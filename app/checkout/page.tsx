@@ -78,10 +78,10 @@ export default function CheckoutPage() {
   return (
     <div className="min-h-screen bg-black text-white">
       <Header />
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold mb-8">Finalizar Pedido</h1>
+      <div className="container mx-auto px-4 py-6 md:py-8">
+        <h1 className="text-3xl md:text-4xl font-bold mb-6 md:mb-8">Finalizar Pedido</h1>
 
-        <form onSubmit={handleSubmit} className="grid lg:grid-cols-3 gap-8">
+        <form onSubmit={handleSubmit} className="grid lg:grid-cols-3 gap-6 md:gap-8">
           {/* Formulário */}
           <div className="lg:col-span-2 space-y-6">
             {/* Tipo de Entrega */}

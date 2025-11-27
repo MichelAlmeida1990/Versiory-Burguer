@@ -76,14 +76,14 @@ export default function Home() {
         <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
           <AnimatedTitle 
             text="Versiory Burguer"
-            className="text-5xl md:text-7xl font-bold mb-4 text-white"
+            className="text-4xl sm:text-5xl md:text-7xl font-bold mb-4 md:mb-6 text-white"
           />
           
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1, duration: 0.8 }}
-            className="text-xl md:text-2xl mb-8 text-white/90"
+            className="text-lg sm:text-xl md:text-2xl mb-6 md:mb-8 text-white/90 px-2"
           >
             Os melhores hambúrguers artesanais da cidade
           </motion.p>
@@ -92,7 +92,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.2, duration: 0.8 }}
-            className="text-lg mb-8 text-white/80 max-w-2xl mx-auto"
+            className="text-base sm:text-lg mb-6 md:mb-8 text-white/80 max-w-2xl mx-auto px-2"
           >
             Ingredientes frescos, receitas exclusivas e sabores únicos que vão conquistar seu paladar. 
             Cada hambúrguer é uma obra de arte culinária preparada com amor e dedicação.
@@ -102,15 +102,15 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.4, duration: 0.8 }}
-            className="flex gap-4 justify-center flex-wrap"
+            className="flex flex-col sm:flex-row gap-4 justify-center items-center"
           >
             <PulseButton href="#cardapio">
-              <span className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-lg text-lg font-bold flex items-center gap-2">
+              <span className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 md:px-8 md:py-4 rounded-lg text-base md:text-lg font-bold flex items-center gap-2 w-full sm:w-auto justify-center">
                 Ver Cardápio
               </span>
             </PulseButton>
             <PulseButton href="https://wa.me/5511999999999">
-              <span className="bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-lg text-lg font-bold flex items-center gap-2">
+              <span className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 md:px-8 md:py-4 rounded-lg text-base md:text-lg font-bold flex items-center gap-2 w-full sm:w-auto justify-center">
                 Pedir pelo WhatsApp
               </span>
             </PulseButton>
@@ -128,11 +128,11 @@ export default function Home() {
                 whileInView={{ backgroundPosition: "100% 50%" }}
                 viewport={{ once: true }}
                 transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                className="text-5xl font-bold mb-4 bg-gradient-to-r from-red-600 via-orange-500 to-red-600 bg-clip-text text-transparent bg-[length:200%_200%]"
+                className="text-3xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-red-600 via-orange-500 to-red-600 bg-clip-text text-transparent bg-[length:200%_200%]"
               >
                 Nosso Cardápio
               </motion.h2>
-              <p className="text-xl text-gray-600">
+              <p className="text-lg md:text-xl text-gray-600 px-4">
                 Explore nossos pratos deliciosos e faça seu pedido
               </p>
             </div>
@@ -245,7 +245,7 @@ export default function Home() {
               whileInView={{ rotateX: 0, opacity: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 1, type: "spring", stiffness: 80 }}
-              className="text-5xl md:text-6xl font-bold mb-6 text-white"
+              className="text-3xl md:text-5xl font-bold mb-4 md:mb-6 text-white px-4"
             >
               Pronto para pedir?
             </motion.h2>
@@ -254,7 +254,7 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2, duration: 0.8 }}
-              className="text-xl md:text-2xl text-white/90 mb-10"
+              className="text-lg md:text-xl text-white/90 mb-8 md:mb-10 px-4"
             >
               Finalize seu pedido e aproveite nossos deliciosos hambúrguers artesanais
             </motion.p>
@@ -265,7 +265,7 @@ export default function Home() {
               transition={{ delay: 0.4, duration: 0.6 }}
             >
               <PulseButton href="/carrinho">
-                <span className="bg-red-600 hover:bg-red-700 text-white px-10 py-5 rounded-lg text-xl md:text-2xl font-bold inline-block shadow-2xl">
+                <span className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 md:px-10 md:py-5 rounded-lg text-lg md:text-xl font-bold inline-block shadow-2xl w-full sm:w-auto">
                   Ver Carrinho
                 </span>
               </PulseButton>

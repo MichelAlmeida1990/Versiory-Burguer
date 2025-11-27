@@ -34,7 +34,7 @@ export function AnimatedTitle({ text, className = "" }: AnimatedTitleProps) {
       scale: 1,
       transition: {
         duration: 0.6,
-        ease: "easeOut",
+        ease: "easeOut" as const,
       },
     },
   };
@@ -75,7 +75,7 @@ export function AnimatedTitle({ text, className = "" }: AnimatedTitleProps) {
                 ? {
                     duration: 2,
                     repeat: Infinity,
-                    ease: "easeInOut",
+                    ease: "easeInOut" as const,
                     delay: index * 0.1,
                   }
                 : {}

@@ -63,17 +63,17 @@ export default function CarrinhoPage() {
     <div className="min-h-screen bg-black text-white">
       <Header />
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold mb-8">Carrinho</h1>
+        <h1 className="text-3xl md:text-4xl font-bold mb-6 md:mb-8">Carrinho</h1>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
           {/* Itens do Carrinho */}
           <div className="lg:col-span-2 space-y-4">
             {items.map((item) => (
               <div
                 key={item.product.id}
-                className="bg-gray-900 rounded-lg p-4 flex gap-4"
+                className="bg-gray-900 rounded-lg p-3 md:p-4 flex flex-col sm:flex-row gap-3 md:gap-4"
               >
-                <div className="relative w-24 h-24 bg-gray-800 rounded-lg flex-shrink-0">
+                <div className="relative w-full h-32 sm:w-24 sm:h-24 bg-gray-800 rounded-lg flex-shrink-0">
                   {item.product.image ? (
                     <Image
                       src={item.product.image}

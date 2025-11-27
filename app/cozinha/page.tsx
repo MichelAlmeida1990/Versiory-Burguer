@@ -30,6 +30,7 @@ export default function CozinhaPage() {
     // Atualizar a cada 3 segundos
     const interval = setInterval(loadOrders, 3000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadOrders = async () => {

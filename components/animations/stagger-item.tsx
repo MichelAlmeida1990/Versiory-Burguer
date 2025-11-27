@@ -21,7 +21,7 @@ export function StaggerItem({ children, className = "" }: StaggerItemProps) {
       scale: 1,
       transition: {
         duration: 0.6,
-        ease: "easeOut",
+        ease: "easeOut" as const,
       },
     },
   };
@@ -40,4 +40,3 @@ export function StaggerItem({ children, className = "" }: StaggerItemProps) {
     </motion.div>
   );
 }
-

@@ -45,6 +45,7 @@ export default function PedidoPage() {
     // Atualizar a cada 5 segundos
     const interval = setInterval(loadOrder, 5000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
   const loadOrder = async () => {
