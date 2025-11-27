@@ -4,8 +4,6 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Header } from "@/components/layout/header";
 import { Product, Category, supabase } from "@/lib/supabase";
-import Image from "next/image";
-import { Plus } from "lucide-react";
 import { useCartStore } from "@/store/cart-store";
 import { formatCurrency } from "@/lib/utils";
 import toast from "react-hot-toast";
@@ -15,6 +13,7 @@ import { ScrollAnimation } from "@/components/animations/scroll-animation";
 import { PulseButton } from "@/components/animations/pulse-button";
 import { StaggerGrid } from "@/components/animations/stagger-grid";
 import { StaggerItem } from "@/components/animations/stagger-item";
+import { ProductCard } from "@/components/products/product-card";
 
 export default function Home() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -173,49 +172,13 @@ export default function Home() {
               <p className="text-xl text-gray-600">Carregando cardápio...</p>
             </div>
           ) : (
-            <StaggerGrid className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <StaggerGrid className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
               {filteredProducts.map((product) => (
                 <StaggerItem key={product.id}>
-                  <div className="bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow border border-gray-100 h-full flex flex-col">
-                    <div className="relative w-full h-48 bg-gray-100">
-                      {product.image ? (
-                        <Image
-                          src={product.image}
-                          alt={product.name}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400">
-                          Sem imagem
-                        </div>
-                      )}
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        whileInView={{ scale: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
-                        className="absolute top-2 right-2 bg-red-600 text-white px-3 py-1 rounded-full font-bold text-sm"
-                      >
-                        {formatCurrency(product.price)}
-                      </motion.div>
-                    </div>
-                    <div className="p-4 flex-1 flex flex-col">
-                      <h3 className="text-xl font-bold mb-2 text-gray-900">{product.name}</h3>
-                      <p className="text-gray-600 text-sm mb-4 line-clamp-2 flex-1">
-                        {product.description}
-                      </p>
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => handleAddToCart(product)}
-                        className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg font-bold transition flex items-center justify-center gap-2"
-                      >
-                        <Plus className="w-5 h-5" />
-                        Adicionar
-                      </motion.button>
-                    </div>
-                  </div>
+                  <ProductCard 
+                    product={product} 
+                    onAddToCart={handleAddToCart}
+                  />
                 </StaggerItem>
               ))}
             </StaggerGrid>
