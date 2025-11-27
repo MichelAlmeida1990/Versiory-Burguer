@@ -1,0 +1,77 @@
+╔══════════════════════════════════════════════════════════════╗
+║                                                              ║
+║     🍽️  RESTAURANTE DEMONSTRAÇÃO - CONFIGURAÇÃO COMPLETA   ║
+║                                                              ║
+╚══════════════════════════════════════════════════════════════╝
+
+✅ TUDO PRONTO PARA USAR!
+
+📁 ARQUIVOS IMPORTANTES:
+
+1. supabase/COMPLETO.sql
+   → Script SQL completo e pronto para copiar/colar no Supabase
+   → Contém: Tabelas + Categorias + Produtos + Configurações
+
+2. CONFIGURAR_SUPABASE.md
+   → Guia passo a passo detalhado de configuração
+
+3. INICIO_RAPIDO.md
+   → Guia rápido de 5 minutos para começar
+
+═══════════════════════════════════════════════════════════════
+
+🚀 COMO COMEÇAR (3 PASSOS):
+
+1️⃣  Abra: supabase/COMPLETO.sql
+    Copie TODO o conteúdo
+    Cole no SQL Editor do Supabase
+    Clique em RUN ✅
+
+2️⃣  Pegue suas credenciais no Supabase:
+    Project Settings > API
+    Copie: Project URL e anon key
+
+3️⃣  Crie arquivo .env.local:
+    NEXT_PUBLIC_SUPABASE_URL=sua_url
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_chave
+
+═══════════════════════════════════════════════════════════════
+
+📊 O QUE ESTÁ INCLUÍDO NO SQL:
+
+✅ 4 Categorias:
+   - Entradas
+   - Pratos Principais
+   - Bebidas
+   - Sobremesas
+
+✅ 23 Produtos de exemplo:
+   - 5 Entradas
+   - 8 Pratos Principais
+   - 6 Bebidas
+   - 4 Sobremesas
+
+✅ Todas as imagens já organizadas e linkadas!
+
+═══════════════════════════════════════════════════════════════
+
+🎯 PRÓXIMOS PASSOS:
+
+1. Execute o script SQL no Supabase
+2. Configure o .env.local
+3. Rode: npm install && npm run dev
+4. Acesse: http://localhost:3000
+
+═══════════════════════════════════════════════════════════════
+
+📚 DOCUMENTAÇÃO:
+
+- README.md - Documentação geral
+- SETUP.md - Guia de setup detalhado
+- CONFIGURAR_SUPABASE.md - Configuração passo a passo
+- PROJETO_COMPLETO.md - Resumo do projeto
+
+═══════════════════════════════════════════════════════════════
+
+✨ TUDO ESTÁ PRONTO! BOA SORTE! ✨
+
