@@ -49,7 +49,7 @@ export default function CarrinhoPage() {
             Adicione produtos do cardápio para continuar
           </p>
           <Link
-            href="/cardapio"
+            href="/#cardapio"
             className="inline-block bg-primary-yellow text-black px-8 py-4 rounded-lg text-xl font-bold hover:bg-opacity-90 transition"
           >
             Ver Cardápio

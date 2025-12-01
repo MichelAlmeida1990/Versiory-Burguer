@@ -85,9 +85,9 @@ export default function CheckoutPage() {
           {/* Formulário */}
           <div className="lg:col-span-2 space-y-6">
             {/* Tipo de Entrega */}
-            <div className="bg-gray-900 rounded-lg p-6">
-              <h2 className="text-2xl font-bold mb-4">Tipo de Entrega</h2>
-              <div className="flex gap-4">
+            <div className="bg-gray-900 rounded-lg p-4 md:p-6">
+              <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Tipo de Entrega</h2>
+              <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
                 <label className="flex-1">
                   <input
                     type="radio"
@@ -116,9 +116,9 @@ export default function CheckoutPage() {
             </div>
 
             {/* Dados Pessoais */}
-            <div className="bg-gray-900 rounded-lg p-6">
-              <h2 className="text-2xl font-bold mb-4">Dados Pessoais</h2>
-              <div className="grid md:grid-cols-2 gap-4">
+            <div className="bg-gray-900 rounded-lg p-4 md:p-6">
+              <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Dados Pessoais</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     Nome Completo *
@@ -166,9 +166,9 @@ export default function CheckoutPage() {
 
             {/* Endereço (se delivery) */}
             {formData.deliveryType === "delivery" && (
-              <div className="bg-gray-900 rounded-lg p-6">
-                <h2 className="text-2xl font-bold mb-4">Endereço de Entrega</h2>
-                <div className="space-y-4">
+              <div className="bg-gray-900 rounded-lg p-4 md:p-6">
+                <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Endereço de Entrega</h2>
+                <div className="space-y-3 md:space-y-4">
                   <div>
                     <label className="block text-sm font-medium mb-2">
                       CEP *
@@ -248,9 +248,9 @@ export default function CheckoutPage() {
             )}
 
             {/* Método de Pagamento */}
-            <div className="bg-gray-900 rounded-lg p-6">
-              <h2 className="text-2xl font-bold mb-4">Método de Pagamento</h2>
-              <div className="space-y-3">
+            <div className="bg-gray-900 rounded-lg p-4 md:p-6">
+              <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Método de Pagamento</h2>
+              <div className="space-y-2 md:space-y-3">
                 <label className="flex items-center p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700">
                   <input
                     type="radio"
@@ -293,9 +293,9 @@ export default function CheckoutPage() {
 
           {/* Resumo */}
           <div className="lg:col-span-1">
-            <div className="bg-gray-900 rounded-lg p-6 sticky top-24">
-              <h2 className="text-2xl font-bold mb-6">Resumo</h2>
-              <div className="space-y-3 mb-6">
+            <div className="bg-gray-900 rounded-lg p-4 md:p-6 sticky top-20 md:top-24">
+              <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Resumo</h2>
+              <div className="space-y-2 md:space-y-3 mb-4 md:mb-6">
                 <div className="flex justify-between text-gray-400">
                   <span>Subtotal</span>
                   <span>{formatCurrency(subtotal)}</span>

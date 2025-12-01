@@ -83,54 +83,54 @@ export default function CozinhaPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-4">
+    <div className="min-h-screen bg-black text-white p-3 md:p-4">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold">Cozinha - Pedidos</h1>
-          <label className="flex items-center gap-2 cursor-pointer">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-4xl font-bold">Cozinha - Pedidos</h1>
+          <label className="flex items-center gap-2 cursor-pointer text-sm md:text-base">
             <input
               type="checkbox"
               checked={soundEnabled}
               onChange={(e) => setSoundEnabled(e.target.checked)}
-              className="w-5 h-5"
+              className="w-4 h-4 md:w-5 md:h-5"
             />
             <span>Som de Notificação</span>
           </label>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {orders.map((order) => (
             <div
               key={order.id}
-              className={`bg-gray-900 rounded-lg p-6 border-2 ${
+              className={`bg-gray-900 rounded-lg p-4 md:p-6 border-2 ${
                 order.status === "confirmed"
                   ? "border-yellow-500 animate-pulse"
                   : "border-gray-700"
               }`}
             >
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h2 className="text-2xl font-bold">
+              <div className="flex justify-between items-start mb-3 md:mb-4">
+                <div className="flex-1">
+                  <h2 className="text-xl md:text-2xl font-bold">
                     Pedido #{order.id.slice(0, 8)}
                   </h2>
-                  <p className="text-gray-400 text-sm">
+                  <p className="text-gray-400 text-xs md:text-sm">
                     {formatDate(order.created_at)}
                   </p>
-                  <p className="text-gray-300 mt-2">{order.customer_name}</p>
+                  <p className="text-gray-300 mt-1 md:mt-2 text-sm md:text-base">{order.customer_name}</p>
                 </div>
                 {order.status === "confirmed" && (
-                  <Clock className="w-8 h-8 text-yellow-500 animate-spin" />
+                  <Clock className="w-6 h-6 md:w-8 md:h-8 text-yellow-500 animate-spin flex-shrink-0 ml-2" />
                 )}
               </div>
 
-              <div className="space-y-2 mb-6">
+              <div className="space-y-2 mb-4 md:mb-6">
                 {order.order_items.map((item) => (
-                  <div key={item.id} className="bg-gray-800 rounded p-3">
-                    <p className="font-bold">
+                  <div key={item.id} className="bg-gray-800 rounded p-2 md:p-3">
+                    <p className="font-bold text-sm md:text-base">
                       {item.quantity}x {item.products.name}
                     </p>
                     {item.observations && (
-                      <p className="text-sm text-yellow-400 italic mt-1">
+                      <p className="text-xs md:text-sm text-yellow-400 italic mt-1">
                         Obs: {item.observations}
                       </p>
                     )}
@@ -142,7 +142,7 @@ export default function CozinhaPage() {
                 {order.status === "confirmed" && (
                   <button
                     onClick={() => updateStatus(order.id, "preparing")}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-bold transition"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 px-3 md:px-4 py-2 rounded-lg font-bold transition text-sm md:text-base"
                   >
                     Iniciar Preparo
                   </button>
@@ -150,9 +150,9 @@ export default function CozinhaPage() {
                 {order.status === "preparing" && (
                   <button
                     onClick={() => updateStatus(order.id, "ready")}
-                    className="flex-1 bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-bold transition flex items-center justify-center gap-2"
+                    className="flex-1 bg-green-600 hover:bg-green-700 px-3 md:px-4 py-2 rounded-lg font-bold transition flex items-center justify-center gap-2 text-sm md:text-base"
                   >
-                    <CheckCircle className="w-5 h-5" />
+                    <CheckCircle className="w-4 h-4 md:w-5 md:h-5" />
                     Pronto
                   </button>
                 )}

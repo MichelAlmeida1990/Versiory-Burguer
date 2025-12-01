@@ -23,12 +23,14 @@ export function StaggerGrid({ children, className = "" }: StaggerGridProps) {
     <motion.div
       variants={containerVariants}
       initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: "-50px" }}
+      animate="visible"
+      key={children ? JSON.stringify(Array.isArray(children) ? children.map((c: any) => c?.key || c?.props?.product?.id) : []) : ''}
       className={className}
     >
       {children}
     </motion.div>
   );
 }
+
+
 

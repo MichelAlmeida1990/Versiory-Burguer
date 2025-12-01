@@ -50,24 +50,18 @@ npm install
 ```
 
 3. Configure as variáveis de ambiente:
-```bash
-cp .env.example .env.local
-```
 
-Edite `.env.local` e adicione:
+Crie um arquivo `.env.local` na raiz do projeto e adicione:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=sua_url_do_supabase
 NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_chave_anonima_do_supabase
 ```
 
-4. Execute o script para organizar as imagens:
-```bash
-node scripts/organize-images.js
-```
+4. Configure o banco de dados no Supabase:
 
-5. Configure o banco de dados no Supabase (veja `supabase/schema.sql`)
+Execute o arquivo `supabase/COMPLETO.sql` no SQL Editor do Supabase para criar as tabelas e inserir os dados iniciais.
 
-6. Inicie o servidor de desenvolvimento:
+5. Inicie o servidor de desenvolvimento:
 ```bash
 npm run dev
 ```
@@ -83,7 +77,7 @@ O sistema utiliza as seguintes tabelas no Supabase:
 - `orders` - Pedidos
 - `order_items` - Itens dos pedidos
 
-Veja o arquivo `supabase/schema.sql` para o schema completo.
+Veja o arquivo `supabase/COMPLETO.sql` para o schema completo e dados iniciais.
 
 ## 📁 Estrutura do Projeto
 
@@ -108,7 +102,7 @@ Veja o arquivo `supabase/schema.sql` para o schema completo.
 │       ├── categorias/    # Imagens de categorias
 │       ├── banners/       # Banners promocionais
 │       └── logos/         # Logos e marca
-└── scripts/               # Scripts utilitários
+└── supabase/             # Scripts SQL do banco de dados
 ```
 
 ## 🎨 Cores do Tema

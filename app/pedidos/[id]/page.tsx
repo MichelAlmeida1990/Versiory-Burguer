@@ -82,41 +82,41 @@ export default function PedidoPage() {
   return (
     <div className="min-h-screen bg-black text-white">
       <Header />
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-4 md:py-8">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-4xl font-bold mb-8">Acompanhamento do Pedido</h1>
+          <h1 className="text-2xl md:text-4xl font-bold mb-4 md:mb-8">Acompanhamento do Pedido</h1>
 
           {/* Status */}
-          <div className="bg-gray-900 rounded-lg p-6 mb-6">
-            <div className="flex items-center gap-4 mb-4">
-              <StatusIcon className={`w-8 h-8 ${status.color}`} />
+          <div className="bg-gray-900 rounded-lg p-4 md:p-6 mb-4 md:mb-6">
+            <div className="flex items-center gap-3 md:gap-4 mb-3 md:mb-4">
+              <StatusIcon className={`w-6 h-6 md:w-8 md:h-8 ${status.color} flex-shrink-0`} />
               <div>
-                <h2 className="text-2xl font-bold">Pedido #{order.id.slice(0, 8)}</h2>
-                <p className={`text-lg ${status.color}`}>{status.label}</p>
+                <h2 className="text-xl md:text-2xl font-bold">Pedido #{order.id.slice(0, 8)}</h2>
+                <p className={`text-base md:text-lg ${status.color}`}>{status.label}</p>
               </div>
             </div>
-            <p className="text-gray-400">
+            <p className="text-gray-400 text-sm md:text-base">
               Realizado em {formatDate(order.created_at)}
             </p>
           </div>
 
           {/* Itens */}
-          <div className="bg-gray-900 rounded-lg p-6 mb-6">
-            <h2 className="text-2xl font-bold mb-4">Itens do Pedido</h2>
-            <div className="space-y-4">
+          <div className="bg-gray-900 rounded-lg p-4 md:p-6 mb-4 md:mb-6">
+            <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Itens do Pedido</h2>
+            <div className="space-y-3 md:space-y-4">
               {order.order_items.map((item) => (
-                <div key={item.id} className="flex justify-between items-start">
-                  <div>
-                    <p className="font-medium">
+                <div key={item.id} className="flex justify-between items-start gap-2">
+                  <div className="flex-1">
+                    <p className="font-medium text-sm md:text-base">
                       {item.quantity}x {item.products.name}
                     </p>
                     {item.observations && (
-                      <p className="text-sm text-gray-400 italic">
+                      <p className="text-xs md:text-sm text-gray-400 italic mt-1">
                         Obs: {item.observations}
                       </p>
                     )}
                   </div>
-                  <p className="text-primary-yellow font-bold">
+                  <p className="text-primary-yellow font-bold text-sm md:text-base whitespace-nowrap">
                     {formatCurrency(item.price * item.quantity)}
                   </p>
                 </div>
@@ -125,18 +125,18 @@ export default function PedidoPage() {
           </div>
 
           {/* Informações */}
-          <div className="bg-gray-900 rounded-lg p-6 mb-6">
-            <h2 className="text-2xl font-bold mb-4">Informações</h2>
+          <div className="bg-gray-900 rounded-lg p-4 md:p-6 mb-4 md:mb-6">
+            <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Informações</h2>
             <div className="space-y-3">
               {order.delivery_address && (
                 <div>
-                  <p className="text-gray-400 text-sm">Endereço de Entrega</p>
-                  <p className="font-medium">{order.delivery_address}</p>
+                  <p className="text-gray-400 text-xs md:text-sm">Endereço de Entrega</p>
+                  <p className="font-medium text-sm md:text-base break-words">{order.delivery_address}</p>
                 </div>
               )}
               <div>
-                <p className="text-gray-400 text-sm">Forma de Pagamento</p>
-                <p className="font-medium capitalize">
+                <p className="text-gray-400 text-xs md:text-sm">Forma de Pagamento</p>
+                <p className="font-medium capitalize text-sm md:text-base">
                   {order.payment_method === "pix"
                     ? "PIX"
                     : order.payment_method === "card"
@@ -145,8 +145,8 @@ export default function PedidoPage() {
                 </p>
               </div>
               <div>
-                <p className="text-gray-400 text-sm">Total</p>
-                <p className="text-2xl font-bold text-primary-yellow">
+                <p className="text-gray-400 text-xs md:text-sm">Total</p>
+                <p className="text-xl md:text-2xl font-bold text-primary-yellow">
                   {formatCurrency(order.total)}
                 </p>
               </div>

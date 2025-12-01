@@ -105,3 +105,5 @@ ON CONFLICT DO NOTHING;
 -- CREATE POLICY "Users can create orders" ON orders FOR INSERT WITH CHECK (true);
 -- CREATE POLICY "Users can view their own orders" ON orders FOR SELECT USING (true);
 
+
+

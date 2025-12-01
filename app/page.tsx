@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Header } from "@/components/layout/header";
 import { Product, Category, supabase } from "@/lib/supabase";
@@ -28,19 +28,49 @@ export default function Home() {
 
   const loadData = async () => {
     try {
-      const { data: categoriesData } = await supabase
+      // Carregar categorias
+      const { data: categoriesData, error: categoriesError } = await supabase
         .from("categories")
         .select("*")
         .order("order");
 
-      const { data: productsData } = await supabase
+      if (categoriesError) {
+        console.error("Erro ao carregar categorias:", categoriesError);
+        toast.error("Erro ao carregar categorias");
+        return;
+      }
+
+      if (!categoriesData || categoriesData.length === 0) {
+        toast.error("Nenhuma categoria encontrada");
+        return;
+      }
+
+      setCategories(categoriesData);
+
+      // Carregar produtos
+      const { data: productsData, error: productsError } = await supabase
         .from("products")
-        .select("*")
+        .select("id, name, description, price, image, category_id, available, created_at, updated_at")
         .eq("available", true)
         .order("name");
 
-      if (categoriesData) setCategories(categoriesData);
-      if (productsData) setProducts(productsData);
+      if (productsError) {
+        console.error("Erro ao carregar produtos:", productsError);
+        toast.error("Erro ao carregar produtos");
+        return;
+      }
+
+      if (!productsData || productsData.length === 0) {
+        return;
+      }
+
+      // Verificar produtos e suas categorias
+      const categoryIds = new Set(categoriesData.map(c => c.id));
+      const validProducts = productsData.filter(p => {
+        return p.category_id && categoryIds.has(p.category_id);
+      });
+      
+      setProducts(validProducts);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
       toast.error("Erro ao carregar cardápio");
@@ -49,9 +79,23 @@ export default function Home() {
     }
   };
 
-  const filteredProducts = selectedCategory
-    ? products.filter((p) => p.category_id === selectedCategory)
-    : products;
+  // Memoizar produtos filtrados para melhor performance
+  const filteredProducts = useMemo(() => {
+    if (!selectedCategory) {
+      return products;
+    }
+    
+    const filtered = products.filter((p) => {
+      if (!p.category_id) {
+        return false;
+      }
+      
+      // Comparação direta de UUIDs
+      return p.category_id === selectedCategory;
+    });
+    
+    return filtered;
+  }, [products, selectedCategory]);
 
   const handleAddToCart = (product: Product) => {
     addItem(product, 1);
@@ -153,7 +197,16 @@ export default function Home() {
               {categories.map((category) => (
                 <button
                   key={category.id}
-                  onClick={() => setSelectedCategory(category.id)}
+                  onClick={() => {
+                    setSelectedCategory(category.id);
+                    // Scroll suave para a seção de produtos
+                    setTimeout(() => {
+                      const produtosSection = document.getElementById('produtos-section');
+                      if (produtosSection) {
+                        produtosSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    }, 100);
+                  }}
                   className={`px-6 py-3 rounded-lg font-medium transition ${
                     selectedCategory === category.id
                       ? "bg-red-600 text-white"
@@ -167,28 +220,45 @@ export default function Home() {
           </ScrollAnimation>
 
           {/* Produtos */}
-          {loading ? (
-            <div className="text-center py-12">
-              <p className="text-xl text-gray-600">Carregando cardápio...</p>
-            </div>
-          ) : (
-            <StaggerGrid className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-              {filteredProducts.map((product) => (
-                <StaggerItem key={product.id}>
-                  <ProductCard 
-                    product={product} 
-                    onAddToCart={handleAddToCart}
-                  />
-                </StaggerItem>
-              ))}
-            </StaggerGrid>
-          )}
-
-          {!loading && filteredProducts.length === 0 && (
-            <div className="text-center py-12 text-gray-400">
-              Nenhum produto encontrado nesta categoria.
-            </div>
-          )}
+          <div id="produtos-section">
+            {loading ? (
+              <div className="text-center py-12">
+                <p className="text-xl text-gray-600">Carregando cardápio...</p>
+              </div>
+            ) : (
+              <>
+                {selectedCategory && (
+                  <div className="mb-6 text-center">
+                    <p className="text-lg text-gray-600">
+                      Mostrando {filteredProducts.length} {filteredProducts.length === 1 ? 'produto' : 'produtos'} em &quot;{categories.find(c => c.id === selectedCategory)?.name || 'Categoria'}&quot;
+                    </p>
+                  </div>
+                )}
+                {filteredProducts.length > 0 ? (
+                  <StaggerGrid key={`grid-${selectedCategory || 'all'}`} className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                    {filteredProducts.map((product) => (
+                      <StaggerItem key={product.id}>
+                        <ProductCard 
+                          product={product} 
+                          onAddToCart={handleAddToCart}
+                        />
+                      </StaggerItem>
+                    ))}
+                  </StaggerGrid>
+                ) : (
+                  <div className="text-center py-12 text-gray-400">
+                    <p className="text-xl mb-4">Nenhum produto encontrado nesta categoria.</p>
+                    <button
+                      onClick={() => setSelectedCategory(null)}
+                      className="text-red-600 hover:text-red-700 font-medium underline"
+                    >
+                      Ver todos os produtos
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </section>
 
