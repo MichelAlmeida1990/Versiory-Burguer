@@ -5,7 +5,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { Product, Category, supabase } from "@/lib/supabase";
 import { formatCurrency, formatDate, formatTime, formatDateTime, getTimeAgo } from "@/lib/utils";
-import { Plus, Edit, Trash2, Package, Users, DollarSign } from "lucide-react";
+import { Plus, Edit, Trash2, Package, Users, DollarSign, TrendingUp, Calendar, ShoppingBag } from "lucide-react";
+import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
@@ -20,7 +21,17 @@ function AdminContent() {
     totalOrders: 0,
     totalRevenue: 0,
     pendingOrders: 0,
+    todayRevenue: 0,
+    todayOrders: 0,
+    weekRevenue: 0,
+    weekOrders: 0,
+    monthRevenue: 0,
+    monthOrders: 0,
   });
+  const [salesData, setSalesData] = useState<any[]>([]);
+  const [revenueData, setRevenueData] = useState<any[]>([]);
+  const [topProducts, setTopProducts] = useState<any[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
 
   useEffect(() => {
     const tabParam = searchParams.get("tab");
@@ -53,20 +64,49 @@ function AdminContent() {
       }
 
       if (activeTab === "orders" || activeTab === "dashboard") {
+        // Carregar pedidos com itens para dashboard
         const { data: ordersData } = await supabase
           .from("orders")
-          .select("*")
+          .select(`
+            *,
+            order_items (
+              *,
+              products (*)
+            )
+          `)
           .order("created_at", { ascending: false })
-          .limit(100);
+          .limit(500);
+        
         if (ordersData) {
           setOrders(ordersData);
-          // Filtrar pedidos cancelados para o cálculo de faturamento
           const activeOrders = ordersData.filter((o) => o.status !== "cancelled");
+          
+          // Calcular métricas
+          const now = new Date();
+          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+          const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+          
+          const todayOrders = activeOrders.filter(o => new Date(o.created_at) >= today);
+          const weekOrders = activeOrders.filter(o => new Date(o.created_at) >= weekAgo);
+          const monthOrders = activeOrders.filter(o => new Date(o.created_at) >= monthAgo);
+          
           setStats({
             totalOrders: ordersData.length,
             totalRevenue: activeOrders.reduce((sum, o) => sum + Number(o.total), 0),
             pendingOrders: ordersData.filter((o) => o.status === "pending").length,
+            todayRevenue: todayOrders.reduce((sum, o) => sum + Number(o.total), 0),
+            todayOrders: todayOrders.length,
+            weekRevenue: weekOrders.reduce((sum, o) => sum + Number(o.total), 0),
+            weekOrders: weekOrders.length,
+            monthRevenue: monthOrders.reduce((sum, o) => sum + Number(o.total), 0),
+            monthOrders: monthOrders.length,
           });
+
+          // Processar dados para gráficos
+          processChartData(activeOrders);
+          processTopProducts(ordersData);
+          processPaymentMethods(activeOrders);
         }
       }
     } catch (error) {
@@ -100,6 +140,81 @@ function AdminContent() {
     } catch (error) {
       toast.error("Erro ao atualizar produto");
     }
+  };
+
+  const processChartData = (orders: any[]) => {
+    // Agrupar por dia (últimos 30 dias)
+    const daysMap = new Map<string, { date: string; sales: number; revenue: number }>();
+    const now = new Date();
+    
+    // Inicializar últimos 30 dias
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      const dateStr = date.toISOString().split('T')[0];
+      const dateFormatted = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(date);
+      daysMap.set(dateStr, { date: dateFormatted, sales: 0, revenue: 0 });
+    }
+    
+    // Processar pedidos
+    orders.forEach(order => {
+      const orderDate = new Date(order.created_at).toISOString().split('T')[0];
+      if (daysMap.has(orderDate)) {
+        const dayData = daysMap.get(orderDate)!;
+        dayData.sales += 1;
+        dayData.revenue += Number(order.total);
+      }
+    });
+    
+    setSalesData(Array.from(daysMap.values()));
+    setRevenueData(Array.from(daysMap.values()));
+  };
+
+  const processTopProducts = (orders: any[]) => {
+    const productMap = new Map<string, { name: string; quantity: number; revenue: number }>();
+    
+    orders.forEach(order => {
+      if (order.order_items && order.status !== 'cancelled') {
+        order.order_items.forEach((item: any) => {
+          if (item.products) {
+            const productId = item.product_id;
+            const productName = item.products.name;
+            const quantity = item.quantity;
+            const revenue = Number(item.price) * quantity;
+            
+            if (productMap.has(productId)) {
+              const existing = productMap.get(productId)!;
+              existing.quantity += quantity;
+              existing.revenue += revenue;
+            } else {
+              productMap.set(productId, { name: productName, quantity, revenue });
+            }
+          }
+        });
+      }
+    });
+    
+    const topProductsArray = Array.from(productMap.values())
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 5);
+    
+    setTopProducts(topProductsArray);
+  };
+
+  const processPaymentMethods = (orders: any[]) => {
+    const methodMap = new Map<string, number>();
+    
+    orders.forEach(order => {
+      const method = order.payment_method || 'cash';
+      const current = methodMap.get(method) || 0;
+      methodMap.set(method, current + Number(order.total));
+    });
+    
+    const methods = Array.from(methodMap.entries()).map(([name, value]) => ({
+      name: name === 'pix' ? 'PIX' : name === 'card' ? 'Cartão' : 'Dinheiro',
+      value: Number(value),
+    }));
+    
+    setPaymentMethods(methods);
   };
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
@@ -156,29 +271,181 @@ function AdminContent() {
 
         {/* Dashboard */}
         {activeTab === "dashboard" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
-            <div className="bg-gray-900 rounded-lg p-4 md:p-6">
-              <div className="flex items-center justify-between mb-3 md:mb-4">
-                <Package className="w-6 h-6 md:w-8 md:h-8 text-primary-yellow" />
-                <span className="text-2xl md:text-3xl font-bold">{stats.totalOrders}</span>
+          <div className="space-y-6 md:space-y-8">
+            {/* Cards de Métricas */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+              <div className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 rounded-lg p-4 md:p-6 border border-yellow-500/30">
+                <div className="flex items-center justify-between mb-2">
+                  <Calendar className="w-5 h-5 md:w-6 md:h-6 text-yellow-400" />
+                  <span className="text-xs text-gray-400">Hoje</span>
+                </div>
+                <p className="text-2xl md:text-3xl font-bold mb-1">{formatCurrency(stats.todayRevenue)}</p>
+                <p className="text-sm text-gray-400">{stats.todayOrders} pedido{stats.todayOrders !== 1 ? 's' : ''}</p>
               </div>
-              <p className="text-sm md:text-base text-gray-400">Total de Pedidos</p>
+              
+              <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 rounded-lg p-4 md:p-6 border border-blue-500/30">
+                <div className="flex items-center justify-between mb-2">
+                  <TrendingUp className="w-5 h-5 md:w-6 md:h-6 text-blue-400" />
+                  <span className="text-xs text-gray-400">7 dias</span>
+                </div>
+                <p className="text-2xl md:text-3xl font-bold mb-1">{formatCurrency(stats.weekRevenue)}</p>
+                <p className="text-sm text-gray-400">{stats.weekOrders} pedido{stats.weekOrders !== 1 ? 's' : ''}</p>
+              </div>
+              
+              <div className="bg-gradient-to-br from-green-500/20 to-green-600/10 rounded-lg p-4 md:p-6 border border-green-500/30">
+                <div className="flex items-center justify-between mb-2">
+                  <DollarSign className="w-5 h-5 md:w-6 md:h-6 text-green-400" />
+                  <span className="text-xs text-gray-400">30 dias</span>
+                </div>
+                <p className="text-2xl md:text-3xl font-bold mb-1">{formatCurrency(stats.monthRevenue)}</p>
+                <p className="text-sm text-gray-400">{stats.monthOrders} pedido{stats.monthOrders !== 1 ? 's' : ''}</p>
+              </div>
+              
+              <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 rounded-lg p-4 md:p-6 border border-purple-500/30">
+                <div className="flex items-center justify-between mb-2">
+                  <Package className="w-5 h-5 md:w-6 md:h-6 text-purple-400" />
+                  <span className="text-xs text-gray-400">Total</span>
+                </div>
+                <p className="text-2xl md:text-3xl font-bold mb-1">{formatCurrency(stats.totalRevenue)}</p>
+                <p className="text-sm text-gray-400">{stats.totalOrders} pedido{stats.totalOrders !== 1 ? 's' : ''}</p>
+              </div>
             </div>
-            <div className="bg-gray-900 rounded-lg p-4 md:p-6">
-              <div className="flex items-center justify-between mb-3 md:mb-4">
-                <DollarSign className="w-6 h-6 md:w-8 md:h-8 text-primary-azure" />
-                <span className="text-xl md:text-3xl font-bold">
-                  {formatCurrency(stats.totalRevenue)}
-                </span>
+
+            {/* Gráficos */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+              {/* Gráfico de Vendas por Dia */}
+              <div className="bg-gray-900 rounded-lg p-4 md:p-6">
+                <h3 className="text-lg md:text-xl font-bold mb-4 md:mb-6">Vendas por Dia (últimos 30 dias)</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={salesData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="date" stroke="#9CA3AF" fontSize={12} />
+                    <YAxis stroke="#9CA3AF" fontSize={12} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px' }}
+                      labelStyle={{ color: '#F3F4F6' }}
+                    />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="sales" 
+                      name="Pedidos"
+                      stroke="#FCD34D" 
+                      strokeWidth={2}
+                      dot={{ fill: '#FCD34D', r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
-              <p className="text-sm md:text-base text-gray-400">Faturamento Total</p>
+
+              {/* Gráfico de Faturamento por Dia */}
+              <div className="bg-gray-900 rounded-lg p-4 md:p-6">
+                <h3 className="text-lg md:text-xl font-bold mb-4 md:mb-6">Faturamento por Dia (últimos 30 dias)</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={revenueData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="date" stroke="#9CA3AF" fontSize={12} />
+                    <YAxis stroke="#9CA3AF" fontSize={12} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px' }}
+                      labelStyle={{ color: '#F3F4F6' }}
+                      formatter={(value: number) => formatCurrency(value)}
+                    />
+                    <Legend />
+                    <Bar 
+                      dataKey="revenue" 
+                      name="Faturamento"
+                      fill="#3B82F6"
+                      radius={[8, 8, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
-            <div className="bg-gray-900 rounded-lg p-4 md:p-6">
-              <div className="flex items-center justify-between mb-3 md:mb-4">
-                <Users className="w-6 h-6 md:w-8 md:h-8 text-primary-pink" />
-                <span className="text-2xl md:text-3xl font-bold">{stats.pendingOrders}</span>
+
+            {/* Gráficos Inferiores */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+              {/* Top Produtos */}
+              <div className="bg-gray-900 rounded-lg p-4 md:p-6">
+                <h3 className="text-lg md:text-xl font-bold mb-4 md:mb-6">Top 5 Produtos Mais Vendidos</h3>
+                <div className="space-y-3">
+                  {topProducts.length > 0 ? (
+                    topProducts.map((product, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-primary-yellow/20 flex items-center justify-center text-primary-yellow font-bold text-sm">
+                            {index + 1}
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm md:text-base">{product.name}</p>
+                            <p className="text-xs text-gray-400">{product.quantity} unidade{product.quantity !== 1 ? 's' : ''}</p>
+                          </div>
+                        </div>
+                        <p className="text-primary-yellow font-bold">{formatCurrency(product.revenue)}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-gray-400 text-center py-8">Nenhum produto vendido ainda</p>
+                  )}
+                </div>
               </div>
-              <p className="text-sm md:text-base text-gray-400">Pedidos Pendentes</p>
+
+              {/* Métodos de Pagamento */}
+              <div className="bg-gray-900 rounded-lg p-4 md:p-6">
+                <h3 className="text-lg md:text-xl font-bold mb-4 md:mb-6">Faturamento por Método de Pagamento</h3>
+                {paymentMethods.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={paymentMethods}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
+                        outerRadius={100}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {paymentMethods.map((entry, index) => {
+                          const colors = ['#FCD34D', '#3B82F6', '#10B981'];
+                          return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                        })}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px' }}
+                        labelStyle={{ color: '#F3F4F6' }}
+                        formatter={(value: number) => formatCurrency(value)}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <p className="text-gray-400 text-center py-8">Nenhum dado disponível</p>
+                )}
+              </div>
+            </div>
+
+            {/* Status de Pedidos */}
+            <div className="bg-gray-900 rounded-lg p-4 md:p-6">
+              <h3 className="text-lg md:text-xl font-bold mb-4 md:mb-6">Status dos Pedidos</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+                {[
+                  { status: 'pending', label: 'Aguardando', color: 'bg-yellow-500', count: orders.filter(o => o.status === 'pending').length },
+                  { status: 'confirmed', label: 'Confirmado', color: 'bg-blue-500', count: orders.filter(o => o.status === 'confirmed').length },
+                  { status: 'preparing', label: 'Preparando', color: 'bg-orange-500', count: orders.filter(o => o.status === 'preparing').length },
+                  { status: 'ready', label: 'Pronto', color: 'bg-green-500', count: orders.filter(o => o.status === 'ready').length },
+                  { status: 'delivering', label: 'Entregando', color: 'bg-purple-500', count: orders.filter(o => o.status === 'delivering').length },
+                  { status: 'delivered', label: 'Entregue', color: 'bg-green-600', count: orders.filter(o => o.status === 'delivered').length },
+                  { status: 'cancelled', label: 'Cancelado', color: 'bg-red-500', count: orders.filter(o => o.status === 'cancelled').length },
+                ].map((item) => (
+                  <div key={item.status} className="text-center">
+                    <div className={`${item.color} w-12 h-12 md:w-16 md:h-16 rounded-full mx-auto mb-2 flex items-center justify-center text-white font-bold text-lg md:text-2xl`}>
+                      {item.count}
+                    </div>
+                    <p className="text-xs md:text-sm text-gray-400">{item.label}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
