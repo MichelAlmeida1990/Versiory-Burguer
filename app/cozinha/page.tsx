@@ -69,16 +69,22 @@ export default function CozinhaPage() {
 
   const updateStatus = async (orderId: string, newStatus: string) => {
     try {
-      const { error } = await supabase
-        .from("orders")
-        .update({ status: newStatus })
-        .eq("id", orderId);
+      const response = await fetch(`/api/orders/${orderId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Erro ao atualizar status");
+      }
+
       toast.success("Status atualizado!");
       loadOrders();
-    } catch (error) {
-      toast.error("Erro ao atualizar status");
+    } catch (error: any) {
+      console.error("Erro ao atualizar status:", error);
+      toast.error(error.message || "Erro ao atualizar status");
     }
   };
 

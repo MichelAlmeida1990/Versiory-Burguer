@@ -57,6 +57,14 @@ export async function POST(request: NextRequest) {
 
     if (itemsError) throw itemsError;
 
+    // Registrar status inicial no histórico
+    await supabase
+      .from("order_status_history")
+      .insert({
+        order_id: order.id,
+        status: "pending",
+      });
+
     return NextResponse.json({ id: order.id, ...order });
   } catch (error: any) {
     console.error("Erro ao criar pedido:", error);
@@ -73,7 +81,7 @@ export async function GET(request: NextRequest) {
     const orderId = searchParams.get("id");
 
     if (orderId) {
-      // Buscar pedido específico
+      // Buscar pedido específico com histórico
       const { data: order, error } = await supabase
         .from("orders")
         .select(`
@@ -81,12 +89,26 @@ export async function GET(request: NextRequest) {
           order_items (
             *,
             products (*)
+          ),
+          order_status_history (
+            id,
+            status,
+            created_at
           )
         `)
         .eq("id", orderId)
         .single();
 
       if (error) throw error;
+
+      // Ordenar histórico por data
+      if (order.order_status_history) {
+        order.order_status_history.sort(
+          (a: any, b: any) =>
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+      }
+
       return NextResponse.json(order);
     }
 
