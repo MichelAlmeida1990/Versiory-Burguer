@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
+import { useRouter, useParams } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { supabase } from "@/lib/supabase";
 import { ArrowLeft, Save, Upload, X } from "lucide-react";
@@ -9,10 +9,13 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import Image from "next/image";
 
-export default function NewCategoryPage() {
+export default function EditCategoryPage() {
   const router = useRouter();
+  const params = useParams();
+  const categoryId = params.id as string;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingCategory, setLoadingCategory] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -20,6 +23,44 @@ export default function NewCategoryPage() {
     image: "",
     order: "0",
   });
+
+  useEffect(() => {
+    loadCategory();
+  }, [categoryId]);
+
+  const loadCategory = async () => {
+    try {
+      setLoadingCategory(true);
+      const { data, error } = await supabase
+        .from("categories")
+        .select("*")
+        .eq("id", categoryId)
+        .single();
+
+      if (error) throw error;
+      if (!data) {
+        toast.error("Categoria não encontrada");
+        router.push("/admin?tab=categories");
+        return;
+      }
+
+      setFormData({
+        name: data.name || "",
+        image: data.image || "",
+        order: String(data.order || 0),
+      });
+
+      if (data.image) {
+        setImagePreview(data.image);
+      }
+    } catch (error: any) {
+      console.error("Erro ao carregar categoria:", error);
+      toast.error(error.message || "Erro ao carregar categoria");
+      router.push("/admin?tab=categories");
+    } finally {
+      setLoadingCategory(false);
+    }
+  };
 
   const handleFileUpload = async (file: File) => {
     if (!file) return null;
@@ -106,26 +147,40 @@ export default function NewCategoryPage() {
         return;
       }
 
-      const { error } = await supabase.from("categories").insert({
-        name: formData.name.trim(),
-        image: formData.image.trim() || null,
-        order: parseInt(formData.order) || 0,
-      });
+      const { error } = await supabase
+        .from("categories")
+        .update({
+          name: formData.name.trim(),
+          image: formData.image.trim() || null,
+          order: parseInt(formData.order) || 0,
+        })
+        .eq("id", categoryId);
 
       if (error) {
-        console.error("Erro ao criar categoria:", error);
+        console.error("Erro ao atualizar categoria:", error);
         throw error;
       }
 
-      toast.success("Categoria cadastrada com sucesso!");
+      toast.success("Categoria atualizada com sucesso!");
       router.push("/admin?tab=categories");
     } catch (error: any) {
-      console.error("Erro ao cadastrar categoria:", error);
-      toast.error(error.message || "Erro ao cadastrar categoria");
+      console.error("Erro ao atualizar categoria:", error);
+      toast.error(error.message || "Erro ao atualizar categoria");
     } finally {
       setLoading(false);
     }
   };
+
+  if (loadingCategory) {
+    return (
+      <div className="min-h-screen bg-black text-white">
+        <Header />
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+          <div className="text-center">Carregando categoria...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -139,7 +194,7 @@ export default function NewCategoryPage() {
             <ArrowLeft className="w-4 h-4" />
             Voltar para Categorias
           </Link>
-          <h1 className="text-2xl md:text-4xl font-bold">Nova Categoria</h1>
+          <h1 className="text-2xl md:text-4xl font-bold">Editar Categoria</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-gray-900 rounded-lg p-4 md:p-6 space-y-6">
@@ -275,7 +330,7 @@ export default function NewCategoryPage() {
               ) : (
                 <>
                   <Save className="w-5 h-5" />
-                  Salvar Categoria
+                  Salvar Alterações
                 </>
               )}
             </button>
@@ -291,5 +346,4 @@ export default function NewCategoryPage() {
     </div>
   );
 }
-
 

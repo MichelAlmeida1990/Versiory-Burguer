@@ -105,6 +105,12 @@ DROP POLICY IF EXISTS "Anyone can update categories" ON categories;
 CREATE POLICY "Anyone can update categories" ON categories
   FOR UPDATE USING (true);
 
+DROP POLICY IF EXISTS "Anyone can delete categories" ON categories;
+CREATE POLICY "Anyone can delete categories" ON categories
+  FOR DELETE
+  TO authenticated, anon
+  USING (true);
+
 DROP POLICY IF EXISTS "Products are viewable by everyone" ON products;
 CREATE POLICY "Products are viewable by everyone" ON products
   FOR SELECT USING (true);

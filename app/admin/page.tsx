@@ -276,6 +276,80 @@ function AdminContent() {
     }
   };
 
+  const handleDeleteCategory = async (id: string) => {
+    if (!confirm("Tem certeza que deseja excluir esta categoria? Produtos associados terão sua categoria removida.")) return;
+
+    try {
+      console.log("Iniciando exclusão da categoria:", id);
+      
+      // Verificar se há produtos com esta categoria
+      const { data: products, error: productsError } = await supabase
+        .from("products")
+        .select("id")
+        .eq("category_id", id)
+        .limit(1);
+
+      if (productsError) {
+        console.error("Erro ao verificar produtos:", productsError);
+        toast.error("Erro ao verificar produtos: " + productsError.message);
+        return;
+      }
+
+      if (products && products.length > 0) {
+        // Se houver produtos, remover a categoria deles primeiro (será SET NULL automaticamente)
+        const { error: updateError } = await supabase
+          .from("products")
+          .update({ category_id: null })
+          .eq("category_id", id);
+        
+        if (updateError) {
+          console.error("Erro ao remover categoria dos produtos:", updateError);
+          toast.error("Erro ao remover categoria dos produtos: " + updateError.message);
+          return;
+        }
+        
+        console.log("Categoria removida dos produtos associados");
+      }
+
+      // Deletar a categoria
+      console.log("Deletando categoria do banco de dados...");
+      const { error: deleteError, data: deletedData } = await supabase
+        .from("categories")
+        .delete()
+        .eq("id", id)
+        .select();
+      
+      if (deleteError) {
+        console.error("Erro ao deletar categoria:", deleteError);
+        console.error("Detalhes:", deleteError.message, deleteError.details, deleteError.hint);
+        console.error("Código do erro:", deleteError.code);
+        
+        // Verificar se é erro de política RLS
+        if (deleteError.message?.includes('policy') || deleteError.message?.includes('RLS') || deleteError.code === '42501') {
+          toast.error("Erro de permissão. Execute a política RLS de DELETE no Supabase (arquivo: supabase/POLITICAS_CATEGORIAS_DELETE.sql)");
+        } else {
+          toast.error("Erro ao deletar: " + deleteError.message);
+        }
+        return;
+      }
+      
+      if (!deletedData || deletedData.length === 0) {
+        console.warn("Categoria não foi deletada (nenhum registro retornado)");
+        toast.error("Categoria não foi deletada. Verifique as políticas RLS.");
+        return;
+      }
+      
+      console.log("Categoria deletada com sucesso:", deletedData);
+      // Remover do estado local
+      setCategories((prevCategories) => prevCategories.filter((c) => c.id !== id));
+      toast.success("Categoria excluída com sucesso!");
+    } catch (error: any) {
+      console.error("Erro ao excluir categoria:", error);
+      const errorMessage = error.message || error.details || "Erro ao excluir categoria";
+      toast.error(errorMessage);
+    }
+  };
+
   const processChartData = (orders: any[]) => {
     // Agrupar por dia (últimos 30 dias)
     const daysMap = new Map<string, { date: string; sales: number; revenue: number }>();
@@ -862,10 +936,31 @@ function AdminContent() {
                 Nova Categoria
               </Link>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
               {categories.map((category) => (
                 <div key={category.id} className="bg-gray-900 rounded-lg p-3 md:p-4">
-                  <h3 className="text-base md:text-xl font-bold">{category.name}</h3>
+                  <h3 className="text-base md:text-xl font-bold mb-3">{category.name}</h3>
+                  {category.order !== null && (
+                    <p className="text-xs text-gray-400 mb-3">Ordem: {category.order}</p>
+                  )}
+                  <div className="flex gap-2">
+                    <Link
+                      href={`/admin/categories/${category.id}/edit`}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg flex items-center justify-center gap-1 text-xs md:text-sm transition"
+                      title="Editar categoria"
+                    >
+                      <Edit className="w-4 h-4" />
+                      <span className="hidden sm:inline">Editar</span>
+                    </Link>
+                    <button
+                      onClick={() => handleDeleteCategory(category.id)}
+                      className="bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg flex items-center justify-center gap-1 text-xs md:text-sm transition"
+                      title="Excluir categoria"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span className="hidden sm:inline">Excluir</span>
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
