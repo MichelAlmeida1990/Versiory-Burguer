@@ -18,3 +18,4 @@ DROP POLICY IF EXISTS "Anyone can create order status history" ON order_status_h
 CREATE POLICY "Anyone can create order status history" ON order_status_history
   FOR INSERT WITH CHECK (true);
 
+

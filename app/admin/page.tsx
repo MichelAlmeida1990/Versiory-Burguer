@@ -10,6 +10,22 @@ import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Cart
 import Link from "next/link";
 import toast from "react-hot-toast";
 
+// Componente para evitar erro de hidratação com getTimeAgo
+function TimeAgo({ date }: { date: Date | string }) {
+  const [timeAgo, setTimeAgo] = useState("");
+
+  useEffect(() => {
+    setTimeAgo(getTimeAgo(date));
+    const interval = setInterval(() => {
+      setTimeAgo(getTimeAgo(date));
+    }, 60000); // Atualizar a cada minuto
+
+    return () => clearInterval(interval);
+  }, [date]);
+
+  return <span>{timeAgo || "carregando..."}</span>;
+}
+
 function AdminContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -116,15 +132,133 @@ function AdminContent() {
   };
 
   const handleDeleteProduct = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir este produto?")) return;
+    if (!confirm("Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita.")) return;
 
     try {
-      const { error } = await supabase.from("products").delete().eq("id", id);
-      if (error) throw error;
-      toast.success("Produto excluído!");
-      loadData();
-    } catch (error) {
-      toast.error("Erro ao excluir produto");
+      console.log("Iniciando exclusão do produto:", id);
+      
+      // Buscar o produto para obter a URL da imagem
+      const { data: product, error: productError } = await supabase
+        .from("products")
+        .select("image")
+        .eq("id", id)
+        .single();
+
+      if (productError) {
+        console.error("Erro ao buscar produto:", productError);
+        toast.error("Erro ao buscar produto: " + productError.message);
+        return;
+      }
+
+      if (!product) {
+        toast.error("Produto não encontrado");
+        return;
+      }
+
+      // Verificar se há pedidos com este produto
+      const { data: orderItems, error: orderItemsError } = await supabase
+        .from("order_items")
+        .select("id")
+        .eq("product_id", id)
+        .limit(1);
+
+      if (orderItemsError) {
+        console.error("Erro ao verificar pedidos:", orderItemsError);
+        toast.error("Erro ao verificar pedidos: " + orderItemsError.message);
+        return;
+      }
+
+      if (orderItems && orderItems.length > 0) {
+        // Se houver pedidos, apenas desativar o produto
+        console.log("Produto tem pedidos, desativando...");
+        const { error, data } = await supabase
+          .from("products")
+          .update({ available: false })
+          .eq("id", id)
+          .select();
+        
+        if (error) {
+          console.error("Erro ao desativar produto:", error);
+          console.error("Detalhes:", error.message, error.details, error.hint);
+          toast.error("Erro ao desativar: " + error.message);
+          return;
+        }
+        
+        console.log("Produto desativado com sucesso:", data);
+        // Atualizar estado local
+        setProducts((prevProducts) => 
+          prevProducts.map((p) => p.id === id ? { ...p, available: false } : p)
+        );
+        toast.success("Produto desativado (existe em pedidos anteriores)!");
+      } else {
+        // Se não houver pedidos, pode deletar completamente
+        console.log("Produto não tem pedidos, deletando permanentemente...");
+        
+        // Deletar imagem do storage se existir e for do Supabase Storage
+        if (product?.image) {
+          const imageUrl = product.image;
+          // Verificar se é uma URL do Supabase Storage
+          if (imageUrl.includes('/storage/v1/object/public/images/')) {
+            // Extrair o caminho do arquivo da URL
+            const urlParts = imageUrl.split('/storage/v1/object/public/images/');
+            if (urlParts.length > 1) {
+              const filePath = urlParts[1];
+              console.log("Deletando imagem do storage:", filePath);
+              // Deletar do storage (ignorar erros se o arquivo não existir)
+              try {
+                const { error: storageError } = await supabase.storage
+                  .from('images')
+                  .remove([filePath]);
+                if (storageError) {
+                  console.warn("Erro ao deletar imagem do storage:", storageError);
+                } else {
+                  console.log("Imagem deletada do storage com sucesso");
+                }
+              } catch (storageError) {
+                console.warn("Erro ao deletar imagem do storage (pode não existir):", storageError);
+                // Continuar mesmo se falhar ao deletar a imagem
+              }
+            }
+          }
+        }
+
+        // Deletar o produto
+        console.log("Deletando produto do banco de dados...");
+        const { error: deleteError, data: deletedData } = await supabase
+          .from("products")
+          .delete()
+          .eq("id", id)
+          .select();
+        
+        if (deleteError) {
+          console.error("Erro ao deletar produto:", deleteError);
+          console.error("Detalhes:", deleteError.message, deleteError.details, deleteError.hint);
+          console.error("Código do erro:", deleteError.code);
+          
+          // Verificar se é erro de política RLS
+          if (deleteError.message?.includes('policy') || deleteError.message?.includes('RLS') || deleteError.code === '42501') {
+            toast.error("Erro de permissão. Execute a política RLS de DELETE no Supabase (arquivo: supabase/POLITICAS_PRODUTOS_DELETE.sql)");
+          } else {
+            toast.error("Erro ao deletar: " + deleteError.message);
+          }
+          return;
+        }
+        
+        if (!deletedData || deletedData.length === 0) {
+          console.warn("Produto não foi deletado (nenhum registro retornado)");
+          toast.error("Produto não foi deletado. Verifique as políticas RLS.");
+          return;
+        }
+        
+        console.log("Produto deletado com sucesso:", deletedData);
+        // Remover do estado local
+        setProducts((prevProducts) => prevProducts.filter((p) => p.id !== id));
+        toast.success("Produto excluído permanentemente!");
+      }
+    } catch (error: any) {
+      console.error("Erro ao excluir produto:", error);
+      const errorMessage = error.message || error.details || "Erro ao excluir produto";
+      toast.error(errorMessage);
     }
   };
 
@@ -235,6 +369,86 @@ function AdminContent() {
     } catch (error: any) {
       console.error("Erro ao atualizar status:", error);
       toast.error(error.message || "Erro ao atualizar status");
+    }
+  };
+
+  const handleDeleteOrder = async (orderId: string) => {
+    if (!confirm("Tem certeza que deseja excluir este pedido? Esta ação não pode ser desfeita.")) return;
+
+    try {
+      // Remover do estado local imediatamente para feedback visual
+      setOrders((prevOrders) => prevOrders.filter((o) => o.id !== orderId));
+
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: "DELETE",
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        // Se falhar, recarregar os dados para restaurar o estado
+        console.error("Erro na resposta:", result);
+        loadData();
+        throw new Error(result.error || "Erro ao excluir pedido");
+      }
+
+      toast.success("Pedido excluído com sucesso!");
+      // Aguardar um pouco antes de recarregar para garantir que a exclusão foi processada
+      setTimeout(() => {
+        loadData();
+      }, 500);
+    } catch (error: any) {
+      console.error("Erro ao excluir pedido:", error);
+      toast.error(error.message || "Erro ao excluir pedido. Verifique o console para mais detalhes.");
+      // Recarregar dados em caso de erro
+      loadData();
+    }
+  };
+
+  const handleEditOrder = (order: any) => {
+    // Abrir modal ou redirecionar para página de edição
+    const newCustomerName = prompt("Nome do cliente:", order.customer_name || "");
+    if (newCustomerName === null) return;
+
+    const newCustomerPhone = prompt("Telefone:", order.customer_phone || "");
+    if (newCustomerPhone === null) return;
+
+    const newCustomerEmail = prompt("Email:", order.customer_email || "");
+    if (newCustomerEmail === null) return;
+
+    const newAddress = prompt("Endereço de entrega:", order.delivery_address || "");
+    if (newAddress === null) return;
+
+    const newTotal = prompt("Total (R$):", String(order.total));
+    if (newTotal === null) return;
+
+    updateOrder(order.id, {
+      customer_name: newCustomerName,
+      customer_phone: newCustomerPhone,
+      customer_email: newCustomerEmail,
+      delivery_address: newAddress,
+      total: parseFloat(newTotal) || order.total,
+    });
+  };
+
+  const updateOrder = async (orderId: string, data: any) => {
+    try {
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Erro ao atualizar pedido");
+      }
+
+      toast.success("Pedido atualizado com sucesso!");
+      loadData();
+    } catch (error: any) {
+      console.error("Erro ao atualizar pedido:", error);
+      toast.error(error.message || "Erro ao atualizar pedido");
     }
   };
 
@@ -482,11 +696,21 @@ function AdminContent() {
                     >
                       {product.available ? "Ativo" : "Inativo"}
                     </button>
+                    <Link
+                      href={`/admin/products/${product.id}/edit`}
+                      className="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg flex items-center justify-center transition"
+                      title="Editar produto"
+                    >
+                      <Edit className="w-4 h-4 md:w-5 md:h-5" />
+                      <span className="hidden sm:inline ml-1 text-xs md:text-sm">Editar</span>
+                    </Link>
                     <button
                       onClick={() => handleDeleteProduct(product.id)}
-                      className="bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg"
+                      className="bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg flex items-center justify-center transition"
+                      title="Excluir produto"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
+                      <span className="hidden sm:inline ml-1 text-xs md:text-sm">Excluir</span>
                     </button>
                   </div>
                 </div>
@@ -556,7 +780,7 @@ function AdminContent() {
                                 {formatDateTime(order.created_at)}
                               </p>
                               <p className="text-gray-400 text-xs md:text-sm">
-                                {getTimeAgo(order.created_at)}
+                                <TimeAgo date={order.created_at} />
                               </p>
                             </div>
 
@@ -573,23 +797,41 @@ function AdminContent() {
                             )}
                           </div>
 
-                          <div className="w-full lg:w-auto text-left lg:text-right">
+                          <div className="w-full lg:w-auto text-left lg:text-right space-y-3">
                             <p className="text-xl md:text-2xl font-bold text-primary-yellow mb-3 lg:mb-0">
                               {formatCurrency(order.total)}
                             </p>
-                            <select
-                              value={order.status}
-                              onChange={(e) => updateOrderStatus(order.id, e.target.value)}
-                              className="w-full lg:w-auto bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs md:text-sm"
-                            >
-                              <option value="pending">Aguardando</option>
-                              <option value="confirmed">Confirmado</option>
-                              <option value="preparing">Preparando</option>
-                              <option value="ready">Pronto</option>
-                              <option value="delivering">Saiu para Entrega</option>
-                              <option value="delivered">Entregue</option>
-                              <option value="cancelled">Cancelado</option>
-                            </select>
+                            <div className="flex flex-col sm:flex-row gap-2">
+                              <select
+                                value={order.status}
+                                onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                                className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs md:text-sm"
+                              >
+                                <option value="pending">Aguardando</option>
+                                <option value="confirmed">Confirmado</option>
+                                <option value="preparing">Preparando</option>
+                                <option value="ready">Pronto</option>
+                                <option value="delivering">Saiu para Entrega</option>
+                                <option value="delivered">Entregue</option>
+                                <option value="cancelled">Cancelado</option>
+                              </select>
+                              <button
+                                onClick={() => handleEditOrder(order)}
+                                className="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg flex items-center justify-center gap-1 text-xs md:text-sm"
+                                title="Editar pedido"
+                              >
+                                <Edit className="w-4 h-4" />
+                                <span className="hidden sm:inline">Editar</span>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteOrder(order.id)}
+                                className="bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg flex items-center justify-center gap-1 text-xs md:text-sm"
+                                title="Excluir pedido"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                <span className="hidden sm:inline">Excluir</span>
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>

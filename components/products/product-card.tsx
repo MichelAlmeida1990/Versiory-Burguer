@@ -32,6 +32,18 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
               fill
               sizes="112px"
               className="object-cover"
+              unoptimized={product.image.includes('supabase.co')}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const parent = target.parentElement;
+                if (parent && !parent.querySelector('.image-fallback')) {
+                  const fallback = document.createElement('div');
+                  fallback.className = 'image-fallback w-full h-full flex items-center justify-center text-gray-400 text-xs';
+                  fallback.textContent = 'Sem imagem';
+                  parent.appendChild(fallback);
+                }
+              }}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
@@ -81,6 +93,18 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-cover"
+              unoptimized={product.image.includes('supabase.co')}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const parent = target.parentElement;
+                if (parent && !parent.querySelector('.image-fallback')) {
+                  const fallback = document.createElement('div');
+                  fallback.className = 'image-fallback w-full h-full flex items-center justify-center text-gray-400';
+                  fallback.textContent = 'Sem imagem';
+                  parent.appendChild(fallback);
+                }
+              }}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-400">

@@ -117,6 +117,12 @@ DROP POLICY IF EXISTS "Anyone can update products" ON products;
 CREATE POLICY "Anyone can update products" ON products
   FOR UPDATE USING (true);
 
+DROP POLICY IF EXISTS "Anyone can delete products" ON products;
+CREATE POLICY "Anyone can delete products" ON products
+  FOR DELETE
+  TO authenticated, anon
+  USING (true);
+
 DROP POLICY IF EXISTS "Anyone can create orders" ON orders;
 CREATE POLICY "Anyone can create orders" ON orders
   FOR INSERT WITH CHECK (true);
@@ -128,6 +134,12 @@ CREATE POLICY "Orders are viewable by everyone" ON orders
 DROP POLICY IF EXISTS "Orders can be updated" ON orders;
 CREATE POLICY "Orders can be updated" ON orders
   FOR UPDATE USING (true);
+
+DROP POLICY IF EXISTS "Orders can be deleted" ON orders;
+CREATE POLICY "Orders can be deleted" ON orders
+  FOR DELETE
+  TO authenticated, anon
+  USING (true);
 
 DROP POLICY IF EXISTS "Anyone can create order items" ON order_items;
 CREATE POLICY "Anyone can create order items" ON order_items

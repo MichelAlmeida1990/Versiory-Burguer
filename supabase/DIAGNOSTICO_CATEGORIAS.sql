@@ -34,3 +34,4 @@ FROM products
 WHERE category_id IS NULL OR category_id NOT IN (SELECT id FROM categories);
 
 
+

@@ -6,3 +6,4 @@ DROP POLICY IF EXISTS "Anyone can update categories" ON categories;
 CREATE POLICY "Anyone can update categories" ON categories
   FOR UPDATE USING (true);
 
+

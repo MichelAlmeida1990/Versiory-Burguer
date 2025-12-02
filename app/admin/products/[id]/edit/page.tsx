@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { supabase, Category } from "@/lib/supabase";
 import { ArrowLeft, Save, Upload, X } from "lucide-react";
@@ -9,10 +9,13 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import Image from "next/image";
 
-export default function NewProductPage() {
+export default function EditProductPage() {
   const router = useRouter();
+  const params = useParams();
+  const productId = params.id as string;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingProduct, setLoadingProduct] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -27,7 +30,8 @@ export default function NewProductPage() {
 
   useEffect(() => {
     loadCategories();
-  }, []);
+    loadProduct();
+  }, [productId]);
 
   const loadCategories = async () => {
     try {
@@ -41,6 +45,43 @@ export default function NewProductPage() {
     } catch (error: any) {
       console.error("Erro ao carregar categorias:", error);
       toast.error("Erro ao carregar categorias");
+    }
+  };
+
+  const loadProduct = async () => {
+    try {
+      setLoadingProduct(true);
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .eq("id", productId)
+        .single();
+
+      if (error) throw error;
+      if (!data) {
+        toast.error("Produto não encontrado");
+        router.push("/admin?tab=products");
+        return;
+      }
+
+      setFormData({
+        name: data.name || "",
+        description: data.description || "",
+        price: String(data.price || ""),
+        image: data.image || "",
+        category_id: data.category_id || "",
+        available: data.available ?? true,
+      });
+
+      if (data.image) {
+        setImagePreview(data.image);
+      }
+    } catch (error: any) {
+      console.error("Erro ao carregar produto:", error);
+      toast.error(error.message || "Erro ao carregar produto");
+      router.push("/admin?tab=products");
+    } finally {
+      setLoadingProduct(false);
     }
   };
 
@@ -142,29 +183,43 @@ export default function NewProductPage() {
         return;
       }
 
-      const { error } = await supabase.from("products").insert({
-        name: formData.name.trim(),
-        description: formData.description.trim() || null,
-        price: parseFloat(formData.price),
-        image: formData.image.trim() || null,
-        category_id: formData.category_id,
-        available: formData.available,
-      });
+      const { error } = await supabase
+        .from("products")
+        .update({
+          name: formData.name.trim(),
+          description: formData.description.trim() || null,
+          price: parseFloat(formData.price),
+          image: formData.image.trim() || null,
+          category_id: formData.category_id,
+          available: formData.available,
+        })
+        .eq("id", productId);
 
       if (error) {
-        console.error("Erro ao criar produto:", error);
+        console.error("Erro ao atualizar produto:", error);
         throw error;
       }
 
-      toast.success("Produto cadastrado com sucesso!");
+      toast.success("Produto atualizado com sucesso!");
       router.push("/admin?tab=products");
     } catch (error: any) {
-      console.error("Erro ao cadastrar produto:", error);
-      toast.error(error.message || "Erro ao cadastrar produto");
+      console.error("Erro ao atualizar produto:", error);
+      toast.error(error.message || "Erro ao atualizar produto");
     } finally {
       setLoading(false);
     }
   };
+
+  if (loadingProduct) {
+    return (
+      <div className="min-h-screen bg-black text-white">
+        <Header />
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+          <div className="text-center">Carregando produto...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -178,7 +233,7 @@ export default function NewProductPage() {
             <ArrowLeft className="w-4 h-4" />
             Voltar para Produtos
           </Link>
-          <h1 className="text-2xl md:text-4xl font-bold">Novo Produto</h1>
+          <h1 className="text-2xl md:text-4xl font-bold">Editar Produto</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-gray-900 rounded-lg p-4 md:p-6 space-y-6">
@@ -363,7 +418,7 @@ export default function NewProductPage() {
               ) : (
                 <>
                   <Save className="w-5 h-5" />
-                  Salvar Produto
+                  Salvar Alterações
                 </>
               )}
             </button>
