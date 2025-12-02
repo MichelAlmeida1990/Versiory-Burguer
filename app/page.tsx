@@ -118,7 +118,7 @@ export default function Home() {
         
         <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
           <AnimatedTitle 
-            text="Versiory Burguer"
+            text="Versiory Delivery"
             className="text-4xl sm:text-5xl md:text-7xl font-bold mb-4 md:mb-6 text-white"
           />
           
@@ -126,19 +126,27 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1, duration: 0.8 }}
-            className="text-lg sm:text-xl md:text-2xl mb-6 md:mb-8 text-white/90 px-2"
+            className="text-xl sm:text-2xl md:text-3xl lg:text-4xl mb-6 md:mb-8 text-white font-bold drop-shadow-2xl px-2"
           >
-            Os melhores hambúrguers artesanais da cidade
+            O sistema que sua empresa merece
           </motion.p>
           
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.2, duration: 0.8 }}
-            className="text-base sm:text-lg mb-6 md:mb-8 text-white/80 max-w-2xl mx-auto px-2"
+            className="text-base sm:text-lg md:text-xl lg:text-2xl mb-6 md:mb-8 text-white font-semibold max-w-3xl mx-auto px-2 drop-shadow-lg leading-relaxed"
           >
-            Ingredientes frescos, receitas exclusivas e sabores únicos que vão conquistar seu paladar. 
-            Cada hambúrguer é uma obra de arte culinária preparada com amor e dedicação.
+            Conquistando empreendedores pela facilidade, eficiência e resultados. Cada detalhe do sistema foi pensado para dar mais agilidade ao seu negócio e melhorar a experiência dos seus clientes.
+          </motion.p>
+          
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.4, duration: 0.8 }}
+            className="text-base sm:text-lg md:text-xl lg:text-2xl mb-6 md:mb-8 text-white font-semibold max-w-3xl mx-auto px-2 drop-shadow-lg leading-relaxed"
+          >
+            A Versiory traz evolução que seu negócio precisa para vender mais, atender melhor e crescer com tecnologia simples e acessível.
           </motion.p>
           
           <motion.div
@@ -152,7 +160,7 @@ export default function Home() {
                 Ver Cardápio
               </span>
             </PulseButton>
-            <PulseButton href="https://wa.me/5511999999999">
+            <PulseButton href="https://wa.me/5511959917953">
               <span className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 md:px-8 md:py-4 rounded-lg text-base md:text-lg font-bold flex items-center gap-2 w-full sm:w-auto justify-center">
                 Pedir pelo WhatsApp
               </span>

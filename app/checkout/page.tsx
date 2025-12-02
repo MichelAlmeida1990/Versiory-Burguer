@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/layout/header";
 import { useCartStore } from "@/store/cart-store";
 import { formatCurrency } from "@/lib/utils";
@@ -10,6 +10,7 @@ import toast from "react-hot-toast";
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, getTotal, clearCart } = useCartStore();
+  const [mounted, setMounted] = useState(false);
   const [deliveryFee] = useState(5.0);
   const [formData, setFormData] = useState({
     name: "",
@@ -24,7 +25,11 @@ export default function CheckoutPage() {
     deliveryType: "delivery" as "delivery" | "pickup",
   });
 
-  const subtotal = getTotal();
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const subtotal = mounted ? getTotal() : 0;
   const total = subtotal + (formData.deliveryType === "delivery" ? deliveryFee : 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,7 +53,7 @@ export default function CheckoutPage() {
 
     try {
       // Criar pedido no Supabase
-      const { data: order, error } = await fetch("/api/orders", {
+      const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -59,19 +64,27 @@ export default function CheckoutPage() {
             price: item.product.price,
             observations: item.observations,
           })),
-          total,
+          total: formData.paymentMethod === "pix" ? total * 0.95 : total,
           delivery_fee: formData.deliveryType === "delivery" ? deliveryFee : 0,
         }),
-      }).then((res) => res.json());
+      });
 
-      if (error) throw error;
+      const result = await response.json();
+
+      if (!response.ok || result.error) {
+        throw new Error(result.error || "Erro ao criar pedido");
+      }
+
+      if (!result || !result.id) {
+        throw new Error("Resposta inválida do servidor");
+      }
 
       toast.success("Pedido realizado com sucesso!");
       clearCart();
-      router.push(`/pedidos/${order.id}`);
-    } catch (error) {
+      router.push(`/pedidos/${result.id}`);
+    } catch (error: any) {
       console.error("Erro ao criar pedido:", error);
-      toast.error("Erro ao finalizar pedido. Tente novamente.");
+      toast.error(error.message || "Erro ao finalizar pedido. Tente novamente.");
     }
   };
 
@@ -296,30 +309,39 @@ export default function CheckoutPage() {
             <div className="bg-gray-900 rounded-lg p-4 md:p-6 sticky top-20 md:top-24">
               <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Resumo</h2>
               <div className="space-y-2 md:space-y-3 mb-4 md:mb-6">
-                <div className="flex justify-between text-gray-400">
-                  <span>Subtotal</span>
-                  <span>{formatCurrency(subtotal)}</span>
-                </div>
-                {formData.deliveryType === "delivery" && (
-                  <div className="flex justify-between text-gray-400">
-                    <span>Taxa de Entrega</span>
-                    <span>{formatCurrency(deliveryFee)}</span>
-                  </div>
-                )}
-                {formData.paymentMethod === "pix" && (
-                  <div className="flex justify-between text-green-400">
-                    <span>Desconto PIX</span>
-                    <span>-{formatCurrency(total * 0.05)}</span>
-                  </div>
-                )}
-                <div className="border-t border-gray-700 pt-3 flex justify-between text-xl font-bold">
-                  <span>Total</span>
-                  <span className="text-primary-yellow">
-                    {formatCurrency(
-                      formData.paymentMethod === "pix" ? total * 0.95 : total
+                {mounted ? (
+                  <>
+                    <div className="flex justify-between text-gray-400">
+                      <span>Subtotal</span>
+                      <span>{formatCurrency(subtotal)}</span>
+                    </div>
+                    {formData.deliveryType === "delivery" && (
+                      <div className="flex justify-between text-gray-400">
+                        <span>Taxa de Entrega</span>
+                        <span>{formatCurrency(deliveryFee)}</span>
+                      </div>
                     )}
-                  </span>
-                </div>
+                    {formData.paymentMethod === "pix" && (
+                      <div className="flex justify-between text-green-400">
+                        <span>Desconto PIX</span>
+                        <span>-{formatCurrency(total * 0.05)}</span>
+                      </div>
+                    )}
+                    <div className="border-t border-gray-700 pt-3 flex justify-between text-xl font-bold">
+                      <span>Total</span>
+                      <span className="text-primary-yellow">
+                        {formatCurrency(
+                          formData.paymentMethod === "pix" ? total * 0.95 : total
+                        )}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex justify-between text-gray-400">
+                    <span>Carregando...</span>
+                    <span>R$ 0,00</span>
+                  </div>
+                )}
               </div>
               <button
                 type="submit"

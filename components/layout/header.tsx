@@ -22,26 +22,26 @@ export function Header() {
             className="object-contain md:w-[50px] md:h-[50px]"
           />
           <span className="text-lg md:text-2xl font-bold text-red-600">
-            Versiory Burguer
+            Versiory Delivery
           </span>
         </Link>
 
         {/* Navigation Desktop */}
         <nav className="hidden md:flex items-center space-x-8">
           <Link
-            href="#inicio"
+            href="/"
             className="text-gray-700 hover:text-red-600 font-medium transition"
           >
             Início
           </Link>
           <Link
-            href="#cardapio"
+            href="/#cardapio"
             className="text-gray-700 hover:text-red-600 font-medium transition"
           >
             Cardápio
           </Link>
           <Link
-            href="#combos"
+            href="/#cardapio"
             className="text-gray-700 hover:text-red-600 font-medium transition"
           >
             Combos
@@ -91,21 +91,21 @@ export function Header() {
         <nav className="md:hidden bg-white border-t border-gray-200">
           <div className="container mx-auto px-4 py-4 space-y-3">
             <Link
-              href="#inicio"
+              href="/"
               onClick={() => setMobileMenuOpen(false)}
               className="block text-gray-700 hover:text-red-600 font-medium transition py-2"
             >
               Início
             </Link>
             <Link
-              href="#cardapio"
+              href="/#cardapio"
               onClick={() => setMobileMenuOpen(false)}
               className="block text-gray-700 hover:text-red-600 font-medium transition py-2"
             >
               Cardápio
             </Link>
             <Link
-              href="#combos"
+              href="/#cardapio"
               onClick={() => setMobileMenuOpen(false)}
               className="block text-gray-700 hover:text-red-600 font-medium transition py-2"
             >

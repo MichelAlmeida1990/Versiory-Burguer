@@ -1,4 +1,4 @@
-# 🍽️ Versiory Burguer - Sistema Completo de Pedidos Online
+# 🍽️ Versiory Delivery - Sistema Completo de Pedidos Online
 
 Sistema completo de cardápio digital e gestão de pedidos para restaurantes, desenvolvido com Next.js 15, TypeScript, Tailwind CSS e Supabase.
 

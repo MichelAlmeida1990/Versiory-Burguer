@@ -1,6 +1,3 @@
--- Schema do banco de dados para o sistema de restaurante
-
--- Tabela de categorias
 CREATE TABLE IF NOT EXISTS categories (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(255) NOT NULL,
@@ -10,7 +7,6 @@ CREATE TABLE IF NOT EXISTS categories (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Tabela de produtos
 CREATE TABLE IF NOT EXISTS products (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(255) NOT NULL,
@@ -23,7 +19,6 @@ CREATE TABLE IF NOT EXISTS products (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Tabela de pedidos
 CREATE TABLE IF NOT EXISTS orders (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id VARCHAR(255) NOT NULL,
@@ -39,7 +34,6 @@ CREATE TABLE IF NOT EXISTS orders (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Tabela de itens do pedido
 CREATE TABLE IF NOT EXISTS order_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
@@ -50,7 +44,6 @@ CREATE TABLE IF NOT EXISTS order_items (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Índices para performance
 CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id);
 CREATE INDEX IF NOT EXISTS idx_products_available ON products(available);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
@@ -59,7 +52,6 @@ CREATE INDEX IF NOT EXISTS idx_orders_created ON orders(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id);
 CREATE INDEX IF NOT EXISTS idx_order_items_product ON order_items(product_id);
 
--- Função para atualizar updated_at automaticamente
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -68,43 +60,70 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Triggers para atualizar updated_at
+DROP TRIGGER IF EXISTS update_categories_updated_at ON categories;
 CREATE TRIGGER update_categories_updated_at
   BEFORE UPDATE ON categories
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_products_updated_at ON products;
 CREATE TRIGGER update_products_updated_at
   BEFORE UPDATE ON products
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_orders_updated_at ON orders;
 CREATE TRIGGER update_orders_updated_at
   BEFORE UPDATE ON orders
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
--- Dados de exemplo (opcional)
-INSERT INTO categories (name, "order") VALUES
-  ('Entradas', 1),
-  ('Pratos Principais', 2),
-  ('Bebidas', 3),
-  ('Sobremesas', 4),
-  ('Combos', 5)
-ON CONFLICT DO NOTHING;
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 
--- Habilitar Row Level Security (RLS) - opcional
--- ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE products ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Categories are viewable by everyone" ON categories;
+CREATE POLICY "Categories are viewable by everyone" ON categories
+  FOR SELECT USING (true);
 
--- Políticas de segurança (exemplo - ajuste conforme necessário)
--- CREATE POLICY "Public read access" ON categories FOR SELECT USING (true);
--- CREATE POLICY "Public read access" ON products FOR SELECT USING (true);
--- CREATE POLICY "Users can create orders" ON orders FOR INSERT WITH CHECK (true);
--- CREATE POLICY "Users can view their own orders" ON orders FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Anyone can create categories" ON categories;
+CREATE POLICY "Anyone can create categories" ON categories
+  FOR INSERT WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Anyone can update categories" ON categories;
+CREATE POLICY "Anyone can update categories" ON categories
+  FOR UPDATE USING (true);
 
+DROP POLICY IF EXISTS "Products are viewable by everyone" ON products;
+CREATE POLICY "Products are viewable by everyone" ON products
+  FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Anyone can create products" ON products;
+CREATE POLICY "Anyone can create products" ON products
+  FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Anyone can update products" ON products;
+CREATE POLICY "Anyone can update products" ON products
+  FOR UPDATE USING (true);
+
+DROP POLICY IF EXISTS "Anyone can create orders" ON orders;
+CREATE POLICY "Anyone can create orders" ON orders
+  FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Orders are viewable by everyone" ON orders;
+CREATE POLICY "Orders are viewable by everyone" ON orders
+  FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Orders can be updated" ON orders;
+CREATE POLICY "Orders can be updated" ON orders
+  FOR UPDATE USING (true);
+
+DROP POLICY IF EXISTS "Anyone can create order items" ON order_items;
+CREATE POLICY "Anyone can create order items" ON order_items
+  FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Order items are viewable by everyone" ON order_items;
+CREATE POLICY "Order items are viewable by everyone" ON order_items
+  FOR SELECT USING (true);
 

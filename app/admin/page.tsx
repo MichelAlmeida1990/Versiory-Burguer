@@ -1,14 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { Product, Category, supabase } from "@/lib/supabase";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, formatTime, formatDateTime, getTimeAgo } from "@/lib/utils";
 import { Plus, Edit, Trash2, Package, Users, DollarSign } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
-export default function AdminPage() {
+function AdminContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<"dashboard" | "products" | "orders" | "categories">("dashboard");
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -18,6 +21,13 @@ export default function AdminPage() {
     totalRevenue: 0,
     pendingOrders: 0,
   });
+
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam && ["dashboard", "products", "orders", "categories"].includes(tabParam)) {
+      setActiveTab(tabParam as any);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     loadData();
@@ -47,7 +57,7 @@ export default function AdminPage() {
           .from("orders")
           .select("*")
           .order("created_at", { ascending: false })
-          .limit(50);
+          .limit(100);
         if (ordersData) {
           setOrders(ordersData);
           // Filtrar pedidos cancelados para o cálculo de faturamento
@@ -122,7 +132,10 @@ export default function AdminPage() {
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => {
+                setActiveTab(tab.id as any);
+                router.push(`/admin?tab=${tab.id}`);
+              }}
               className={`px-3 md:px-6 py-2 md:py-3 font-medium border-b-2 transition whitespace-nowrap ${
                 activeTab === tab.id
                   ? "border-primary-yellow text-primary-yellow"
@@ -170,7 +183,7 @@ export default function AdminPage() {
               <h2 className="text-xl md:text-2xl font-bold">Produtos</h2>
               <Link
                 href="/admin/products/new"
-                className="bg-primary-yellow text-black px-4 py-2 rounded-lg font-bold hover:bg-opacity-90 transition flex items-center gap-2 text-sm md:text-base"
+                className="bg-primary-yellow text-black px-4 py-2 rounded-lg font-bold hover:bg-opacity-90 transition flex items-center gap-2 text-sm md:text-base whitespace-nowrap"
               >
                 <Plus className="w-4 h-4 md:w-5 md:h-5" />
                 Novo Produto
@@ -211,45 +224,111 @@ export default function AdminPage() {
         {/* Pedidos */}
         {activeTab === "orders" && (
           <div>
-            <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Pedidos</h2>
-            <div className="space-y-3 md:space-y-4">
-              {orders.map((order) => (
-                <div key={order.id} className="bg-gray-900 rounded-lg p-4 md:p-6">
-                  <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-3 md:mb-4">
-                    <div className="flex-1">
-                      <h3 className="text-lg md:text-xl font-bold">
-                        Pedido #{order.id.slice(0, 8)}
-                      </h3>
-                      <p className="text-gray-400 text-xs md:text-sm">
-                        {formatDate(order.created_at)}
-                      </p>
-                      {order.delivery_address && (
-                        <p className="text-gray-400 text-xs md:text-sm mt-1 line-clamp-2">
-                          {order.delivery_address}
-                        </p>
-                      )}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 md:mb-6">
+              <h2 className="text-xl md:text-2xl font-bold">Pedidos</h2>
+              <div className="text-sm text-gray-400">
+                Total: {orders.length} pedido{orders.length !== 1 ? 's' : ''}
+              </div>
+            </div>
+
+            {/* Timeline View */}
+            <div className="relative">
+              {/* Timeline Line */}
+              <div className="absolute left-4 md:left-6 top-0 bottom-0 w-0.5 bg-gray-700"></div>
+
+              <div className="space-y-4 md:space-y-6">
+                {orders.map((order, index) => {
+                  const statusColors: Record<string, string> = {
+                    pending: "bg-yellow-500",
+                    confirmed: "bg-blue-500",
+                    preparing: "bg-orange-500",
+                    ready: "bg-green-500",
+                    delivering: "bg-purple-500",
+                    delivered: "bg-green-600",
+                    cancelled: "bg-red-500",
+                  };
+
+                  const statusLabels: Record<string, string> = {
+                    pending: "Aguardando",
+                    confirmed: "Confirmado",
+                    preparing: "Preparando",
+                    ready: "Pronto",
+                    delivering: "Saiu para Entrega",
+                    delivered: "Entregue",
+                    cancelled: "Cancelado",
+                  };
+
+                  return (
+                    <div key={order.id} className="relative pl-12 md:pl-16">
+                      {/* Timeline Dot */}
+                      <div className={`absolute left-2 md:left-4 top-2 w-4 h-4 md:w-6 md:h-6 rounded-full ${statusColors[order.status] || "bg-gray-500"} border-4 border-black z-10`}></div>
+
+                      {/* Order Card */}
+                      <div className="bg-gray-900 rounded-lg p-4 md:p-6 hover:bg-gray-800 transition">
+                        <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
+                          <div className="flex-1">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                              <h3 className="text-lg md:text-xl font-bold">
+                                Pedido #{order.id.slice(0, 8)}
+                              </h3>
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${statusColors[order.status] || "bg-gray-500"}`}>
+                                {statusLabels[order.status] || order.status}
+                              </span>
+                            </div>
+
+                            {/* Time Information */}
+                            <div className="space-y-1 mb-3">
+                              <p className="text-gray-300 text-sm md:text-base font-medium">
+                                {formatDateTime(order.created_at)}
+                              </p>
+                              <p className="text-gray-400 text-xs md:text-sm">
+                                {getTimeAgo(order.created_at)}
+                              </p>
+                            </div>
+
+                            {order.delivery_address && (
+                              <p className="text-gray-400 text-xs md:text-sm mt-2 line-clamp-2">
+                                📍 {order.delivery_address}
+                              </p>
+                            )}
+
+                            {order.customer_name && (
+                              <p className="text-gray-400 text-xs md:text-sm mt-1">
+                                👤 {order.customer_name}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="w-full lg:w-auto text-left lg:text-right">
+                            <p className="text-xl md:text-2xl font-bold text-primary-yellow mb-3 lg:mb-0">
+                              {formatCurrency(order.total)}
+                            </p>
+                            <select
+                              value={order.status}
+                              onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                              className="w-full lg:w-auto bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs md:text-sm"
+                            >
+                              <option value="pending">Aguardando</option>
+                              <option value="confirmed">Confirmado</option>
+                              <option value="preparing">Preparando</option>
+                              <option value="ready">Pronto</option>
+                              <option value="delivering">Saiu para Entrega</option>
+                              <option value="delivered">Entregue</option>
+                              <option value="cancelled">Cancelado</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="w-full sm:w-auto text-left sm:text-right">
-                      <p className="text-xl md:text-2xl font-bold text-primary-yellow mb-2 sm:mb-0">
-                        {formatCurrency(order.total)}
-                      </p>
-                      <select
-                        value={order.status}
-                        onChange={(e) => updateOrderStatus(order.id, e.target.value)}
-                        className="w-full sm:w-auto bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs md:text-sm"
-                      >
-                        <option value="pending">Aguardando</option>
-                        <option value="confirmed">Confirmado</option>
-                        <option value="preparing">Preparando</option>
-                        <option value="ready">Pronto</option>
-                        <option value="delivering">Saiu para Entrega</option>
-                        <option value="delivered">Entregue</option>
-                        <option value="cancelled">Cancelado</option>
-                      </select>
-                    </div>
-                  </div>
+                  );
+                })}
+              </div>
+
+              {orders.length === 0 && (
+                <div className="text-center py-12 text-gray-400">
+                  <p className="text-lg">Nenhum pedido encontrado</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         )}
@@ -259,10 +338,13 @@ export default function AdminPage() {
           <div>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 md:mb-6">
               <h2 className="text-xl md:text-2xl font-bold">Categorias</h2>
-              <button className="bg-primary-yellow text-black px-4 py-2 rounded-lg font-bold hover:bg-opacity-90 transition flex items-center gap-2 text-sm md:text-base">
+              <Link
+                href="/admin/categories/new"
+                className="bg-primary-yellow text-black px-4 py-2 rounded-lg font-bold hover:bg-opacity-90 transition flex items-center gap-2 text-sm md:text-base whitespace-nowrap"
+              >
                 <Plus className="w-4 h-4 md:w-5 md:h-5" />
                 Nova Categoria
-              </button>
+              </Link>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
               {categories.map((category) => (
@@ -275,6 +357,21 @@ export default function AdminPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function AdminPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-black text-white">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">Carregando...</div>
+        </div>
+      </div>
+    }>
+      <AdminContent />
+    </Suspense>
   );
 }
 
