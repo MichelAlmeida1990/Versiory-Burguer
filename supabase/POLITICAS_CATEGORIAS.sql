@@ -9,3 +9,4 @@ CREATE POLICY "Anyone can update categories" ON categories
 
 
 
+

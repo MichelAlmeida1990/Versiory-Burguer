@@ -49,8 +49,8 @@ export default function CardapioPage() {
     ? products.filter((p) => p.category_id === selectedCategory)
     : products;
 
-  const handleAddToCart = (product: Product) => {
-    addItem(product, 1);
+  const handleAddToCart = (product: Product, selectedOptions?: any[], totalPrice?: number) => {
+    addItem(product, 1, undefined, selectedOptions, totalPrice);
     toast.success(`${product.name} adicionado ao carrinho!`);
   };
 

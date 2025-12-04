@@ -1,17 +1,32 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Plus } from "lucide-react";
-import { Product } from "@/lib/supabase";
+import { Product, SelectedOption } from "@/lib/supabase";
 import { formatCurrency } from "@/lib/utils";
+import { ProductOptionsModal } from "./product-options-modal";
 
 interface ProductCardProps {
   product: Product;
-  onAddToCart: (product: Product) => void;
+  onAddToCart: (product: Product, selectedOptions?: SelectedOption[], totalPrice?: number) => void;
 }
 
 export function ProductCard({ product, onAddToCart }: ProductCardProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleAddClick = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleConfirmOptions = (selectedOptions: SelectedOption[], totalPrice: number) => {
+    onAddToCart(product, selectedOptions, totalPrice);
+  };
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -52,9 +67,10 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
           )}
           {/* Botão de adicionar no canto da imagem (amarelo) */}
           <motion.button
+            type="button"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            onClick={() => onAddToCart(product)}
+            onClick={handleAddClick}
             className="absolute bottom-1 right-1 bg-yellow-400 hover:bg-yellow-500 w-9 h-9 rounded-full flex items-center justify-center shadow-lg z-10"
             aria-label="Adicionar ao carrinho"
           >
@@ -134,9 +150,10 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
           
           {/* Botão */}
           <motion.button
+            type="button"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => onAddToCart(product)}
+            onClick={handleAddClick}
             className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg font-bold transition flex items-center justify-center gap-2"
           >
             <Plus className="w-5 h-5" />
@@ -144,6 +161,16 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
           </motion.button>
         </div>
       </div>
+
+      {/* Modal de Opções - renderizado via portal */}
+      {isModalOpen && (
+        <ProductOptionsModal
+          product={product}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onConfirm={handleConfirmOptions}
+        />
+      )}
     </motion.div>
   );
 }

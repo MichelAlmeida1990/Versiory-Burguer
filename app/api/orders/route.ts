@@ -51,11 +51,41 @@ export async function POST(request: NextRequest) {
       observations: item.observations,
     }));
 
-    const { error: itemsError } = await supabase
+    const { data: insertedItems, error: itemsError } = await supabase
       .from("order_items")
-      .insert(orderItems);
+      .insert(orderItems)
+      .select();
 
     if (itemsError) throw itemsError;
+
+    // Criar opções dos itens do pedido
+    if (insertedItems && insertedItems.length > 0) {
+      const orderItemOptions: any[] = [];
+      
+      items.forEach((item: any, index: number) => {
+        if (item.selectedOptions && item.selectedOptions.length > 0 && insertedItems[index]) {
+          item.selectedOptions.forEach((selectedOption: any) => {
+            orderItemOptions.push({
+              order_item_id: insertedItems[index].id,
+              option_id: selectedOption.option_id,
+              option_value_id: selectedOption.option_value_id,
+              price_modifier: selectedOption.price_modifier,
+            });
+          });
+        }
+      });
+
+      if (orderItemOptions.length > 0) {
+        const { error: optionsError } = await supabase
+          .from("order_item_options")
+          .insert(orderItemOptions);
+
+        if (optionsError) {
+          console.error("Erro ao salvar opções:", optionsError);
+          // Não falhar o pedido se houver erro nas opções, apenas logar
+        }
+      }
+    }
 
     // Registrar status inicial no histórico
     await supabase

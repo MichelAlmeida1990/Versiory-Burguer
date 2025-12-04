@@ -61,8 +61,9 @@ export default function CheckoutPage() {
           items: items.map((item) => ({
             product_id: item.product.id,
             quantity: item.quantity,
-            price: item.product.price,
+            price: (item as any).calculatedPrice || item.product.price,
             observations: item.observations,
+            selectedOptions: item.selectedOptions || [],
           })),
           total: formData.paymentMethod === "pix" ? total * 0.95 : total,
           delivery_fee: formData.deliveryType === "delivery" ? deliveryFee : 0,

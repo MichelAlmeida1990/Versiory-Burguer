@@ -26,11 +26,40 @@ export interface Category {
   created_at: string;
 }
 
+export interface ProductOption {
+  id: string;
+  product_id: string;
+  name: string;
+  type: 'single' | 'multiple';
+  required: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+  values?: ProductOptionValue[];
+}
+
+export interface ProductOptionValue {
+  id: string;
+  option_id: string;
+  name: string;
+  price_modifier: number;
+  display_order: number;
+  available: boolean;
+  created_at: string;
+}
+
+export interface SelectedOption {
+  option_id: string;
+  option_value_id: string;
+  price_modifier: number;
+}
+
 export interface CartItem {
   product: Product;
   quantity: number;
   observations?: string;
-  additions?: string[];
+  selectedOptions?: SelectedOption[];
+  calculatedPrice?: number; // Preço total incluindo opções
 }
 
 export interface Order {

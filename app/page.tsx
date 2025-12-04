@@ -97,8 +97,8 @@ export default function Home() {
     return filtered;
   }, [products, selectedCategory]);
 
-  const handleAddToCart = (product: Product) => {
-    addItem(product, 1);
+  const handleAddToCart = (product: Product, selectedOptions?: any[], totalPrice?: number) => {
+    addItem(product, 1, undefined, selectedOptions, totalPrice);
     toast.success(`${product.name} adicionado ao carrinho!`);
   };
 
