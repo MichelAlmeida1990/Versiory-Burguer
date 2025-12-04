@@ -206,7 +206,15 @@ export function ProductOptionsModal({ product, isOpen, onClose, onConfirm }: Pro
     onClose();
   };
 
-  if (!mounted) return null;
+  if (!isOpen) return null;
+
+  if (!mounted) {
+    // Renderizar sem portal enquanto não montou (SSR safety)
+    return null;
+  }
+
+  // Garantir que document.body existe antes de criar portal
+  if (typeof document === 'undefined') return null;
 
   const modalContent = (
     <AnimatePresence mode="wait">
@@ -216,7 +224,16 @@ export function ProductOptionsModal({ product, isOpen, onClose, onConfirm }: Pro
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
           className="fixed inset-0 z-[9999] flex items-end md:items-center justify-center p-0 md:p-4 bg-black/70 backdrop-blur-sm"
+          style={{ 
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 9999
+          }}
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               onClose();
@@ -236,9 +253,7 @@ export function ProductOptionsModal({ product, isOpen, onClose, onConfirm }: Pro
             exit={{ opacity: 0, y: "100%" }}
             transition={{ 
               duration: 0.3,
-              type: "spring",
-              damping: 25,
-              stiffness: 300
+              ease: "easeOut"
             }}
             className="bg-white rounded-t-3xl md:rounded-2xl max-w-4xl w-full max-h-[95vh] md:max-h-[90vh] overflow-hidden shadow-2xl flex flex-col relative z-[10000]"
             onClick={(e) => e.stopPropagation()}
