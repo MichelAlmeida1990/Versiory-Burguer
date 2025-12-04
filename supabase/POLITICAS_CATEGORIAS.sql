@@ -7,3 +7,5 @@ CREATE POLICY "Anyone can update categories" ON categories
   FOR UPDATE USING (true);
 
 
+
+

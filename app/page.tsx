@@ -107,7 +107,7 @@ export default function Home() {
       <Header />
       
       {/* Hero Section */}
-      <section id="inicio" className="relative h-screen flex items-center justify-center overflow-hidden">
+      <section id="inicio" className="relative min-h-screen flex items-center justify-center overflow-hidden py-20 sm:py-0 sm:h-screen">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
@@ -116,17 +116,17 @@ export default function Home() {
         ></div>
         <div className="absolute inset-0 bg-black/50"></div>
         
-        <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
+        <div className="relative z-10 text-center px-4 sm:px-6 max-w-4xl mx-auto">
           <AnimatedTitle 
             text="Versiory Delivery"
-            className="text-4xl sm:text-5xl md:text-7xl font-bold mb-4 md:mb-6 text-white"
+            className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-3 sm:mb-4 md:mb-6 text-white"
           />
           
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1, duration: 0.8 }}
-            className="text-xl sm:text-2xl md:text-3xl lg:text-4xl mb-6 md:mb-8 text-white font-bold drop-shadow-2xl px-2"
+            className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl mb-4 sm:mb-6 md:mb-8 text-white font-bold drop-shadow-2xl px-2"
           >
             O sistema que sua empresa merece
           </motion.p>
@@ -135,7 +135,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.2, duration: 0.8 }}
-            className="text-base sm:text-lg md:text-xl lg:text-2xl mb-6 md:mb-8 text-white font-semibold max-w-3xl mx-auto px-2 drop-shadow-lg leading-relaxed"
+            className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl mb-4 sm:mb-6 md:mb-8 text-white font-semibold max-w-3xl mx-auto px-2 drop-shadow-lg leading-relaxed"
           >
             Conquistando empreendedores pela facilidade, eficiência e resultados. Cada detalhe do sistema foi pensado para dar mais agilidade ao seu negócio e melhorar a experiência dos seus clientes.
           </motion.p>
@@ -144,7 +144,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.4, duration: 0.8 }}
-            className="text-base sm:text-lg md:text-xl lg:text-2xl mb-6 md:mb-8 text-white font-semibold max-w-3xl mx-auto px-2 drop-shadow-lg leading-relaxed"
+            className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl mb-4 sm:mb-6 md:mb-8 text-white font-semibold max-w-3xl mx-auto px-2 drop-shadow-lg leading-relaxed"
           >
             A Versiory traz evolução que seu negócio precisa para vender mais, atender melhor e crescer com tecnologia simples e acessível.
           </motion.p>
@@ -153,15 +153,15 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.4, duration: 0.8 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+            className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center"
           >
             <PulseButton href="#cardapio">
-              <span className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 md:px-8 md:py-4 rounded-lg text-base md:text-lg font-bold flex items-center gap-2 w-full sm:w-auto justify-center">
+              <span className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 sm:px-6 sm:py-3 md:px-8 md:py-4 rounded-lg text-sm sm:text-base md:text-lg font-bold flex items-center gap-2 w-full sm:w-auto justify-center">
                 Ver Cardápio
               </span>
             </PulseButton>
             <PulseButton href="https://wa.me/5511959917953">
-              <span className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 md:px-8 md:py-4 rounded-lg text-base md:text-lg font-bold flex items-center gap-2 w-full sm:w-auto justify-center">
+              <span className="bg-green-500 hover:bg-green-600 text-white px-5 py-2.5 sm:px-6 sm:py-3 md:px-8 md:py-4 rounded-lg text-sm sm:text-base md:text-lg font-bold flex items-center gap-2 w-full sm:w-auto justify-center">
                 Pedir pelo WhatsApp
               </span>
             </PulseButton>

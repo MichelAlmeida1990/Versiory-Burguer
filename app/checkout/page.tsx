@@ -306,7 +306,7 @@ export default function CheckoutPage() {
 
           {/* Resumo */}
           <div className="lg:col-span-1">
-            <div className="bg-gray-900 rounded-lg p-4 md:p-6 sticky top-20 md:top-24">
+            <div className="bg-gray-900 rounded-lg p-4 md:p-6 lg:sticky lg:top-20 lg:top-24">
               <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Resumo</h2>
               <div className="space-y-2 md:space-y-3 mb-4 md:mb-6">
                 {mounted ? (

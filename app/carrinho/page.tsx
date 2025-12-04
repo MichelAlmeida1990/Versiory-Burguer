@@ -80,6 +80,7 @@ export default function CarrinhoPage() {
                       alt={item.product.name}
                       fill
                       className="object-cover rounded-lg"
+                      unoptimized={item.product.image.includes('supabase.co')}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">
@@ -87,17 +88,17 @@ export default function CarrinhoPage() {
                     </div>
                   )}
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold mb-1">{item.product.name}</h3>
-                  <p className="text-gray-400 text-sm mb-2">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg sm:text-xl font-bold mb-1 break-words">{item.product.name}</h3>
+                  <p className="text-gray-400 text-xs sm:text-sm mb-2">
                     {formatCurrency(item.product.price)} cada
                   </p>
                   {item.observations && (
-                    <p className="text-gray-500 text-xs italic mb-2">
+                    <p className="text-gray-500 text-xs italic mb-2 break-words">
                       Obs: {item.observations}
                     </p>
                   )}
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
                     <div className="flex items-center gap-2 bg-gray-800 rounded-lg">
                       <button
                         onClick={() =>
@@ -107,7 +108,7 @@ export default function CarrinhoPage() {
                       >
                         <Minus className="w-4 h-4" />
                       </button>
-                      <span className="px-4 py-2">{item.quantity}</span>
+                      <span className="px-3 sm:px-4 py-2 text-sm sm:text-base">{item.quantity}</span>
                       <button
                         onClick={() =>
                           updateQuantity(item.product.id, item.quantity + 1)
@@ -125,8 +126,8 @@ export default function CarrinhoPage() {
                     </button>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-xl font-bold text-primary-yellow">
+                <div className="text-right sm:text-left sm:flex sm:items-center">
+                  <p className="text-lg sm:text-xl font-bold text-primary-yellow">
                     {formatCurrency(item.product.price * item.quantity)}
                   </p>
                 </div>
@@ -136,8 +137,8 @@ export default function CarrinhoPage() {
 
           {/* Resumo do Pedido */}
           <div className="lg:col-span-1">
-            <div className="bg-gray-900 rounded-lg p-6 sticky top-24">
-              <h2 className="text-2xl font-bold mb-6">Resumo do Pedido</h2>
+            <div className="bg-gray-900 rounded-lg p-4 md:p-6 lg:sticky lg:top-24">
+              <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Resumo do Pedido</h2>
 
               {/* Cupom */}
               <div className="mb-6">

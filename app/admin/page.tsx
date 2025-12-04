@@ -533,7 +533,7 @@ function AdminContent() {
         <h1 className="text-2xl md:text-4xl font-bold mb-4 md:mb-8">Painel Administrativo</h1>
 
         {/* Tabs */}
-        <div className="flex gap-2 md:gap-4 mb-4 md:mb-8 border-b border-gray-800 overflow-x-auto">
+        <div className="flex gap-2 md:gap-4 mb-4 md:mb-8 border-b border-gray-800 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
           {[
             { id: "dashboard", label: "Dashboard" },
             { id: "products", label: "Produtos" },
@@ -546,7 +546,7 @@ function AdminContent() {
                 setActiveTab(tab.id as any);
                 router.push(`/admin?tab=${tab.id}`);
               }}
-              className={`px-3 md:px-6 py-2 md:py-3 font-medium border-b-2 transition whitespace-nowrap ${
+              className={`px-3 md:px-6 py-2 md:py-3 font-medium border-b-2 transition whitespace-nowrap flex-shrink-0 ${
                 activeTab === tab.id
                   ? "border-primary-yellow text-primary-yellow"
                   : "border-transparent text-gray-400 hover:text-white"
@@ -600,55 +600,59 @@ function AdminContent() {
             </div>
 
             {/* Gráficos */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
               {/* Gráfico de Vendas por Dia */}
-              <div className="bg-gray-900 rounded-lg p-4 md:p-6">
-                <h3 className="text-lg md:text-xl font-bold mb-4 md:mb-6">Vendas por Dia (últimos 30 dias)</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={salesData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis dataKey="date" stroke="#9CA3AF" fontSize={12} />
-                    <YAxis stroke="#9CA3AF" fontSize={12} />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px' }}
-                      labelStyle={{ color: '#F3F4F6' }}
-                    />
-                    <Legend />
-                    <Line 
-                      type="monotone" 
-                      dataKey="sales" 
-                      name="Pedidos"
-                      stroke="#FCD34D" 
-                      strokeWidth={2}
-                      dot={{ fill: '#FCD34D', r: 4 }}
-                      activeDot={{ r: 6 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+              <div className="bg-gray-900 rounded-lg p-3 md:p-4 lg:p-6 overflow-hidden">
+                <h3 className="text-base md:text-lg lg:text-xl font-bold mb-3 md:mb-4 lg:mb-6">Vendas por Dia (últimos 30 dias)</h3>
+                <div className="w-full" style={{ height: '250px' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={salesData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <XAxis dataKey="date" stroke="#9CA3AF" fontSize={10} angle={-45} textAnchor="end" height={60} />
+                      <YAxis stroke="#9CA3AF" fontSize={10} />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px', fontSize: '12px' }}
+                        labelStyle={{ color: '#F3F4F6' }}
+                      />
+                      <Legend wrapperStyle={{ fontSize: '12px' }} />
+                      <Line 
+                        type="monotone" 
+                        dataKey="sales" 
+                        name="Pedidos"
+                        stroke="#FCD34D" 
+                        strokeWidth={2}
+                        dot={{ fill: '#FCD34D', r: 3 }}
+                        activeDot={{ r: 5 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
 
               {/* Gráfico de Faturamento por Dia */}
-              <div className="bg-gray-900 rounded-lg p-4 md:p-6">
-                <h3 className="text-lg md:text-xl font-bold mb-4 md:mb-6">Faturamento por Dia (últimos 30 dias)</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={revenueData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis dataKey="date" stroke="#9CA3AF" fontSize={12} />
-                    <YAxis stroke="#9CA3AF" fontSize={12} />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px' }}
-                      labelStyle={{ color: '#F3F4F6' }}
-                      formatter={(value: number) => formatCurrency(value)}
-                    />
-                    <Legend />
-                    <Bar 
-                      dataKey="revenue" 
-                      name="Faturamento"
-                      fill="#3B82F6"
-                      radius={[8, 8, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
+              <div className="bg-gray-900 rounded-lg p-3 md:p-4 lg:p-6 overflow-hidden">
+                <h3 className="text-base md:text-lg lg:text-xl font-bold mb-3 md:mb-4 lg:mb-6">Faturamento por Dia (últimos 30 dias)</h3>
+                <div className="w-full" style={{ height: '250px' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={revenueData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <XAxis dataKey="date" stroke="#9CA3AF" fontSize={10} angle={-45} textAnchor="end" height={60} />
+                      <YAxis stroke="#9CA3AF" fontSize={10} />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px', fontSize: '12px' }}
+                        labelStyle={{ color: '#F3F4F6' }}
+                        formatter={(value: number) => formatCurrency(value)}
+                      />
+                      <Legend wrapperStyle={{ fontSize: '12px' }} />
+                      <Bar 
+                        dataKey="revenue" 
+                        name="Faturamento"
+                        fill="#3B82F6"
+                        radius={[8, 8, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </div>
 
@@ -680,33 +684,35 @@ function AdminContent() {
               </div>
 
               {/* Métodos de Pagamento */}
-              <div className="bg-gray-900 rounded-lg p-4 md:p-6">
-                <h3 className="text-lg md:text-xl font-bold mb-4 md:mb-6">Faturamento por Método de Pagamento</h3>
+              <div className="bg-gray-900 rounded-lg p-3 md:p-4 lg:p-6 overflow-hidden">
+                <h3 className="text-base md:text-lg lg:text-xl font-bold mb-3 md:mb-4 lg:mb-6">Faturamento por Método de Pagamento</h3>
                 {paymentMethods.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={paymentMethods}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
-                        outerRadius={100}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {paymentMethods.map((entry, index) => {
-                          const colors = ['#FCD34D', '#3B82F6', '#10B981'];
-                          return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
-                        })}
-                      </Pie>
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px' }}
-                        labelStyle={{ color: '#F3F4F6' }}
-                        formatter={(value: number) => formatCurrency(value)}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <div className="w-full" style={{ height: '250px' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={paymentMethods}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
+                          {paymentMethods.map((entry, index) => {
+                            const colors = ['#FCD34D', '#3B82F6', '#10B981'];
+                            return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                          })}
+                        </Pie>
+                        <Tooltip 
+                          contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px', fontSize: '12px' }}
+                          labelStyle={{ color: '#F3F4F6' }}
+                          formatter={(value: number) => formatCurrency(value)}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
                 ) : (
                   <p className="text-gray-400 text-center py-8">Nenhum dado disponível</p>
                 )}
@@ -714,9 +720,9 @@ function AdminContent() {
             </div>
 
             {/* Status de Pedidos */}
-            <div className="bg-gray-900 rounded-lg p-4 md:p-6">
-              <h3 className="text-lg md:text-xl font-bold mb-4 md:mb-6">Status dos Pedidos</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+            <div className="bg-gray-900 rounded-lg p-3 md:p-4 lg:p-6">
+              <h3 className="text-base md:text-lg lg:text-xl font-bold mb-3 md:mb-4 lg:mb-6">Status dos Pedidos</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 md:gap-4">
                 {[
                   { status: 'pending', label: 'Aguardando', color: 'bg-yellow-500', count: orders.filter(o => o.status === 'pending').length },
                   { status: 'confirmed', label: 'Confirmado', color: 'bg-blue-500', count: orders.filter(o => o.status === 'confirmed').length },
@@ -727,10 +733,10 @@ function AdminContent() {
                   { status: 'cancelled', label: 'Cancelado', color: 'bg-red-500', count: orders.filter(o => o.status === 'cancelled').length },
                 ].map((item) => (
                   <div key={item.status} className="text-center">
-                    <div className={`${item.color} w-12 h-12 md:w-16 md:h-16 rounded-full mx-auto mb-2 flex items-center justify-center text-white font-bold text-lg md:text-2xl`}>
+                    <div className={`${item.color} w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full mx-auto mb-2 flex items-center justify-center text-white font-bold text-sm sm:text-base md:text-lg lg:text-2xl`}>
                       {item.count}
                     </div>
-                    <p className="text-xs md:text-sm text-gray-400">{item.label}</p>
+                    <p className="text-xs sm:text-sm text-gray-400 break-words">{item.label}</p>
                   </div>
                 ))}
               </div>
@@ -806,9 +812,9 @@ function AdminContent() {
             {/* Timeline View */}
             <div className="relative">
               {/* Timeline Line */}
-              <div className="absolute left-4 md:left-6 top-0 bottom-0 w-0.5 bg-gray-700"></div>
+              <div className="absolute left-3 sm:left-4 md:left-6 top-0 bottom-0 w-0.5 bg-gray-700"></div>
 
-              <div className="space-y-4 md:space-y-6">
+              <div className="space-y-3 md:space-y-4 lg:space-y-6">
                 {orders.map((order, index) => {
                   const statusColors: Record<string, string> = {
                     pending: "bg-yellow-500",
@@ -831,55 +837,55 @@ function AdminContent() {
                   };
 
                   return (
-                    <div key={order.id} className="relative pl-12 md:pl-16">
+                    <div key={order.id} className="relative pl-10 sm:pl-12 md:pl-16">
                       {/* Timeline Dot */}
-                      <div className={`absolute left-2 md:left-4 top-2 w-4 h-4 md:w-6 md:h-6 rounded-full ${statusColors[order.status] || "bg-gray-500"} border-4 border-black z-10`}></div>
+                      <div className={`absolute left-1.5 sm:left-2 md:left-4 top-2 w-3 h-3 sm:w-4 sm:h-4 md:w-6 md:h-6 rounded-full ${statusColors[order.status] || "bg-gray-500"} border-2 sm:border-4 border-black z-10`}></div>
 
                       {/* Order Card */}
-                      <div className="bg-gray-900 rounded-lg p-4 md:p-6 hover:bg-gray-800 transition">
-                        <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
-                          <div className="flex-1">
+                      <div className="bg-gray-900 rounded-lg p-3 sm:p-4 md:p-6 hover:bg-gray-800 transition">
+                        <div className="flex flex-col lg:flex-row justify-between items-start gap-3 md:gap-4">
+                          <div className="flex-1 min-w-0">
                             <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-                              <h3 className="text-lg md:text-xl font-bold">
+                              <h3 className="text-base sm:text-lg md:text-xl font-bold break-words">
                                 Pedido #{order.id.slice(0, 8)}
                               </h3>
-                              <span className={`px-2 py-1 rounded text-xs font-medium ${statusColors[order.status] || "bg-gray-500"}`}>
+                              <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${statusColors[order.status] || "bg-gray-500"}`}>
                                 {statusLabels[order.status] || order.status}
                               </span>
                             </div>
 
                             {/* Time Information */}
-                            <div className="space-y-1 mb-3">
-                              <p className="text-gray-300 text-sm md:text-base font-medium">
+                            <div className="space-y-1 mb-2 md:mb-3">
+                              <p className="text-gray-300 text-xs sm:text-sm md:text-base font-medium">
                                 {formatDateTime(order.created_at)}
                               </p>
-                              <p className="text-gray-400 text-xs md:text-sm">
+                              <p className="text-gray-400 text-xs">
                                 <TimeAgo date={order.created_at} />
                               </p>
                             </div>
 
                             {order.delivery_address && (
-                              <p className="text-gray-400 text-xs md:text-sm mt-2 line-clamp-2">
+                              <p className="text-gray-400 text-xs sm:text-sm mt-2 line-clamp-2 break-words">
                                 📍 {order.delivery_address}
                               </p>
                             )}
 
                             {order.customer_name && (
-                              <p className="text-gray-400 text-xs md:text-sm mt-1">
+                              <p className="text-gray-400 text-xs sm:text-sm mt-1 break-words">
                                 👤 {order.customer_name}
                               </p>
                             )}
                           </div>
 
-                          <div className="w-full lg:w-auto text-left lg:text-right space-y-3">
-                            <p className="text-xl md:text-2xl font-bold text-primary-yellow mb-3 lg:mb-0">
+                          <div className="w-full lg:w-auto text-left lg:text-right space-y-2 md:space-y-3">
+                            <p className="text-lg sm:text-xl md:text-2xl font-bold text-primary-yellow mb-2 lg:mb-0">
                               {formatCurrency(order.total)}
                             </p>
                             <div className="flex flex-col sm:flex-row gap-2">
                               <select
                                 value={order.status}
                                 onChange={(e) => updateOrderStatus(order.id, e.target.value)}
-                                className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs md:text-sm"
+                                className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm"
                               >
                                 <option value="pending">Aguardando</option>
                                 <option value="confirmed">Confirmado</option>
@@ -891,18 +897,18 @@ function AdminContent() {
                               </select>
                               <button
                                 onClick={() => handleEditOrder(order)}
-                                className="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg flex items-center justify-center gap-1 text-xs md:text-sm"
+                                className="bg-blue-600 hover:bg-blue-700 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg flex items-center justify-center gap-1 text-xs sm:text-sm"
                                 title="Editar pedido"
                               >
-                                <Edit className="w-4 h-4" />
+                                <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                                 <span className="hidden sm:inline">Editar</span>
                               </button>
                               <button
                                 onClick={() => handleDeleteOrder(order.id)}
-                                className="bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg flex items-center justify-center gap-1 text-xs md:text-sm"
+                                className="bg-red-600 hover:bg-red-700 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg flex items-center justify-center gap-1 text-xs sm:text-sm"
                                 title="Excluir pedido"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                                 <span className="hidden sm:inline">Excluir</span>
                               </button>
                             </div>
@@ -916,7 +922,7 @@ function AdminContent() {
 
               {orders.length === 0 && (
                 <div className="text-center py-12 text-gray-400">
-                  <p className="text-lg">Nenhum pedido encontrado</p>
+                  <p className="text-base sm:text-lg">Nenhum pedido encontrado</p>
                 </div>
               )}
             </div>

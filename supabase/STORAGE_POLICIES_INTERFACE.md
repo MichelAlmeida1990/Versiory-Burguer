@@ -57,3 +57,5 @@ USING (bucket_id = 'images');
 **Use o SQL Editor** (Opção 1) para executar todas as políticas de uma vez. É mais rápido e evita erros!
 
 
+
+

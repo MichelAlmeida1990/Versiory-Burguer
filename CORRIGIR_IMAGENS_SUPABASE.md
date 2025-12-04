@@ -83,3 +83,5 @@ O arquivo `next.config.js` já está configurado corretamente com:
 
 As imagens do Supabase agora usam `unoptimized={true}` para evitar problemas com a otimização do Next.js Image. Isso significa que as imagens serão servidas diretamente do Supabase sem otimização, o que é aceitável para a maioria dos casos.
 
+
+
