@@ -235,18 +235,11 @@ export default function AdminLoginPage() {
                       }}
                       onMouseEnter={(e) => {
                         const video = e.currentTarget;
-                        if (video) {
-                          video.playbackRate = 0.8;
-                        }
+                        video.playbackRate = 0.8;
                       }}
                       onMouseLeave={(e) => {
                         const video = e.currentTarget;
-                        if (video) {
-                          video.playbackRate = 0.6;
-                        }
-                      }}
-                      onError={(e) => {
-                        console.error("Erro ao carregar vídeo:", e);
+                        video.playbackRate = 0.6;
                       }}
                     >
                       <source src="/videos/food-animation.mp4" type="video/mp4" />
