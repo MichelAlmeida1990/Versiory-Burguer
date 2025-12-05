@@ -176,33 +176,33 @@ export default function AdminLoginPage() {
       {/* Conteúdo */}
       <div className="relative z-10">
       {/* Hero Section */}
-      <div className="container mx-auto px-4 py-12 md:py-20">
-        <div className="text-center mb-12">
-          <div className="flex justify-center mb-6">
+      <div className="container mx-auto px-3 sm:px-4 py-8 sm:py-12 md:py-20">
+        <div className="text-center mb-8 sm:mb-12">
+          <div className="flex justify-center mb-4 sm:mb-6">
             <Image
               src="/images/produtos/logo.jpg"
               alt="Versiory Logo"
               width={120}
               height={120}
-              className="object-contain rounded-lg"
+              className="object-contain rounded-lg w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32"
             />
           </div>
-          <h1 className="text-4xl md:text-6xl font-bold mb-4">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold mb-3 sm:mb-4 px-2">
             <span className="text-red-600">Sistema Completo</span>{" "}
             <span className="text-primary-yellow">para Food Service</span>
           </h1>
-          <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-300 mb-6 sm:mb-8 max-w-3xl mx-auto px-2">
             Cardápio digital, gestão de pedidos, pagamento online e muito mais - tudo integrado em uma plataforma poderosa.
           </p>
         </div>
 
         {/* Video Card - Interactive */}
-        <div className="max-w-4xl mx-auto mb-12">
+        <div className="max-w-4xl mx-auto mb-8 sm:mb-12 px-2 sm:px-0">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="relative group rounded-2xl p-6 md:p-8 overflow-hidden shadow-2xl border-2 border-red-400/50 transition-all duration-300"
+            className="relative group rounded-2xl p-4 sm:p-6 md:p-8 overflow-hidden shadow-2xl border-2 border-red-400/50 transition-all duration-300"
             style={{
               background: "linear-gradient(135deg, rgba(220, 38, 38, 0.4) 0%, rgba(185, 28, 28, 0.3) 100%)",
               backdropFilter: "blur(12px)",
@@ -214,7 +214,7 @@ export default function AdminLoginPage() {
             <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 via-pink-600/20 to-red-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl"></div>
             
             <div className="relative z-10">
-              <div className="flex flex-col md:flex-row items-center gap-6">
+              <div className="flex flex-col md:flex-row items-center gap-4 sm:gap-6">
                 {/* Video */}
                 <div className="flex-shrink-0 w-full md:w-1/2">
                   <div className="relative rounded-xl overflow-hidden border-2 border-red-600/50 shadow-lg shadow-red-500/30">
@@ -224,7 +224,7 @@ export default function AdminLoginPage() {
                       loop
                       muted
                       playsInline
-                      className="w-full h-auto"
+                      className="w-full h-auto max-h-[200px] sm:max-h-[250px] md:max-h-none object-cover"
                       onMouseEnter={(e) => {
                         const video = e.currentTarget;
                         video.playbackRate = 0.8;
@@ -242,20 +242,20 @@ export default function AdminLoginPage() {
                 
                 {/* Message Card */}
                 <div className="flex-1 text-center md:text-left">
-                  <h3 className="text-2xl md:text-3xl font-bold mb-4 text-white drop-shadow-lg">
+                  <h3 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 sm:mb-4 text-white drop-shadow-lg">
                     Tecnologia que Transforma
                   </h3>
-                  <p className="mb-4 text-lg leading-relaxed !text-black font-semibold" style={{ color: '#000000' }}>
+                  <p className="mb-3 sm:mb-4 text-sm sm:text-base md:text-lg leading-relaxed !text-black font-semibold px-2 sm:px-0" style={{ color: '#000000' }}>
                     Descubra como a <span className="text-yellow-500 font-bold drop-shadow-lg">Versiory</span> está revolucionando o mercado de food service com soluções inteligentes e inovadoras.
                   </p>
                   <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-                    <span className="px-4 py-2 bg-red-600/20 border border-red-600/50 rounded-lg text-red-400 text-sm font-medium">
+                    <span className="px-3 py-1.5 sm:px-4 sm:py-2 bg-red-600/20 border border-red-600/50 rounded-lg text-red-400 text-xs sm:text-sm font-medium">
                       ✨ Inovação
                     </span>
-                    <span className="px-4 py-2 bg-pink-600/20 border border-pink-600/50 rounded-lg text-pink-400 text-sm font-medium">
+                    <span className="px-3 py-1.5 sm:px-4 sm:py-2 bg-pink-600/20 border border-pink-600/50 rounded-lg text-pink-400 text-xs sm:text-sm font-medium">
                       🚀 Performance
                     </span>
-                    <span className="px-4 py-2 bg-primary-yellow/20 border border-primary-yellow/50 rounded-lg text-primary-yellow text-sm font-medium">
+                    <span className="px-3 py-1.5 sm:px-4 sm:py-2 bg-primary-yellow/20 border border-primary-yellow/50 rounded-lg text-primary-yellow text-xs sm:text-sm font-medium">
                       💡 Inteligência
                     </span>
                   </div>
@@ -266,13 +266,13 @@ export default function AdminLoginPage() {
         </div>
 
         {/* Services Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12 px-2 sm:px-0">
           {services.map((service, index) => {
             const Icon = service.icon;
             return (
               <div
                 key={index}
-                className="group relative bg-white/95 dark:bg-black/80 backdrop-blur-sm border-2 border-transparent rounded-xl p-6 overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+                className="group relative bg-white/95 dark:bg-black/80 backdrop-blur-sm border-2 border-transparent rounded-xl p-4 sm:p-6 overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
                 style={{
                   background: `linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 100%)`,
                 }}
@@ -282,15 +282,15 @@ export default function AdminLoginPage() {
                 <div className={`absolute inset-[2px] rounded-xl bg-black`}></div>
                 
                 {/* Content */}
-                <div className="relative z-10 flex items-start gap-4">
-                  <div className={`bg-gradient-to-br ${service.color} p-4 rounded-xl shadow-lg ${service.glow} shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                    <Icon className="w-6 h-6 text-red-600 dark:text-white" />
+                <div className="relative z-10 flex items-start gap-3 sm:gap-4">
+                  <div className={`bg-gradient-to-br ${service.color} p-3 sm:p-4 rounded-xl shadow-lg ${service.glow} shadow-lg group-hover:scale-110 transition-transform duration-300 flex-shrink-0`}>
+                    <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-red-600 dark:text-white" />
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold mb-2 text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-gray-300 transition-all duration-300">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base sm:text-lg font-bold mb-1 sm:mb-2 text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-gray-300 transition-all duration-300 break-words">
                       {service.title}
                     </h3>
-                    <p className="text-gray-600 dark:text-gray-400 text-sm group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors duration-300">
+                    <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors duration-300 break-words">
                       {service.description}
                     </p>
                   </div>
@@ -304,11 +304,11 @@ export default function AdminLoginPage() {
         </div>
 
         {/* Benefits Section */}
-        <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg p-8 mb-12">
-          <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center text-red-600">
+        <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg p-4 sm:p-6 md:p-8 mb-8 sm:mb-12 mx-2 sm:mx-0">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6 text-center text-red-600 px-2">
             Aqui você vende mais
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
             {benefits.map((benefit, index) => (
               <div key={index} className="flex items-center gap-3">
                 <CheckCircle2 className="w-5 h-5 text-primary-yellow flex-shrink-0" />
@@ -319,50 +319,50 @@ export default function AdminLoginPage() {
         </div>
 
         {/* Login Section */}
-        <div className="max-w-md mx-auto">
-          <div className="bg-white dark:bg-gray-900/90 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-lg p-6 md:p-8 shadow-2xl">
-            <div className="text-center mb-6">
-              <h2 className="text-2xl md:text-3xl font-bold mb-2 text-red-600 dark:text-red-500">Acesso Administrativo</h2>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">Faça login para gerenciar seu restaurante</p>
+        <div className="max-w-md mx-auto px-2 sm:px-0">
+          <div className="bg-white dark:bg-gray-900/90 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-lg p-4 sm:p-6 md:p-8 shadow-2xl">
+            <div className="text-center mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 text-red-600 dark:text-red-500">Acesso Administrativo</h2>
+              <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm">Faça login para gerenciar seu restaurante</p>
             </div>
             
             {/* Mensagem para Clientes */}
-            <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-              <p className="text-sm text-blue-800 dark:text-blue-300 text-center">
+            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <p className="text-xs sm:text-sm text-blue-800 dark:text-blue-300 text-center">
                 <strong>É cliente?</strong> Clique em &quot;Ver Cardápio&quot; abaixo para fazer pedidos sem login.
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="block text-xs sm:text-sm font-medium mb-1.5 sm:mb-2">
                   Email
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
                   <input
                     type="email"
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:border-red-600 transition text-gray-900 dark:text-white"
+                    className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg pl-9 sm:pl-10 pr-3 sm:pr-4 py-2.5 sm:py-3 text-sm sm:text-base focus:outline-none focus:border-red-600 transition text-gray-900 dark:text-white"
                     placeholder="admin@restaurante.com"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="block text-xs sm:text-sm font-medium mb-1.5 sm:mb-2">
                   Senha
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
                   <input
                     type="password"
                     required
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:border-red-600 transition text-gray-900 dark:text-white"
+                    className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg pl-9 sm:pl-10 pr-3 sm:pr-4 py-2.5 sm:py-3 text-sm sm:text-base focus:outline-none focus:border-red-600 transition text-gray-900 dark:text-white"
                     placeholder="••••••••"
                   />
                 </div>
@@ -371,7 +371,7 @@ export default function AdminLoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-bold transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full bg-red-600 hover:bg-red-700 text-white py-2.5 sm:py-3 rounded-lg font-bold text-sm sm:text-base transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
                   "Entrando..."
@@ -384,19 +384,19 @@ export default function AdminLoginPage() {
               </button>
             </form>
 
-            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-4">
+            <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200 dark:border-gray-700">
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 text-center mb-3 sm:mb-4">
                 Não é administrador?
               </p>
               <Link
                 href="/cardapio"
-                className="block w-full bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg font-medium transition text-center mb-2"
+                className="block w-full bg-red-600 hover:bg-red-700 text-white py-2 sm:py-2.5 rounded-lg font-medium text-sm sm:text-base transition text-center mb-2"
               >
                 Ver Cardápio como Cliente
               </Link>
               <Link
                 href="/"
-                className="block w-full text-sm text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 transition text-center"
+                className="block w-full text-xs sm:text-sm text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 transition text-center"
               >
                 ← Voltar para página inicial
               </Link>
@@ -409,14 +409,14 @@ export default function AdminLoginPage() {
         </div>
 
         {/* CTA Section */}
-        <div className="text-center mt-12">
-          <p className="text-gray-400 mb-4">Quer conhecer mais sobre a Versiory?</p>
+        <div className="text-center mt-8 sm:mt-12 px-2 sm:px-0">
+          <p className="text-gray-400 mb-3 sm:mb-4 text-sm sm:text-base">Quer conhecer mais sobre a Versiory?</p>
           <Link
             href="/"
-            className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-bold transition"
+            className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-bold text-sm sm:text-base transition"
           >
             Ver Cardápio Digital
-            <ArrowRight className="w-5 h-5" />
+            <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
           </Link>
         </div>
       </div>
