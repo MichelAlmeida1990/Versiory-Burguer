@@ -69,8 +69,25 @@ export default function AdminLoginPage() {
 
   // Definir velocidade inicial do vídeo
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.playbackRate = 0.6;
+    const video = videoRef.current;
+    if (video) {
+      // Aguardar o vídeo estar pronto antes de definir playbackRate
+      const handleCanPlay = () => {
+        if (video) {
+          video.playbackRate = 0.6;
+        }
+      };
+      
+      video.addEventListener('canplay', handleCanPlay);
+      
+      // Se já estiver pronto, definir imediatamente
+      if (video.readyState >= 2) {
+        video.playbackRate = 0.6;
+      }
+      
+      return () => {
+        video.removeEventListener('canplay', handleCanPlay);
+      };
     }
   }, []);
 
@@ -223,13 +240,30 @@ export default function AdminLoginPage() {
                       playsInline
                       preload="metadata"
                       className="w-full h-auto max-h-[200px] sm:max-h-[250px] md:max-h-none object-cover"
+                      onLoadedMetadata={(e) => {
+                        const video = e.currentTarget;
+                        if (video) {
+                          video.playbackRate = 0.6;
+                          // Tentar play, mas ignorar erros (pode ser bloqueado pelo navegador)
+                          video.play().catch(() => {
+                            // Ignorar erro silenciosamente
+                          });
+                        }
+                      }}
                       onMouseEnter={(e) => {
                         const video = e.currentTarget;
-                        video.playbackRate = 0.8;
+                        if (video) {
+                          video.playbackRate = 0.8;
+                        }
                       }}
                       onMouseLeave={(e) => {
                         const video = e.currentTarget;
-                        video.playbackRate = 0.6;
+                        if (video) {
+                          video.playbackRate = 0.6;
+                        }
+                      }}
+                      onError={(e) => {
+                        console.error("Erro ao carregar vídeo:", e);
                       }}
                     >
                       <source src="/videos/food-animation.mp4" type="video/mp4" />
