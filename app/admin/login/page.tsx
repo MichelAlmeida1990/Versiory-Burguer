@@ -14,9 +14,7 @@ import {
   BarChart3,
   CheckCircle2,
   ArrowRight,
-  Shield,
-  Zap,
-  TrendingUp
+  Shield
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -25,7 +23,6 @@ export default function AdminLoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
-  const [showLogin, setShowLogin] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [formData, setFormData] = useState({
     email: "",
@@ -224,6 +221,8 @@ export default function AdminLoginPage() {
                       loop
                       muted
                       playsInline
+                      preload="metadata"
+                      loading="lazy"
                       className="w-full h-auto max-h-[200px] sm:max-h-[250px] md:max-h-none object-cover"
                       onMouseEnter={(e) => {
                         const video = e.currentTarget;
