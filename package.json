@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "preview": "npm run build && npm run start",
+    "test:build": "node -e \"try { require('fs').rmSync('.next', {recursive: true, force: true}) } catch(e) {}\" && npm run build",
+    "test:production": "npm run test:build && npm run start",
+    "clean": "node -e \"const fs = require('fs'); ['.next', 'node_modules', 'package-lock.json'].forEach(p => { try { fs.rmSync(p, {recursive: true, force: true}) } catch(e) {} })\"",
+    "fresh": "npm run clean && npm install && npm run build"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
