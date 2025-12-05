@@ -94,14 +94,15 @@ export default function CarrinhoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-x-hidden">
+    <div className="min-h-screen bg-black text-white overflow-x-hidden w-full">
       <Header />
-      <div className="container mx-auto px-4 py-8 max-w-full">
-        <h1 className="text-3xl md:text-4xl font-bold mb-6 md:mb-8">Carrinho</h1>
+      <div className="w-full max-w-full overflow-x-hidden">
+        <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 max-w-full">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 md:mb-8">Carrinho</h1>
 
-        <div className="grid lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
-          {/* Itens do Carrinho */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="grid lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
+            {/* Itens do Carrinho */}
+            <div className="lg:col-span-2 space-y-3 sm:space-y-4 min-w-0">
             {items.map((item, index) => {
               const itemKey = item.selectedOptions && item.selectedOptions.length > 0
                 ? `${item.product.id}-${JSON.stringify(item.selectedOptions)}-${index}`
@@ -109,12 +110,12 @@ export default function CarrinhoPage() {
               return (
               <div
                 key={itemKey}
-                className="bg-gray-900 rounded-lg p-3 md:p-4"
+                className="bg-gray-900 rounded-lg p-2.5 sm:p-3 md:p-4 w-full max-w-full overflow-hidden"
               >
                 {/* Mobile Layout */}
-                <div className="flex flex-col sm:hidden gap-3">
-                  <div className="flex gap-2.5 items-start">
-                    <div className="relative w-20 h-20 bg-gray-800 rounded-lg flex-shrink-0">
+                <div className="flex flex-col sm:hidden gap-2.5 w-full">
+                  <div className="flex gap-2 items-start w-full min-w-0">
+                    <div className="relative w-16 h-16 sm:w-20 sm:h-20 bg-gray-800 rounded-lg flex-shrink-0">
                       {item.product.image ? (
                         <Image
                           src={item.product.image}
@@ -129,22 +130,22 @@ export default function CarrinhoPage() {
                         </div>
                       )}
                     </div>
-                    <div className="flex-1 min-w-0 overflow-hidden">
-                      <h3 className="text-base font-bold break-words leading-tight mb-1">{item.product.name}</h3>
-                      <p className="text-lg font-bold text-primary-yellow break-words mb-1">
+                    <div className="flex-1 min-w-0 overflow-hidden w-full">
+                      <h3 className="text-sm sm:text-base font-bold break-words leading-tight mb-1">{item.product.name}</h3>
+                      <p className="text-base sm:text-lg font-bold text-primary-yellow break-all mb-1">
                         {formatCurrency(((item as any).calculatedPrice || item.product.price) * item.quantity)}
                       </p>
-                      <p className="text-gray-400 text-xs mb-2">
+                      <p className="text-gray-400 text-xs mb-1.5">
                         {formatCurrency((item as any).calculatedPrice || item.product.price)} cada
                       </p>
                       {item.selectedOptions && item.selectedOptions.length > 0 && (
-                        <div className="text-xs text-gray-400 space-y-0.5 mb-2">
+                        <div className="text-xs text-gray-400 space-y-0.5 mb-1.5 w-full">
                           {item.selectedOptions.map((opt, idx) => (
-                            <div key={idx} className="flex items-start gap-1.5 flex-wrap">
-                              <span className="mt-0.5">•</span>
+                            <div key={idx} className="flex items-start gap-1 flex-wrap w-full min-w-0">
+                              <span className="mt-0.5 flex-shrink-0">•</span>
                               <span className="break-words flex-1 min-w-0">{optionNames[opt.option_value_id] || 'Opção'}</span>
                               {opt.price_modifier !== 0 && (
-                                <span className="text-green-400 break-words">
+                                <span className="text-green-400 break-words whitespace-normal text-xs">
                                   ({opt.price_modifier > 0 ? '+' : ''}{formatCurrency(opt.price_modifier)})
                                 </span>
                               )}
@@ -159,34 +160,34 @@ export default function CarrinhoPage() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-800">
-                    <div className="flex items-center gap-0.5 bg-gray-800 rounded-lg flex-shrink-0">
+                  <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-gray-800 w-full min-w-0">
+                    <div className="flex items-center gap-0 bg-gray-800 rounded-lg flex-shrink-0">
                       <button
                         onClick={() =>
                           updateQuantity(item.product.id, item.quantity - 1, item.selectedOptions)
                         }
-                        className="p-2.5 hover:bg-gray-700 rounded-l-lg active:bg-gray-600 transition-colors"
+                        className="p-2 hover:bg-gray-700 rounded-l-lg active:bg-gray-600 transition-colors"
                         aria-label="Diminuir quantidade"
                       >
-                        <Minus className="w-4 h-4" />
+                        <Minus className="w-3.5 h-3.5" />
                       </button>
-                      <span className="px-3 py-2 text-sm font-semibold min-w-[2rem] text-center">{item.quantity}</span>
+                      <span className="px-2.5 py-1.5 text-xs font-semibold min-w-[1.75rem] text-center">{item.quantity}</span>
                       <button
                         onClick={() =>
                           updateQuantity(item.product.id, item.quantity + 1, item.selectedOptions)
                         }
-                        className="p-2.5 hover:bg-gray-700 rounded-r-lg active:bg-gray-600 transition-colors"
+                        className="p-2 hover:bg-gray-700 rounded-r-lg active:bg-gray-600 transition-colors"
                         aria-label="Aumentar quantidade"
                       >
-                        <Plus className="w-4 h-4" />
+                        <Plus className="w-3.5 h-3.5" />
                       </button>
                     </div>
                     <button
                       onClick={() => removeItem(item.product.id, item.selectedOptions)}
-                      className="text-red-400 hover:text-red-300 p-2.5 active:opacity-70 transition-colors flex-shrink-0"
+                      className="text-red-400 hover:text-red-300 p-2 active:opacity-70 transition-colors flex-shrink-0"
                       aria-label="Remover item"
                     >
-                      <Trash2 className="w-5 h-5" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -273,26 +274,26 @@ export default function CarrinhoPage() {
           </div>
 
           {/* Resumo do Pedido */}
-          <div className="lg:col-span-1">
-            <div className="bg-gray-900 rounded-lg p-4 md:p-6 lg:sticky lg:top-24 mb-6 lg:mb-0">
-              <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Resumo do Pedido</h2>
+          <div className="lg:col-span-1 w-full min-w-0">
+            <div className="bg-gray-900 rounded-lg p-3 sm:p-4 md:p-6 lg:sticky lg:top-24 mb-4 sm:mb-6 lg:mb-0 w-full max-w-full overflow-hidden">
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 md:mb-6">Resumo do Pedido</h2>
 
               {/* Cupom */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium mb-2">
+              <div className="mb-4 sm:mb-6">
+                <label className="block text-xs sm:text-sm font-medium mb-2">
                   Cupom de Desconto
                 </label>
-                <div className="flex gap-2">
+                <div className="flex gap-1.5 sm:gap-2 w-full">
                   <input
                     type="text"
                     value={coupon}
                     onChange={(e) => setCoupon(e.target.value)}
                     placeholder="Código do cupom"
-                    className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-primary-yellow"
+                    className="flex-1 min-w-0 bg-gray-800 border border-gray-700 rounded-lg px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2 text-sm focus:outline-none focus:border-primary-yellow"
                   />
                   <button
                     onClick={applyCoupon}
-                    className="bg-primary-azure text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transition"
+                    className="bg-primary-azure text-white px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-opacity-90 transition text-xs sm:text-sm flex-shrink-0"
                   >
                     Aplicar
                   </button>
@@ -300,24 +301,24 @@ export default function CarrinhoPage() {
               </div>
 
               {/* Totais */}
-              <div className="space-y-3 mb-6">
-                <div className="flex justify-between text-gray-400">
-                  <span>Subtotal</span>
-                  <span>{formatCurrency(subtotal)}</span>
+              <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6 w-full">
+                <div className="flex justify-between items-center text-gray-400 text-sm sm:text-base w-full min-w-0">
+                  <span className="flex-shrink-0">Subtotal</span>
+                  <span className="text-right break-all ml-2">{formatCurrency(subtotal)}</span>
                 </div>
-                <div className="flex justify-between text-gray-400">
-                  <span>Taxa de Entrega</span>
-                  <span>{formatCurrency(deliveryFee)}</span>
+                <div className="flex justify-between items-center text-gray-400 text-sm sm:text-base w-full min-w-0">
+                  <span className="flex-shrink-0">Taxa de Entrega</span>
+                  <span className="text-right break-all ml-2">{formatCurrency(deliveryFee)}</span>
                 </div>
                 {discount > 0 && (
-                  <div className="flex justify-between text-green-400">
-                    <span>Desconto</span>
-                    <span>-{formatCurrency(discount)}</span>
+                  <div className="flex justify-between items-center text-green-400 text-sm sm:text-base w-full min-w-0">
+                    <span className="flex-shrink-0">Desconto</span>
+                    <span className="text-right break-all ml-2">-{formatCurrency(discount)}</span>
                   </div>
                 )}
-                <div className="border-t border-gray-700 pt-3 flex justify-between text-xl font-bold">
-                  <span>Total</span>
-                  <span className="text-primary-yellow">
+                <div className="border-t border-gray-700 pt-2 sm:pt-3 flex justify-between items-center text-lg sm:text-xl font-bold w-full min-w-0">
+                  <span className="flex-shrink-0">Total</span>
+                  <span className="text-primary-yellow text-right break-all ml-2">
                     {formatCurrency(total)}
                   </span>
                 </div>
@@ -325,12 +326,13 @@ export default function CarrinhoPage() {
 
               <button
                 onClick={handleCheckout}
-                className="w-full bg-primary-yellow text-black py-4 rounded-lg text-lg font-bold hover:bg-opacity-90 transition"
+                className="w-full bg-primary-yellow text-black py-3 sm:py-4 rounded-lg text-base sm:text-lg font-bold hover:bg-opacity-90 transition"
               >
                 Finalizar Pedido
               </button>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>
