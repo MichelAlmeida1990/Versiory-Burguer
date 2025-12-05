@@ -94,12 +94,12 @@ export default function CarrinhoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-black text-white overflow-x-hidden">
       <Header />
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 max-w-full">
         <h1 className="text-3xl md:text-4xl font-bold mb-6 md:mb-8">Carrinho</h1>
 
-        <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
+        <div className="grid lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
           {/* Itens do Carrinho */}
           <div className="lg:col-span-2 space-y-4">
             {items.map((item, index) => {
@@ -113,8 +113,8 @@ export default function CarrinhoPage() {
               >
                 {/* Mobile Layout */}
                 <div className="flex flex-col sm:hidden gap-3">
-                  <div className="flex gap-3 items-start">
-                    <div className="relative w-24 h-24 sm:w-20 sm:h-20 bg-gray-800 rounded-lg flex-shrink-0">
+                  <div className="flex gap-2.5 items-start">
+                    <div className="relative w-20 h-20 bg-gray-800 rounded-lg flex-shrink-0">
                       {item.product.image ? (
                         <Image
                           src={item.product.image}
@@ -129,24 +129,22 @@ export default function CarrinhoPage() {
                         </div>
                       )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2 mb-1.5">
-                        <h3 className="text-base font-bold break-words flex-1 leading-tight">{item.product.name}</h3>
-                        <p className="text-lg font-bold text-primary-yellow whitespace-nowrap ml-2">
-                          {formatCurrency(((item as any).calculatedPrice || item.product.price) * item.quantity)}
-                        </p>
-                      </div>
+                    <div className="flex-1 min-w-0 overflow-hidden">
+                      <h3 className="text-base font-bold break-words leading-tight mb-1">{item.product.name}</h3>
+                      <p className="text-lg font-bold text-primary-yellow break-words mb-1">
+                        {formatCurrency(((item as any).calculatedPrice || item.product.price) * item.quantity)}
+                      </p>
                       <p className="text-gray-400 text-xs mb-2">
                         {formatCurrency((item as any).calculatedPrice || item.product.price)} cada
                       </p>
                       {item.selectedOptions && item.selectedOptions.length > 0 && (
                         <div className="text-xs text-gray-400 space-y-0.5 mb-2">
                           {item.selectedOptions.map((opt, idx) => (
-                            <div key={idx} className="flex items-center gap-1.5 flex-wrap">
-                              <span>•</span>
-                              <span className="break-words">{optionNames[opt.option_value_id] || 'Opção'}</span>
+                            <div key={idx} className="flex items-start gap-1.5 flex-wrap">
+                              <span className="mt-0.5">•</span>
+                              <span className="break-words flex-1 min-w-0">{optionNames[opt.option_value_id] || 'Opção'}</span>
                               {opt.price_modifier !== 0 && (
-                                <span className="text-green-400 whitespace-nowrap">
+                                <span className="text-green-400 break-words">
                                   ({opt.price_modifier > 0 ? '+' : ''}{formatCurrency(opt.price_modifier)})
                                 </span>
                               )}
@@ -161,34 +159,34 @@ export default function CarrinhoPage() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center justify-between gap-3 pt-3 border-t border-gray-800">
-                    <div className="flex items-center gap-1 bg-gray-800 rounded-lg">
+                  <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-800">
+                    <div className="flex items-center gap-0.5 bg-gray-800 rounded-lg flex-shrink-0">
                       <button
                         onClick={() =>
                           updateQuantity(item.product.id, item.quantity - 1, item.selectedOptions)
                         }
-                        className="p-3 hover:bg-gray-700 rounded-l-lg active:bg-gray-600 transition-colors"
+                        className="p-2.5 hover:bg-gray-700 rounded-l-lg active:bg-gray-600 transition-colors"
                         aria-label="Diminuir quantidade"
                       >
-                        <Minus className="w-5 h-5" />
+                        <Minus className="w-4 h-4" />
                       </button>
-                      <span className="px-4 py-2 text-base font-semibold min-w-[2.5rem] text-center">{item.quantity}</span>
+                      <span className="px-3 py-2 text-sm font-semibold min-w-[2rem] text-center">{item.quantity}</span>
                       <button
                         onClick={() =>
                           updateQuantity(item.product.id, item.quantity + 1, item.selectedOptions)
                         }
-                        className="p-3 hover:bg-gray-700 rounded-r-lg active:bg-gray-600 transition-colors"
+                        className="p-2.5 hover:bg-gray-700 rounded-r-lg active:bg-gray-600 transition-colors"
                         aria-label="Aumentar quantidade"
                       >
-                        <Plus className="w-5 h-5" />
+                        <Plus className="w-4 h-4" />
                       </button>
                     </div>
                     <button
                       onClick={() => removeItem(item.product.id, item.selectedOptions)}
-                      className="text-red-400 hover:text-red-300 p-3 active:opacity-70 transition-colors"
+                      className="text-red-400 hover:text-red-300 p-2.5 active:opacity-70 transition-colors flex-shrink-0"
                       aria-label="Remover item"
                     >
-                      <Trash2 className="w-6 h-6" />
+                      <Trash2 className="w-5 h-5" />
                     </button>
                   </div>
                 </div>
