@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { supabase, Category } from "@/lib/supabase";
@@ -8,6 +8,7 @@ import { ArrowLeft, Save, Upload, X } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import Image from "next/image";
+import { ProductOptionsManager } from "@/components/admin/product-options-manager";
 
 export default function EditProductPage() {
   const router = useRouter();
@@ -28,12 +29,7 @@ export default function EditProductPage() {
     available: true,
   });
 
-  useEffect(() => {
-    loadCategories();
-    loadProduct();
-  }, [productId]);
-
-  const loadCategories = async () => {
+  const loadCategories = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from("categories")
@@ -46,9 +42,9 @@ export default function EditProductPage() {
       console.error("Erro ao carregar categorias:", error);
       toast.error("Erro ao carregar categorias");
     }
-  };
+  }, []);
 
-  const loadProduct = async () => {
+  const loadProduct = useCallback(async () => {
     try {
       setLoadingProduct(true);
       const { data, error } = await supabase
@@ -83,7 +79,12 @@ export default function EditProductPage() {
     } finally {
       setLoadingProduct(false);
     }
-  };
+  }, [productId, router]);
+
+  useEffect(() => {
+    loadCategories();
+    loadProduct();
+  }, [loadCategories, loadProduct]);
 
   const handleFileUpload = async (file: File) => {
     if (!file) return null;
@@ -404,6 +405,15 @@ export default function EditProductPage() {
             <label htmlFor="available" className="text-sm font-medium">
               Produto disponível
             </label>
+          </div>
+
+          {/* Opções/Adicionais do Produto */}
+          <div className="border-t border-gray-700 pt-6">
+            <h2 className="text-xl font-bold mb-4">Opcionais e Adicionais</h2>
+            <p className="text-sm text-gray-400 mb-4">
+              Configure opções como tamanhos, bordas, adicionais, etc. Exemplo: Pizza pode ter Tamanho (P, M, G), Borda (Normal, Recheada), Ingredientes Extras.
+            </p>
+            <ProductOptionsManager productId={productId} />
           </div>
 
           {/* Botões */}

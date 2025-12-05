@@ -142,22 +142,27 @@ export default function NewProductPage() {
         return;
       }
 
-      const { error } = await supabase.from("products").insert({
+      const { data: newProduct, error } = await supabase.from("products").insert({
         name: formData.name.trim(),
         description: formData.description.trim() || null,
         price: parseFloat(formData.price),
         image: formData.image.trim() || null,
         category_id: formData.category_id,
         available: formData.available,
-      });
+      }).select().single();
 
       if (error) {
         console.error("Erro ao criar produto:", error);
         throw error;
       }
 
-      toast.success("Produto cadastrado com sucesso!");
-      router.push("/admin?tab=products");
+      toast.success("Produto cadastrado com sucesso! Agora você pode adicionar opcionais.");
+      // Redirecionar para a página de edição onde pode adicionar opções
+      if (newProduct?.id) {
+        router.push(`/admin/products/${newProduct.id}/edit`);
+      } else {
+        router.push("/admin?tab=products");
+      }
     } catch (error: any) {
       console.error("Erro ao cadastrar produto:", error);
       toast.error(error.message || "Erro ao cadastrar produto");
