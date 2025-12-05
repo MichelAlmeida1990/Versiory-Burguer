@@ -222,7 +222,6 @@ export default function AdminLoginPage() {
                       muted
                       playsInline
                       preload="metadata"
-                      loading="lazy"
                       className="w-full h-auto max-h-[200px] sm:max-h-[250px] md:max-h-none object-cover"
                       onMouseEnter={(e) => {
                         const video = e.currentTarget;
