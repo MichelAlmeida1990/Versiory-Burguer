@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
+const path = require('path');
+
 const nextConfig = {
+  // Forçar o workspace root correto (resolve problema de múltiplos lockfiles)
+  outputFileTracingRoot: path.join(__dirname),
+  
   // Fix para Node.js 22 + Next.js 14.2.18
   generateBuildId: async () => {
     return null; // Usa o buildId padrão do Next.js
