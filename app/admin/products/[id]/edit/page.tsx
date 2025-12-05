@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Header } from "@/components/layout/header";
+import { AdminHeader } from "@/components/layout/admin-header";
 import { supabase, Category } from "@/lib/supabase";
 import { ArrowLeft, Save, Upload, X } from "lucide-react";
 import Link from "next/link";
@@ -214,7 +214,7 @@ export default function EditProductPage() {
   if (loadingProduct) {
     return (
       <div className="min-h-screen bg-black text-white">
-        <Header />
+        <AdminHeader />
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           <div className="text-center">Carregando produto...</div>
         </div>
@@ -224,7 +224,7 @@ export default function EditProductPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <Header />
+      <AdminHeader />
       <div className="container mx-auto px-4 py-4 md:py-8 max-w-4xl">
         <div className="mb-6">
           <Link

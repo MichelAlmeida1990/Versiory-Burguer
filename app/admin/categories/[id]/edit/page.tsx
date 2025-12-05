@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Header } from "@/components/layout/header";
+import { AdminHeader } from "@/components/layout/admin-header";
 import { supabase } from "@/lib/supabase";
 import { ArrowLeft, Save, Upload, X } from "lucide-react";
 import Link from "next/link";
@@ -24,11 +24,7 @@ export default function EditCategoryPage() {
     order: "0",
   });
 
-  useEffect(() => {
-    loadCategory();
-  }, [categoryId]);
-
-  const loadCategory = async () => {
+  const loadCategory = useCallback(async () => {
     try {
       setLoadingCategory(true);
       const { data, error } = await supabase
@@ -60,7 +56,11 @@ export default function EditCategoryPage() {
     } finally {
       setLoadingCategory(false);
     }
-  };
+  }, [categoryId, router]);
+
+  useEffect(() => {
+    loadCategory();
+  }, [loadCategory]);
 
   const handleFileUpload = async (file: File) => {
     if (!file) return null;
@@ -174,7 +174,7 @@ export default function EditCategoryPage() {
   if (loadingCategory) {
     return (
       <div className="min-h-screen bg-black text-white">
-        <Header />
+        <AdminHeader />
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           <div className="text-center">Carregando categoria...</div>
         </div>
@@ -184,7 +184,7 @@ export default function EditCategoryPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <Header />
+      <AdminHeader />
       <div className="container mx-auto px-4 py-4 md:py-8 max-w-4xl">
         <div className="mb-6">
           <Link

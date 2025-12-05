@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Header } from "@/components/layout/header";
+import { AdminHeader } from "@/components/layout/admin-header";
 import { supabase } from "@/lib/supabase";
 import { ArrowLeft, Save, Upload, X } from "lucide-react";
 import Link from "next/link";
@@ -129,7 +129,7 @@ export default function NewCategoryPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <Header />
+      <AdminHeader />
       <div className="container mx-auto px-4 py-4 md:py-8 max-w-4xl">
         <div className="mb-6">
           <Link

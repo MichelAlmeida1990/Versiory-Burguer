@@ -2,13 +2,14 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Header } from "@/components/layout/header";
+import { AdminHeader } from "@/components/layout/admin-header";
 import { Product, Category, supabase } from "@/lib/supabase";
 import { formatCurrency, formatDate, formatTime, formatDateTime, getTimeAgo } from "@/lib/utils";
-import { Plus, Edit, Trash2, Package, Users, DollarSign, TrendingUp, Calendar, ShoppingBag } from "lucide-react";
+import { Plus, Edit, Trash2, Package, Users, DollarSign, TrendingUp, Calendar, ShoppingBag, LogIn } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { getCurrentUser } from "@/lib/auth";
 
 // Componente para evitar erro de hidratação com getTimeAgo
 function TimeAgo({ date }: { date: Date | string }) {
@@ -33,6 +34,8 @@ function AdminContent() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState({
     totalOrders: 0,
     totalRevenue: 0,
@@ -49,17 +52,47 @@ function AdminContent() {
   const [topProducts, setTopProducts] = useState<any[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
 
+  // Verificar autenticação IMEDIATAMENTE ao montar o componente
   useEffect(() => {
+    checkAuth();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    // Só processar tabs se estiver autenticado
+    if (!isAuthenticated) return;
+    
     const tabParam = searchParams.get("tab");
     if (tabParam && ["dashboard", "products", "orders", "categories"].includes(tabParam)) {
       setActiveTab(tabParam as any);
     }
-  }, [searchParams]);
+  }, [searchParams, isAuthenticated]);
 
   useEffect(() => {
-    loadData();
+    if (isAuthenticated) {
+      loadData();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
+  }, [activeTab, isAuthenticated]);
+
+  const checkAuth = async () => {
+    setIsLoading(true);
+    try {
+      const user = await getCurrentUser();
+      if (!user || (user.role !== 'admin' && user.role !== 'kitchen')) {
+        // Redirecionar imediatamente sem renderizar
+        router.replace('/admin/login');
+        return;
+      }
+      setIsAuthenticated(true);
+    } catch (error) {
+      console.error('Erro ao verificar autenticação:', error);
+      // Redirecionar imediatamente sem renderizar
+      router.replace('/admin/login');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -526,9 +559,41 @@ function AdminContent() {
     }
   };
 
+  // Se não estiver autenticado, mostrar mensagem e botão para login
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-red-600 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-400">Verificando autenticação...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto px-4">
+          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-red-600">Acesso Restrito</h1>
+          <p className="text-gray-300 mb-6 text-lg">
+            Esta área é restrita a administradores. Faça login para continuar.
+          </p>
+          <Link
+            href="/admin/login"
+            className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-bold transition"
+          >
+            <LogIn className="w-5 h-5" />
+            Fazer Login
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-black text-white">
-      <Header />
+      <AdminHeader />
       <div className="container mx-auto px-4 py-4 md:py-8">
         <h1 className="text-2xl md:text-4xl font-bold mb-4 md:mb-8">Painel Administrativo</h1>
 
@@ -980,10 +1045,10 @@ function AdminContent() {
 export default function AdminPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-black text-white">
-        <Header />
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">Carregando...</div>
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-red-600 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-400">Verificando autenticação...</p>
         </div>
       </div>
     }>

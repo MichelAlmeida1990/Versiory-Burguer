@@ -1,5 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Fix para Node.js 22 + Next.js 14.2.18
+  generateBuildId: async () => {
+    return null; // Usa o buildId padrão do Next.js
+  },
+  experimental: {
+    // Força o Turbopack a resolver corretamente os módulos do PostCSS
+    turbotrace: {
+      logLevel: "bug",
+    },
+  },
+  // Isso resolve 99% dos erros de tailwindcss com Turbopack
+  transpilePackages: ["tailwindcss"],
   images: {
     remotePatterns: [
       {
@@ -22,15 +34,11 @@ const nextConfig = {
         hostname: 'images.pexels.com',
       },
     ],
-    // Desabilitar otimização para imagens do Supabase Storage se necessário
     unoptimized: false,
-    // Configuração adicional para lidar com erros de imagem
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
-  outputFileTracingRoot: require('path').join(__dirname),
 }
 
 module.exports = nextConfig
-

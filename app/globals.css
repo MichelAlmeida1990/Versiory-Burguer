@@ -3,8 +3,33 @@
 @tailwind utilities;
 
 :root {
+  /* Tema Claro (Padrão) */
+  --background: #ffffff;
+  --foreground: #1a1a1a;
+  --card-bg: #ffffff;
+  --card-border: #e5e7eb;
+  --text-primary: #1a1a1a;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+  --border-color: #e5e7eb;
+  --hover-bg: #f9fafb;
+  --input-bg: #ffffff;
+  --input-border: #d1d5db;
+}
+
+.dark {
+  /* Tema Escuro */
   --background: #000000;
   --foreground: #ffffff;
+  --card-bg: #111827;
+  --card-border: #374151;
+  --text-primary: #ffffff;
+  --text-secondary: #d1d5db;
+  --text-muted: #9ca3af;
+  --border-color: #374151;
+  --hover-bg: #1f2937;
+  --input-bg: #1f2937;
+  --input-border: #4b5563;
 }
 
 * {
@@ -13,12 +38,22 @@
   margin: 0;
 }
 
+html {
+  /* Garantir que o tema claro seja o padrão inicial */
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
 html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
   background-color: var(--background);
   color: var(--foreground);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 body {
@@ -46,6 +81,50 @@ a {
   
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Classes de tema - Backgrounds */
+  .bg-theme {
+    @apply bg-white dark:bg-black;
+  }
+
+  .bg-theme-card {
+    @apply bg-white dark:bg-gray-900;
+  }
+
+  .bg-theme-card-secondary {
+    @apply bg-gray-50 dark:bg-gray-800;
+  }
+
+  .bg-theme-hover {
+    @apply hover:bg-gray-50 dark:hover:bg-gray-800;
+  }
+
+  /* Classes de tema - Text */
+  .text-theme {
+    @apply text-gray-900 dark:text-white;
+  }
+
+  .text-theme-secondary {
+    @apply text-gray-600 dark:text-gray-300;
+  }
+
+  .text-theme-muted {
+    @apply text-gray-500 dark:text-gray-400;
+  }
+
+  /* Classes de tema - Borders */
+  .border-theme {
+    @apply border-gray-200 dark:border-gray-700;
+  }
+
+  .border-theme-card {
+    @apply border-gray-300 dark:border-gray-600;
+  }
+
+  /* Classes de tema - Inputs */
+  .input-theme {
+    @apply bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white;
   }
 }
 
@@ -126,5 +205,32 @@ a {
 
 .animate-glow {
   animation: glow 2s ease-in-out infinite;
+}
+
+@keyframes neon-pulse {
+  0%, 100% {
+    box-shadow: 0 0 5px currentColor, 0 0 10px currentColor, 0 0 15px currentColor;
+  }
+  50% {
+    box-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor, 0 0 40px currentColor;
+  }
+}
+
+.animate-neon-pulse {
+  animation: neon-pulse 2s ease-in-out infinite;
+}
+
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient-shift {
+  background-size: 200% 200%;
+  animation: gradient-shift 3s ease infinite;
 }
 

@@ -74,12 +74,12 @@ export default function CarrinhoPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-black text-white">
+      <div className="min-h-screen bg-white dark:bg-black text-gray-900 dark:text-white transition-colors">
         <Header />
         <div className="container mx-auto px-4 py-16 text-center">
           <ShoppingBag className="w-24 h-24 mx-auto mb-4 text-gray-600" />
           <h2 className="text-3xl font-bold mb-4">Seu carrinho está vazio</h2>
-          <p className="text-gray-400 mb-8">
+          <p className="text-gray-600 dark:text-gray-400 mb-8">
             Adicione produtos do cardápio para continuar
           </p>
           <Link
@@ -110,12 +110,12 @@ export default function CarrinhoPage() {
               return (
               <div
                 key={itemKey}
-                className="bg-gray-900 rounded-lg p-2.5 sm:p-3 md:p-4 w-full max-w-full overflow-hidden"
+                className="bg-white dark:bg-gray-900 rounded-lg p-2.5 sm:p-3 md:p-4 w-full max-w-full overflow-hidden border border-gray-200 dark:border-gray-700 shadow-md"
               >
                 {/* Mobile Layout */}
                 <div className="flex flex-col sm:hidden gap-2.5 w-full">
                   <div className="flex gap-2 items-start w-full min-w-0">
-                    <div className="relative w-16 h-16 sm:w-20 sm:h-20 bg-gray-800 rounded-lg flex-shrink-0">
+                    <div className="relative w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 dark:bg-gray-800 rounded-lg flex-shrink-0">
                       {item.product.image ? (
                         <Image
                           src={item.product.image}
@@ -135,7 +135,7 @@ export default function CarrinhoPage() {
                       <p className="text-base sm:text-lg font-bold text-primary-yellow break-all mb-1">
                         {formatCurrency(((item as any).calculatedPrice || item.product.price) * item.quantity)}
                       </p>
-                      <p className="text-gray-400 text-xs mb-1.5">
+                      <p className="text-gray-600 dark:text-gray-400 text-xs mb-1.5">
                         {formatCurrency((item as any).calculatedPrice || item.product.price)} cada
                       </p>
                       {item.selectedOptions && item.selectedOptions.length > 0 && (
@@ -161,7 +161,7 @@ export default function CarrinhoPage() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-gray-800 w-full min-w-0">
-                    <div className="flex items-center gap-0 bg-gray-800 rounded-lg flex-shrink-0">
+                    <div className="flex items-center gap-0 bg-gray-100 dark:bg-gray-800 rounded-lg flex-shrink-0">
                       <button
                         onClick={() =>
                           updateQuantity(item.product.id, item.quantity - 1, item.selectedOptions)
@@ -194,7 +194,7 @@ export default function CarrinhoPage() {
 
                 {/* Desktop/Tablet Layout */}
                 <div className="hidden sm:flex gap-3 md:gap-4">
-                  <div className="relative w-24 h-24 bg-gray-800 rounded-lg flex-shrink-0">
+                  <div className="relative w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-lg flex-shrink-0">
                     {item.product.image ? (
                       <Image
                         src={item.product.image}

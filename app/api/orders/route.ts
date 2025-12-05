@@ -20,13 +20,46 @@ export async function POST(request: NextRequest) {
       delivery_fee,
     } = body;
 
-    // Criar pedido
+    const normalizedPhone = phone.replace(/\D/g, '');
+    const finalTotal = paymentMethod === "pix" ? total * 0.95 : total;
+
+    let customerId: string | null = null;
+
+    if (normalizedPhone.length >= 10) {
+      const customerPayload = {
+        phone: normalizedPhone,
+        name: name || null,
+        email: email || null,
+        default_address: address || null,
+        default_complement: complement || null,
+        default_neighborhood: neighborhood || null,
+        default_city: city || null,
+        default_zip_code: zipCode || null,
+        updated_at: new Date().toISOString()
+      };
+
+      const { data: customer, error: customerError } = await supabase
+        .from('customers')
+        .upsert(customerPayload, {
+          onConflict: 'phone',
+          ignoreDuplicates: false
+        })
+        .select()
+        .single();
+
+      if (customerError) {
+        console.error('Erro ao salvar cliente:', customerError);
+      } else if (customer) {
+        customerId = customer.id;
+      }
+    }
+
     const { data: order, error: orderError } = await supabase
       .from("orders")
       .insert({
-        user_id: `guest_${Date.now()}`, // Em produção, usar autenticação real
+        user_id: `guest_${Date.now()}`,
         status: "pending",
-        total: paymentMethod === "pix" ? total * 0.95 : total,
+        total: finalTotal,
         delivery_address:
           deliveryType === "delivery"
             ? `${address}, ${complement ? complement + ", " : ""}${neighborhood}, ${city} - ${zipCode}`
@@ -36,6 +69,7 @@ export async function POST(request: NextRequest) {
         customer_name: name,
         customer_phone: phone,
         customer_email: email,
+        customer_id: customerId,
       })
       .select()
       .single();

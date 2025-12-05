@@ -1,17 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Header } from "@/components/layout/header";
 import { useCartStore } from "@/store/cart-store";
 import { formatCurrency } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { supabase, Customer } from "@/lib/supabase";
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, getTotal, clearCart } = useCartStore();
   const [mounted, setMounted] = useState(false);
   const [deliveryFee] = useState(5.0);
+  const [loadingCustomer, setLoadingCustomer] = useState(false);
+  const [customerFound, setCustomerFound] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -28,6 +31,64 @@ export default function CheckoutPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const normalizePhone = (phone: string) => {
+    return phone.replace(/\D/g, '');
+  };
+
+  const searchCustomer = useCallback(async (phoneNumber: string) => {
+    const normalizedPhone = normalizePhone(phoneNumber);
+    
+    if (normalizedPhone.length < 10) {
+      setCustomerFound(false);
+      return;
+    }
+
+    try {
+      setLoadingCustomer(true);
+      const { data, error } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('phone', normalizedPhone)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      if (data) {
+        setCustomerFound(true);
+        setFormData(prev => ({
+          ...prev,
+          name: data.name || prev.name,
+          email: data.email || prev.email,
+          address: data.default_address || prev.address,
+          complement: data.default_complement || prev.complement,
+          neighborhood: data.default_neighborhood || prev.neighborhood,
+          city: data.default_city || prev.city,
+          zipCode: data.default_zip_code || prev.zipCode,
+        }));
+        toast.success(`Bem-vindo de volta, ${data.name || 'Cliente'}!`);
+      } else {
+        setCustomerFound(false);
+      }
+    } catch (error: any) {
+      console.error('Erro ao buscar cliente:', error);
+      setCustomerFound(false);
+    } finally {
+      setLoadingCustomer(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (formData.phone && formData.phone.length >= 10) {
+        searchCustomer(formData.phone);
+      }
+    }, 800);
+
+    return () => clearTimeout(timeoutId);
+  }, [formData.phone, searchCustomer]);
 
   const subtotal = mounted ? getTotal() : 0;
   const total = subtotal + (formData.deliveryType === "delivery" ? deliveryFee : 0);
@@ -90,7 +151,7 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-white dark:bg-black text-gray-900 dark:text-white transition-colors">
       <Header />
       <div className="container mx-auto px-4 py-6 md:py-8">
         <h1 className="text-3xl md:text-4xl font-bold mb-6 md:mb-8">Finalizar Pedido</h1>
@@ -99,7 +160,7 @@ export default function CheckoutPage() {
           {/* Formulário */}
           <div className="lg:col-span-2 space-y-6">
             {/* Tipo de Entrega */}
-            <div className="bg-gray-900 rounded-lg p-4 md:p-6">
+            <div className="bg-white dark:bg-gray-900 rounded-lg p-4 md:p-6 border border-gray-200 dark:border-gray-700 shadow-md">
               <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Tipo de Entrega</h2>
               <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
                 <label className="flex-1">
@@ -130,7 +191,7 @@ export default function CheckoutPage() {
             </div>
 
             {/* Dados Pessoais */}
-            <div className="bg-gray-900 rounded-lg p-4 md:p-6">
+            <div className="bg-white dark:bg-gray-900 rounded-lg p-4 md:p-6 border border-gray-200 dark:border-gray-700 shadow-md">
               <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Dados Pessoais</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                 <div>
@@ -144,22 +205,32 @@ export default function CheckoutPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-primary-yellow"
+                    className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-primary-yellow text-gray-900 dark:text-white"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     Telefone *
+                    {customerFound && (
+                      <span className="ml-2 text-xs text-green-400">✓ Cliente encontrado</span>
+                    )}
+                    {loadingCustomer && (
+                      <span className="ml-2 text-xs text-gray-600 dark:text-gray-400">Buscando...</span>
+                    )}
                   </label>
                   <input
                     type="tel"
                     required
                     value={formData.phone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
-                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFormData({ ...formData, phone: value });
+                      if (value.length < 10) {
+                        setCustomerFound(false);
+                      }
+                    }}
                     placeholder="(00) 00000-0000"
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-primary-yellow"
+                    className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-primary-yellow text-gray-900 dark:text-white"
                   />
                 </div>
                 <div className="md:col-span-2">
@@ -172,7 +243,7 @@ export default function CheckoutPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, email: e.target.value })
                     }
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-primary-yellow"
+                    className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-primary-yellow text-gray-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -180,7 +251,7 @@ export default function CheckoutPage() {
 
             {/* Endereço (se delivery) */}
             {formData.deliveryType === "delivery" && (
-              <div className="bg-gray-900 rounded-lg p-4 md:p-6">
+              <div className="bg-white dark:bg-gray-900 rounded-lg p-4 md:p-6 border border-gray-200 dark:border-gray-700 shadow-md">
                 <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Endereço de Entrega</h2>
                 <div className="space-y-3 md:space-y-4">
                   <div>
@@ -195,7 +266,7 @@ export default function CheckoutPage() {
                         setFormData({ ...formData, zipCode: e.target.value })
                       }
                       placeholder="00000-000"
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-primary-yellow"
+                      className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-primary-yellow text-gray-900 dark:text-white"
                     />
                   </div>
                   <div>
@@ -210,7 +281,7 @@ export default function CheckoutPage() {
                         setFormData({ ...formData, address: e.target.value })
                       }
                       placeholder="Rua, Avenida, etc"
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-primary-yellow"
+                      className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-primary-yellow text-gray-900 dark:text-white"
                     />
                   </div>
                   <div className="grid md:grid-cols-2 gap-4">
@@ -225,7 +296,7 @@ export default function CheckoutPage() {
                           setFormData({ ...formData, complement: e.target.value })
                         }
                         placeholder="Apto, Bloco, etc"
-                        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-primary-yellow"
+                        className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-primary-yellow text-gray-900 dark:text-white"
                       />
                     </div>
                     <div>
@@ -239,7 +310,7 @@ export default function CheckoutPage() {
                         onChange={(e) =>
                           setFormData({ ...formData, neighborhood: e.target.value })
                         }
-                        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-primary-yellow"
+                        className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-primary-yellow text-gray-900 dark:text-white"
                       />
                     </div>
                   </div>
@@ -254,7 +325,7 @@ export default function CheckoutPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, city: e.target.value })
                       }
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-primary-yellow"
+                      className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-primary-yellow text-gray-900 dark:text-white"
                     />
                   </div>
                 </div>
@@ -262,7 +333,7 @@ export default function CheckoutPage() {
             )}
 
             {/* Método de Pagamento */}
-            <div className="bg-gray-900 rounded-lg p-4 md:p-6">
+            <div className="bg-white dark:bg-gray-900 rounded-lg p-4 md:p-6 border border-gray-200 dark:border-gray-700 shadow-md">
               <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Método de Pagamento</h2>
               <div className="space-y-2 md:space-y-3">
                 <label className="flex items-center p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700">

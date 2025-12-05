@@ -83,6 +83,22 @@ export interface OrderItem {
   observations?: string;
 }
 
+export interface Customer {
+  id: string;
+  phone: string;
+  name?: string;
+  email?: string;
+  default_address?: string;
+  default_complement?: string;
+  default_neighborhood?: string;
+  default_city?: string;
+  default_zip_code?: string;
+  total_orders: number;
+  total_spent: number;
+  created_at: string;
+  updated_at: string;
+}
+
 
 
 

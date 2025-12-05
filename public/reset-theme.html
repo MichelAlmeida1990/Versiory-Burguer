@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Resetar Tema</title>
+</head>
+<body>
+    <h1>Resetar Tema para Claro</h1>
+    <p>Clique no botão abaixo para resetar o tema para claro (padrão):</p>
+    <button onclick="resetTheme()">Resetar para Tema Claro</button>
+    <script>
+        function resetTheme() {
+            localStorage.setItem('theme', 'light');
+            document.documentElement.classList.remove('dark');
+            alert('Tema resetado para claro! Recarregue a página.');
+        }
+    </script>
+</body>
+</html>
+

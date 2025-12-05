@@ -5,12 +5,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { ShoppingCart, Menu, X } from "lucide-react";
 import { CartButton } from "@/components/cart/cart-button";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white shadow-md">
+    <header className="sticky top-0 z-50 w-full bg-white dark:bg-gray-900 shadow-md border-b border-gray-200 dark:border-gray-800">
       <div className="container mx-auto flex h-16 sm:h-20 items-center justify-between px-3 sm:px-4 md:px-6">
         {/* Logo */}
         <Link href="/" className="flex items-center space-x-1.5 sm:space-x-2 md:space-x-3 flex-shrink-0 min-w-0">
@@ -30,38 +31,33 @@ export function Header() {
         <nav className="hidden md:flex items-center space-x-8">
           <Link
             href="/"
-            className="text-gray-700 hover:text-red-600 font-medium transition"
+            className="text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-500 font-medium transition"
           >
             Início
           </Link>
           <Link
             href="/#cardapio"
-            className="text-gray-700 hover:text-red-600 font-medium transition"
+            className="text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-500 font-medium transition"
           >
             Cardápio
           </Link>
           <Link
             href="/#cardapio"
-            className="text-gray-700 hover:text-red-600 font-medium transition"
+            className="text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-500 font-medium transition"
           >
             Combos
           </Link>
           <Link
             href="/pedidos"
-            className="text-gray-700 hover:text-red-600 font-medium transition"
+            className="text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-500 font-medium transition"
           >
             Meus Pedidos
-          </Link>
-          <Link
-            href="/admin"
-            className="text-gray-700 hover:text-red-600 font-medium transition"
-          >
-            Admin
           </Link>
         </nav>
 
         {/* Right Side - Cart and Button */}
         <div className="flex items-center space-x-1.5 sm:space-x-2 md:space-x-4 flex-shrink-0">
+          <ThemeToggle />
           <CartButton />
           <Link
             href="/carrinho"
@@ -74,7 +70,7 @@ export function Header() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 text-gray-700 hover:text-red-600 flex-shrink-0"
+            className="md:hidden p-2 text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-500 flex-shrink-0"
             aria-label="Menu"
           >
             {mobileMenuOpen ? (
@@ -88,43 +84,39 @@ export function Header() {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <nav className="md:hidden bg-white border-t border-gray-200">
+        <nav className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
           <div className="container mx-auto px-4 py-4 space-y-3">
             <Link
               href="/"
               onClick={() => setMobileMenuOpen(false)}
-              className="block text-gray-700 hover:text-red-600 font-medium transition py-2"
+              className="block text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-500 font-medium transition py-2"
             >
               Início
             </Link>
             <Link
               href="/#cardapio"
               onClick={() => setMobileMenuOpen(false)}
-              className="block text-gray-700 hover:text-red-600 font-medium transition py-2"
+              className="block text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-500 font-medium transition py-2"
             >
               Cardápio
             </Link>
             <Link
               href="/#cardapio"
               onClick={() => setMobileMenuOpen(false)}
-              className="block text-gray-700 hover:text-red-600 font-medium transition py-2"
+              className="block text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-500 font-medium transition py-2"
             >
               Combos
             </Link>
             <Link
               href="/pedidos"
               onClick={() => setMobileMenuOpen(false)}
-              className="block text-gray-700 hover:text-red-600 font-medium transition py-2"
+              className="block text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-500 font-medium transition py-2"
             >
               Meus Pedidos
             </Link>
-            <Link
-              href="/admin"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block text-gray-700 hover:text-red-600 font-medium transition py-2"
-            >
-              Admin
-            </Link>
+            <div className="pt-2 border-t border-gray-200 dark:border-gray-800">
+              <ThemeToggle />
+            </div>
           </div>
         </nav>
       )}
