@@ -7,6 +7,13 @@ export const metadata: Metadata = {
   description: "O sistema que sua empresa merece. Conquistando empreendedores pela facilidade, eficiência e resultados.",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{

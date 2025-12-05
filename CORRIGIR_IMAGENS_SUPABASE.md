@@ -86,3 +86,5 @@ As imagens do Supabase agora usam `unoptimized={true}` para evitar problemas com
 
 
 
+
+

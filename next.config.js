@@ -22,15 +22,16 @@ const nextConfig = {
         hostname: 'images.pexels.com',
       },
     ],
-    // Desabilitar otimização para imagens do Supabase Storage se necessário
     unoptimized: false,
-    // Configuração adicional para lidar com erros de imagem
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
-  outputFileTracingRoot: require('path').join(__dirname),
+  // Otimizações para reduzir tamanho do bundle
+  compress: true,
+  poweredByHeader: false,
+  reactStrictMode: true,
+  swcMinify: true,
 }
 
 module.exports = nextConfig
-
