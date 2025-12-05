@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Header } from "@/components/layout/header";
 import { useCartStore } from "@/store/cart-store";
 import { formatCurrency } from "@/lib/utils";
@@ -18,11 +18,7 @@ export default function CarrinhoPage() {
   const [discount, setDiscount] = useState(0);
   const [optionNames, setOptionNames] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    loadOptionNames();
-  }, [items]);
-
-  const loadOptionNames = async () => {
+  const loadOptionNames = useCallback(async () => {
     const allOptionValueIds = new Set<string>();
     items.forEach((item) => {
       item.selectedOptions?.forEach((opt) => {
@@ -48,7 +44,11 @@ export default function CarrinhoPage() {
     } catch (error) {
       console.error("Erro ao carregar nomes das opções:", error);
     }
-  };
+  }, [items]);
+
+  useEffect(() => {
+    loadOptionNames();
+  }, [loadOptionNames]);
 
   const subtotal = getTotal();
   const total = subtotal + deliveryFee - discount;
@@ -109,30 +109,40 @@ export default function CarrinhoPage() {
               return (
               <div
                 key={itemKey}
-                className="bg-gray-900 rounded-lg p-3 md:p-4 flex flex-col sm:flex-row gap-3 md:gap-4"
+                className="bg-gray-900 rounded-lg p-3 md:p-4"
               >
-                <div className="relative w-full h-32 sm:w-24 sm:h-24 bg-gray-800 rounded-lg flex-shrink-0">
-                  {item.product.image ? (
-                    <Image
-                      src={item.product.image}
-                      alt={item.product.name}
-                      fill
-                      className="object-cover rounded-lg"
-                      unoptimized={item.product.image.includes('supabase.co')}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">
-                      Sem imagem
+                {/* Mobile Layout */}
+                <div className="flex flex-col sm:hidden gap-3">
+                  <div className="flex gap-3">
+                    <div className="relative w-20 h-20 bg-gray-800 rounded-lg flex-shrink-0">
+                      {item.product.image ? (
+                        <Image
+                          src={item.product.image}
+                          alt={item.product.name}
+                          fill
+                          className="object-cover rounded-lg"
+                          unoptimized={item.product.image.includes('supabase.co')}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">
+                          Sem imagem
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-lg sm:text-xl font-bold mb-1 break-words">{item.product.name}</h3>
-                  <p className="text-gray-400 text-xs sm:text-sm mb-2">
-                    {formatCurrency((item as any).calculatedPrice || item.product.price)} cada
-                  </p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <h3 className="text-base font-bold break-words flex-1">{item.product.name}</h3>
+                        <p className="text-base font-bold text-primary-yellow whitespace-nowrap">
+                          {formatCurrency(((item as any).calculatedPrice || item.product.price) * item.quantity)}
+                        </p>
+                      </div>
+                      <p className="text-gray-400 text-xs mb-1">
+                        {formatCurrency((item as any).calculatedPrice || item.product.price)} cada
+                      </p>
+                    </div>
+                  </div>
                   {item.selectedOptions && item.selectedOptions.length > 0 && (
-                    <div className="text-xs text-gray-400 mb-2 space-y-1">
+                    <div className="text-xs text-gray-400 space-y-0.5">
                       {item.selectedOptions.map((opt, idx) => (
                         <div key={idx} className="flex items-center gap-1">
                           <span>•</span>
@@ -147,42 +157,114 @@ export default function CarrinhoPage() {
                     </div>
                   )}
                   {item.observations && (
-                    <p className="text-gray-500 text-xs italic mb-2 break-words">
+                    <p className="text-gray-500 text-xs italic break-words">
                       Obs: {item.observations}
                     </p>
                   )}
-                  <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+                  <div className="flex items-center justify-between gap-3 pt-2 border-t border-gray-800">
                     <div className="flex items-center gap-2 bg-gray-800 rounded-lg">
                       <button
                         onClick={() =>
                           updateQuantity(item.product.id, item.quantity - 1, item.selectedOptions)
                         }
-                        className="p-2 hover:bg-gray-700 rounded-l-lg"
+                        className="p-2.5 hover:bg-gray-700 rounded-l-lg active:bg-gray-600"
                       >
                         <Minus className="w-4 h-4" />
                       </button>
-                      <span className="px-3 sm:px-4 py-2 text-sm sm:text-base">{item.quantity}</span>
+                      <span className="px-4 py-2 text-base font-medium min-w-[2rem] text-center">{item.quantity}</span>
                       <button
                         onClick={() =>
                           updateQuantity(item.product.id, item.quantity + 1, item.selectedOptions)
                         }
-                        className="p-2 hover:bg-gray-700 rounded-r-lg"
+                        className="p-2.5 hover:bg-gray-700 rounded-r-lg active:bg-gray-600"
                       >
                         <Plus className="w-4 h-4" />
                       </button>
                     </div>
                     <button
                       onClick={() => removeItem(item.product.id, item.selectedOptions)}
-                      className="text-red-400 hover:text-red-300 p-2"
+                      className="text-red-400 hover:text-red-300 p-2.5 active:opacity-70"
                     >
                       <Trash2 className="w-5 h-5" />
                     </button>
                   </div>
                 </div>
-                <div className="text-right sm:text-left sm:flex sm:items-center">
-                  <p className="text-lg sm:text-xl font-bold text-primary-yellow">
-                    {formatCurrency(((item as any).calculatedPrice || item.product.price) * item.quantity)}
-                  </p>
+
+                {/* Desktop/Tablet Layout */}
+                <div className="hidden sm:flex gap-3 md:gap-4">
+                  <div className="relative w-24 h-24 bg-gray-800 rounded-lg flex-shrink-0">
+                    {item.product.image ? (
+                      <Image
+                        src={item.product.image}
+                        alt={item.product.name}
+                        fill
+                        className="object-cover rounded-lg"
+                        unoptimized={item.product.image.includes('supabase.co')}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">
+                        Sem imagem
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg sm:text-xl font-bold mb-1 break-words">{item.product.name}</h3>
+                    <p className="text-gray-400 text-xs sm:text-sm mb-2">
+                      {formatCurrency((item as any).calculatedPrice || item.product.price)} cada
+                    </p>
+                    {item.selectedOptions && item.selectedOptions.length > 0 && (
+                      <div className="text-xs text-gray-400 mb-2 space-y-1">
+                        {item.selectedOptions.map((opt, idx) => (
+                          <div key={idx} className="flex items-center gap-1">
+                            <span>•</span>
+                            <span>{optionNames[opt.option_value_id] || 'Opção'}</span>
+                            {opt.price_modifier !== 0 && (
+                              <span className="text-green-400">
+                                ({opt.price_modifier > 0 ? '+' : ''}{formatCurrency(opt.price_modifier)})
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {item.observations && (
+                      <p className="text-gray-500 text-xs italic mb-2 break-words">
+                        Obs: {item.observations}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+                      <div className="flex items-center gap-2 bg-gray-800 rounded-lg">
+                        <button
+                          onClick={() =>
+                            updateQuantity(item.product.id, item.quantity - 1, item.selectedOptions)
+                          }
+                          className="p-2 hover:bg-gray-700 rounded-l-lg"
+                        >
+                          <Minus className="w-4 h-4" />
+                        </button>
+                        <span className="px-3 sm:px-4 py-2 text-sm sm:text-base">{item.quantity}</span>
+                        <button
+                          onClick={() =>
+                            updateQuantity(item.product.id, item.quantity + 1, item.selectedOptions)
+                          }
+                          className="p-2 hover:bg-gray-700 rounded-r-lg"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <button
+                        onClick={() => removeItem(item.product.id, item.selectedOptions)}
+                        className="text-red-400 hover:text-red-300 p-2"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="text-right sm:text-left sm:flex sm:items-center">
+                    <p className="text-lg sm:text-xl font-bold text-primary-yellow">
+                      {formatCurrency(((item as any).calculatedPrice || item.product.price) * item.quantity)}
+                    </p>
+                  </div>
                 </div>
               </div>
             );
@@ -191,7 +273,7 @@ export default function CarrinhoPage() {
 
           {/* Resumo do Pedido */}
           <div className="lg:col-span-1">
-            <div className="bg-gray-900 rounded-lg p-4 md:p-6 lg:sticky lg:top-24">
+            <div className="bg-gray-900 rounded-lg p-4 md:p-6 lg:sticky lg:top-24 mb-6 lg:mb-0">
               <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Resumo do Pedido</h2>
 
               {/* Cupom */}
