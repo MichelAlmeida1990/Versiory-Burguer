@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import { loginAdmin, getCurrentUser } from "@/lib/auth";
 import toast from "react-hot-toast";
 import { 
@@ -195,11 +194,8 @@ export default function AdminLoginPage() {
 
         {/* Video Card - Interactive */}
         <div className="max-w-4xl mx-auto mb-8 sm:mb-12 px-2 sm:px-0">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="relative group rounded-2xl p-4 sm:p-6 md:p-8 overflow-hidden shadow-2xl border-2 border-red-400/50 transition-all duration-300"
+          <div
+            className="relative group rounded-2xl p-4 sm:p-6 md:p-8 overflow-hidden shadow-2xl border-2 border-red-400/50 transition-all duration-300 animate-fade-in"
             style={{
               background: "linear-gradient(135deg, rgba(220, 38, 38, 0.4) 0%, rgba(185, 28, 28, 0.3) 100%)",
               backdropFilter: "blur(12px)",
@@ -270,7 +266,7 @@ export default function AdminLoginPage() {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
 
         {/* Services Grid */}

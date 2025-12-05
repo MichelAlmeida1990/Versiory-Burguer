@@ -14,6 +14,8 @@ const nextConfig = {
     turbotrace: {
       logLevel: "bug",
     },
+    // Otimiza imports de pacotes grandes (reduz bundle)
+    optimizePackageImports: ['lucide-react', 'framer-motion', 'recharts'],
   },
   // Isso resolve 99% dos erros de tailwindcss com Turbopack
   transpilePackages: ["tailwindcss"],
