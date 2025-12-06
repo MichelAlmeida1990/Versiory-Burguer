@@ -186,3 +186,5 @@ TOTAL: R$ 38,00
 - **Performance**: Índices criados para consultas rápidas
 
 
+
+
