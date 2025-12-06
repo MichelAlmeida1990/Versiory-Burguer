@@ -1,24 +1,9 @@
 /** @type {import('next').NextConfig} */
-const path = require('path');
-
 const nextConfig = {
-  // Forçar o workspace root correto (resolve problema de múltiplos lockfiles)
-  outputFileTracingRoot: path.join(__dirname),
-  
-  // Fix para Node.js 22 + Next.js 14.2.18
-  generateBuildId: async () => {
-    return null; // Usa o buildId padrão do Next.js
-  },
-  experimental: {
-    // Força o Turbopack a resolver corretamente os módulos do PostCSS
-    turbotrace: {
-      logLevel: "bug",
-    },
-    // Otimiza imports de pacotes grandes (reduz bundle)
-    optimizePackageImports: ['lucide-react', 'framer-motion', 'recharts'],
-  },
   // Isso resolve 99% dos erros de tailwindcss com Turbopack
   transpilePackages: ["tailwindcss"],
+  // Otimiza imports de pacotes grandes (reduz bundle)
+  optimizePackageImports: ['lucide-react', 'framer-motion', 'recharts'],
   images: {
     remotePatterns: [
       {
