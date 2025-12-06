@@ -1,0 +1,9 @@
+# Redirecionamentos do Netlify para Next.js
+# Este arquivo é usado em conjunto com o netlify.toml
+
+# Redireciona todas as rotas para o handler do Next.js
+# (O netlify.toml já faz isso, mas este arquivo serve como backup)
+
+# Exemplo de redirecionamento customizado (se necessário):
+# /old-page /new-page 301
+
