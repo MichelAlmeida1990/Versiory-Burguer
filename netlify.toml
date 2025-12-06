@@ -11,6 +11,8 @@
 [build.environment]
   # Versão do Node.js (recomendado: 18 ou 20)
   NODE_VERSION = "20"
+  # Força o Next.js a incluir styled-jsx no bundle
+  NEXT_TELEMETRY_DISABLED = "1"
 
 # Headers de segurança e cache
 [[headers]]

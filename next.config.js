@@ -31,7 +31,7 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
   reactStrictMode: true,
-  swcMinify: true,
+  // swcMinify é padrão no Next.js 14+ e não precisa ser especificado
 }
 
 module.exports = nextConfig
