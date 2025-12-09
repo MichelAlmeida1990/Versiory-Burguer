@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { supabase } from "@/lib/supabase";
@@ -24,11 +24,7 @@ export default function EditCategoryPage() {
     order: "0",
   });
 
-  useEffect(() => {
-    loadCategory();
-  }, [categoryId]);
-
-  const loadCategory = async () => {
+  const loadCategory = useCallback(async () => {
     try {
       setLoadingCategory(true);
       const { data, error } = await supabase
@@ -60,7 +56,11 @@ export default function EditCategoryPage() {
     } finally {
       setLoadingCategory(false);
     }
-  };
+  }, [categoryId, router]);
+
+  useEffect(() => {
+    loadCategory();
+  }, [loadCategory]);
 
   const handleFileUpload = async (file: File) => {
     if (!file) return null;

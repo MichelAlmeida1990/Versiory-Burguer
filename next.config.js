@@ -29,7 +29,6 @@ const nextConfig = {
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
-  outputFileTracingRoot: require('path').join(__dirname),
 }
 
 module.exports = nextConfig

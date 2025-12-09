@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import Image from "next/image";
@@ -27,29 +27,7 @@ export function ProductOptionsModal({ product, isOpen, onClose, onConfirm }: Pro
     return () => setMounted(false);
   }, []);
 
-  useEffect(() => {
-    if (isOpen && product.id) {
-      loadOptions();
-      // Prevenir scroll do body quando modal está aberto
-      document.body.style.overflow = 'hidden';
-    } else {
-      // Restaurar scroll do body quando modal fecha
-      document.body.style.overflow = 'unset';
-    }
-    
-    return () => {
-      // Cleanup: restaurar scroll quando componente desmonta
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen, product.id]);
-
-  useEffect(() => {
-    if (options.length > 0) {
-      calculateTotal();
-    }
-  }, [selectedOptions, product.price, options]);
-
-  const loadOptions = async () => {
+  const loadOptions = useCallback(async () => {
     try {
       setLoading(true);
       setOptions([]); // Resetar opções
@@ -121,9 +99,25 @@ export function ProductOptionsModal({ product, isOpen, onClose, onConfirm }: Pro
     } finally {
       setLoading(false);
     }
-  };
+  }, [product.id]);
 
-  const calculateTotal = () => {
+  useEffect(() => {
+    if (isOpen && product.id) {
+      loadOptions();
+      // Prevenir scroll do body quando modal está aberto
+      document.body.style.overflow = 'hidden';
+    } else {
+      // Restaurar scroll do body quando modal fecha
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      // Cleanup: restaurar scroll quando componente desmonta
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen, product.id, loadOptions]);
+
+  const calculateTotal = useCallback(() => {
     let total = product.price;
 
     Object.entries(selectedOptions).forEach(([optionId, valueIds]) => {
@@ -142,7 +136,13 @@ export function ProductOptionsModal({ product, isOpen, onClose, onConfirm }: Pro
     });
 
     setTotalPrice(total);
-  };
+  }, [product.price, selectedOptions, options]);
+
+  useEffect(() => {
+    if (options.length > 0) {
+      calculateTotal();
+    }
+  }, [calculateTotal, options.length]);
 
   const handleOptionChange = (optionId: string, valueId: string, type: "single" | "multiple") => {
     if (type === "single") {
