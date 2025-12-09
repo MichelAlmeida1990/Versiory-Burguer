@@ -293,7 +293,7 @@ export default function CarrinhoPage() {
                   />
                   <button
                     onClick={applyCoupon}
-                    className="bg-primary-azure text-white px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-opacity-90 transition text-xs sm:text-sm flex-shrink-0"
+                    className="bg-red-600 hover:bg-red-700 text-white px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg transition text-xs sm:text-sm flex-shrink-0"
                   >
                     Aplicar
                   </button>
@@ -326,7 +326,7 @@ export default function CarrinhoPage() {
 
               <button
                 onClick={handleCheckout}
-                className="w-full bg-primary-yellow text-black py-3 sm:py-4 rounded-lg text-base sm:text-lg font-bold hover:bg-opacity-90 transition"
+                className="w-full bg-red-600 hover:bg-red-700 text-white py-3 sm:py-4 rounded-lg text-base sm:text-lg font-bold transition"
               >
                 Finalizar Pedido
               </button>

@@ -8,6 +8,7 @@ import { ArrowLeft, Save, Upload, X } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import Image from "next/image";
+import { ProductOptionsManager } from "@/components/admin/product-options-manager";
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function NewProductPage() {
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [createdProductId, setCreatedProductId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -156,11 +158,11 @@ export default function NewProductPage() {
         throw error;
       }
 
-      toast.success("Produto cadastrado com sucesso! Agora você pode adicionar opcionais.");
-      // Redirecionar para a página de edição onde pode adicionar opções
       if (newProduct?.id) {
-        router.push(`/admin/products/${newProduct.id}/edit`);
+        setCreatedProductId(newProduct.id);
+        toast.success("Produto cadastrado com sucesso! Agora você pode adicionar opcionais.");
       } else {
+        toast.error("Erro ao obter ID do produto criado");
         router.push("/admin?tab=products");
       }
     } catch (error: any) {
@@ -358,28 +360,62 @@ export default function NewProductPage() {
 
           {/* Botões */}
           <div className="flex gap-4 pt-4">
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-primary-yellow text-black px-6 py-3 rounded-lg font-bold hover:bg-opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                "Salvando..."
-              ) : (
-                <>
-                  <Save className="w-5 h-5" />
-                  Salvar Produto
-                </>
-              )}
-            </button>
-            <Link
-              href="/admin?tab=products"
-              className="px-6 py-3 rounded-lg font-bold border border-gray-700 hover:bg-gray-800 transition"
-            >
-              Cancelar
-            </Link>
+            {createdProductId ? (
+              <Link
+                href="/admin?tab=products"
+                className="flex-1 bg-primary-yellow text-black px-6 py-3 rounded-lg font-bold hover:bg-opacity-90 transition flex items-center justify-center gap-2"
+              >
+                Finalizar e Voltar para Produtos
+              </Link>
+            ) : (
+              <>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 bg-primary-yellow text-black px-6 py-3 rounded-lg font-bold hover:bg-opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    "Salvando..."
+                  ) : (
+                    <>
+                      <Save className="w-5 h-5" />
+                      Salvar Produto
+                    </>
+                  )}
+                </button>
+                <Link
+                  href="/admin?tab=products"
+                  className="px-6 py-3 rounded-lg font-bold border border-gray-700 hover:bg-gray-800 transition"
+                >
+                  Cancelar
+                </Link>
+              </>
+            )}
           </div>
         </form>
+
+        {createdProductId && (
+          <div className="mt-6">
+            <div className="border-t border-gray-700 pt-6">
+              <h2 className="text-xl font-bold mb-4">Opcionais e Adicionais</h2>
+              <p className="text-sm text-gray-400 mb-4">
+                Configure opções como tamanhos, bordas, adicionais, etc. Exemplo: Pizza pode ter Tamanho (P, M, G), Borda (Normal, Recheada), Ingredientes Extras.
+              </p>
+              <ProductOptionsManager productId={createdProductId} />
+            </div>
+          </div>
+        )}
+
+        {!createdProductId && (
+          <div className="mt-6 p-4 md:p-6 bg-gray-800 rounded-lg border border-gray-700 text-center">
+            <p className="text-gray-400 text-sm md:text-base mb-2">
+              💡 Salve o produto primeiro para adicionar opções e adicionais.
+            </p>
+            <p className="text-gray-500 text-xs">
+              Após salvar, esta seção será habilitada automaticamente.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { Product, Category, supabase } from "@/lib/supabase";
 import { formatCurrency, formatDate, formatTime, formatDateTime, getTimeAgo } from "@/lib/utils";
-import { Plus, Edit, Trash2, Package, Users, DollarSign, TrendingUp, Calendar, ShoppingBag } from "lucide-react";
+import { Plus, Edit, Trash2, Package, Users, DollarSign, TrendingUp, Calendar, ShoppingBag, Clock, CheckCircle, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -29,7 +29,13 @@ function TimeAgo({ date }: { date: Date | string }) {
 function AdminContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState<"dashboard" | "products" | "orders" | "categories">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "products" | "orders" | "categories">(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam && ["dashboard", "products", "orders", "categories"].includes(tabParam)) {
+      return tabParam as "dashboard" | "products" | "orders" | "categories";
+    }
+    return "dashboard";
+  });
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
@@ -48,6 +54,9 @@ function AdminContent() {
   const [revenueData, setRevenueData] = useState<any[]>([]);
   const [topProducts, setTopProducts] = useState<any[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+  const [filterStatus, setFilterStatus] = useState<"all" | "active" | "delivered" | "cancelled">("active");
+  const [showDelivered, setShowDelivered] = useState(false);
+  const [timerUpdate, setTimerUpdate] = useState(0);
 
   useEffect(() => {
     const tabParam = searchParams.get("tab");
@@ -60,6 +69,14 @@ function AdminContent() {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
+
+  // Atualizar timer a cada minuto
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimerUpdate(prev => prev + 1);
+    }, 60000); // Atualizar a cada minuto
+    return () => clearInterval(interval);
+  }, []);
 
   const loadData = async () => {
     try {
@@ -80,7 +97,7 @@ function AdminContent() {
       }
 
       if (activeTab === "orders" || activeTab === "dashboard") {
-        // Carregar pedidos com itens para dashboard
+        // Carregar pedidos com itens e histórico de status
         const { data: ordersData } = await supabase
           .from("orders")
           .select(`
@@ -88,10 +105,22 @@ function AdminContent() {
             order_items (
               *,
               products (*)
-            )
+            ),
+            order_status_history (*)
           `)
           .order("created_at", { ascending: false })
           .limit(500);
+        
+        // Ordenar order_status_history por created_at
+        if (ordersData) {
+          ordersData.forEach((order: any) => {
+            if (order.order_status_history) {
+              order.order_status_history.sort((a: any, b: any) => 
+                new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+              );
+            }
+          });
+        }
         
         if (ordersData) {
           setOrders(ordersData);
@@ -425,6 +454,77 @@ function AdminContent() {
     setPaymentMethods(methods);
   };
 
+  // Função para calcular tempo no status atual e verificar se está dentro dos limites
+  const getTimeStatus = (order: any) => {
+    if (!order || order.status === "delivered" || order.status === "cancelled") {
+      return null;
+    }
+
+    const maxTimes: Record<string, number> = {
+      pending: 5,      // 5 minutos para aceitar
+      confirmed: 30,   // 30 minutos para preparar
+      preparing: 30,   // 30 minutos para preparar
+      ready: 25,       // 25 minutos para entregar
+      delivering: 25,  // 25 minutos para entregar
+    };
+
+    const maxTime = maxTimes[order.status];
+    if (!maxTime) return null;
+
+    let statusStartTime: Date;
+    if (order.order_status_history && order.order_status_history.length > 0) {
+      const currentStatusHistory = order.order_status_history
+        .filter((h: any) => h.status === order.status)
+        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+      
+      if (currentStatusHistory) {
+        statusStartTime = new Date(currentStatusHistory.created_at);
+      } else {
+        statusStartTime = new Date(order.created_at);
+      }
+    } else {
+      statusStartTime = new Date(order.created_at);
+    }
+
+    const now = new Date();
+    const timeInStatus = Math.floor((now.getTime() - statusStartTime.getTime()) / 1000 / 60); // minutos
+
+    const percentage = Math.min((timeInStatus / maxTime) * 100, 100);
+
+    let status: "ok" | "warning" | "danger";
+    let message: string;
+    let color: string;
+    let icon: any;
+
+    if (timeInStatus <= maxTime * 0.7) {
+      status = "ok";
+      message = `${timeInStatus} min`;
+      color = "text-green-400";
+      icon = CheckCircle;
+    } else if (timeInStatus <= maxTime) {
+      status = "warning";
+      message = `${timeInStatus} min (${maxTime - timeInStatus} min restantes)`;
+      color = "text-yellow-400";
+      icon = Clock;
+    } else {
+      status = "danger";
+      const exceeded = timeInStatus - maxTime;
+      message = `${timeInStatus} min (${exceeded} min de atraso)`;
+      color = "text-red-400";
+      icon = AlertTriangle;
+    }
+
+    return {
+      timeInStatus,
+      maxTime,
+      percentage,
+      status,
+      message,
+      color,
+      icon,
+    };
+  };
+
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
       const response = await fetch(`/api/orders/${orderId}/status`, {
@@ -525,6 +625,15 @@ function AdminContent() {
       toast.error(error.message || "Erro ao atualizar pedido");
     }
   };
+
+  // Calcular filtros de pedidos
+  const activeOrders = orders.filter(o => o.status !== "delivered" && o.status !== "cancelled");
+  const deliveredOrders = orders.filter(o => o.status === "delivered");
+  const cancelledOrders = orders.filter(o => o.status === "cancelled");
+  
+  const ordersToShow = filterStatus === "active" ? activeOrders : 
+                       filterStatus === "delivered" ? deliveredOrders : 
+                       filterStatus === "cancelled" ? cancelledOrders : orders;
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -745,13 +854,14 @@ function AdminContent() {
         )}
 
         {/* Produtos */}
-        {activeTab === "products" && (
+        {(activeTab === "products" || searchParams.get("tab") === "products") && (
           <div>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 md:mb-6">
               <h2 className="text-xl md:text-2xl font-bold">Produtos</h2>
               <Link
                 href="/admin/products/new"
                 className="bg-primary-yellow text-black px-4 py-2 rounded-lg font-bold hover:bg-opacity-90 transition flex items-center gap-2 text-sm md:text-base whitespace-nowrap"
+                style={{ display: 'flex', backgroundColor: '#ccff00' }}
               >
                 <Plus className="w-4 h-4 md:w-5 md:h-5" />
                 Novo Produto
@@ -801,21 +911,70 @@ function AdminContent() {
 
         {/* Pedidos */}
         {activeTab === "orders" && (
-          <div>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 md:mb-6">
-              <h2 className="text-xl md:text-2xl font-bold">Pedidos</h2>
-              <div className="text-sm text-gray-400">
-                Total: {orders.length} pedido{orders.length !== 1 ? 's' : ''}
+            <div>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 md:gap-6 lg:gap-8 mb-4 md:mb-6 lg:mb-8 xl:mb-10 2xl:mb-12">
+              <h2 className="text-xl md:text-2xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-bold">Pedidos</h2>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setFilterStatus("active");
+                      }}
+                      className={`px-3 py-1.5 rounded text-xs sm:text-sm font-medium transition ${
+                        filterStatus === "active"
+                          ? "bg-[#ccff00] text-black font-bold shadow-lg shadow-[#ccff00]/30"
+                          : "text-gray-400 hover:text-white"
+                      }`}
+                    >
+                      Ativos ({activeOrders.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setFilterStatus("delivered");
+                      }}
+                      className={`px-3 py-1.5 rounded text-xs sm:text-sm font-medium transition ${
+                        filterStatus === "delivered"
+                          ? "bg-green-600 text-white font-bold shadow-lg shadow-green-600/30"
+                          : "text-gray-400 hover:text-white"
+                      }`}
+                    >
+                      Entregues ({deliveredOrders.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setFilterStatus("cancelled");
+                      }}
+                      className={`px-3 py-1.5 rounded text-xs sm:text-sm font-medium transition ${
+                        filterStatus === "cancelled"
+                          ? "bg-red-600 text-white font-bold shadow-lg shadow-red-600/30"
+                          : "text-gray-400 hover:text-white"
+                      }`}
+                    >
+                      Cancelados ({cancelledOrders.length})
+                    </button>
+                  </div>
+                  <div className="text-sm text-gray-400">
+                    Total: {orders.length} pedido{orders.length !== 1 ? 's' : ''}
+                  </div>
+                </div>
               </div>
-            </div>
 
-            {/* Timeline View */}
-            <div className="relative">
-              {/* Timeline Line */}
-              <div className="absolute left-3 sm:left-4 md:left-6 top-0 bottom-0 w-0.5 bg-gray-700"></div>
+              {/* Timeline View */}
+              <div className="relative">
+                {/* Timeline Line */}
+                <div className="absolute left-3 sm:left-4 md:left-6 top-0 bottom-0 w-0.5 bg-gray-700"></div>
 
-              <div className="space-y-3 md:space-y-4 lg:space-y-6">
-                {orders.map((order, index) => {
+                <div className="space-y-3 md:space-y-4 lg:space-y-6 xl:space-y-8 2xl:space-y-10" key={`orders-section-${filterStatus}`}>
+                  {ordersToShow.map((order, index) => {
                   const statusColors: Record<string, string> = {
                     pending: "bg-yellow-500",
                     confirmed: "bg-blue-500",
@@ -842,50 +1001,109 @@ function AdminContent() {
                       <div className={`absolute left-1.5 sm:left-2 md:left-4 top-2 w-3 h-3 sm:w-4 sm:h-4 md:w-6 md:h-6 rounded-full ${statusColors[order.status] || "bg-gray-500"} border-2 sm:border-4 border-black z-10`}></div>
 
                       {/* Order Card */}
-                      <div className="bg-gray-900 rounded-lg p-3 sm:p-4 md:p-6 hover:bg-gray-800 transition">
-                        <div className="flex flex-col lg:flex-row justify-between items-start gap-3 md:gap-4">
+                      <div className="bg-gray-900 rounded-lg p-3 sm:p-4 md:p-6 lg:p-8 xl:p-10 2xl:p-12 hover:bg-gray-800 transition">
+                        <div className="flex flex-col lg:flex-row justify-between items-start gap-3 md:gap-4 lg:gap-6 xl:gap-8">
                           <div className="flex-1 min-w-0">
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-                              <h3 className="text-base sm:text-lg md:text-xl font-bold break-words">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 md:gap-3 lg:gap-4 mb-2 md:mb-3 lg:mb-4">
+                              <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl 2xl:text-4xl font-bold break-words">
                                 Pedido #{order.id.slice(0, 8)}
                               </h3>
-                              <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${statusColors[order.status] || "bg-gray-500"}`}>
+                              <span className={`px-2 py-1 md:px-3 md:py-1.5 lg:px-4 lg:py-2 rounded text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-medium whitespace-nowrap ${statusColors[order.status] || "bg-gray-500"}`}>
                                 {statusLabels[order.status] || order.status}
                               </span>
+                              {(() => {
+                                const timeStatus = getTimeStatus(order);
+                                if (timeStatus) {
+                                  const TimeIcon = timeStatus.icon;
+                                  return (
+                                    <div className={`flex items-center gap-1 ${timeStatus.color} text-xs sm:text-sm font-medium`}>
+                                      <TimeIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                                      <span>{timeStatus.message}</span>
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              })()}
                             </div>
 
                             {/* Time Information */}
-                            <div className="space-y-1 mb-2 md:mb-3">
-                              <p className="text-gray-300 text-xs sm:text-sm md:text-base font-medium">
+                            <div className="space-y-1 md:space-y-2 mb-2 md:mb-3 lg:mb-4">
+                              <p className="text-gray-300 text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-medium">
                                 {formatDateTime(order.created_at)}
                               </p>
-                              <p className="text-gray-400 text-xs">
+                              <p className="text-gray-400 text-xs sm:text-sm md:text-base lg:text-lg">
                                 <TimeAgo date={order.created_at} />
                               </p>
                             </div>
 
                             {order.delivery_address && (
-                              <p className="text-gray-400 text-xs sm:text-sm mt-2 line-clamp-2 break-words">
+                              <p className="text-gray-400 text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl mt-2 md:mt-3 line-clamp-2 break-words">
                                 📍 {order.delivery_address}
                               </p>
                             )}
 
                             {order.customer_name && (
-                              <p className="text-gray-400 text-xs sm:text-sm mt-1 break-words">
+                              <p className="text-gray-400 text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl mt-1 md:mt-2 break-words">
                                 👤 {order.customer_name}
                               </p>
                             )}
+
+                            {/* Detalhes do Pedido - Mostrar para entregues */}
+                            {order.status === "delivered" && order.order_items && order.order_items.length > 0 && (
+                              <div className="mt-3 md:mt-4 lg:mt-6 xl:mt-8 pt-3 md:pt-4 lg:pt-6 xl:pt-8 border-t border-gray-700">
+                                <h4 className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl 2xl:text-2xl font-semibold text-gray-300 mb-2 md:mb-3 lg:mb-4">Itens do Pedido:</h4>
+                                <div className="space-y-1.5 md:space-y-2 lg:space-y-3">
+                                  {order.order_items.map((item: any, idx: number) => (
+                                    <div key={idx} className="flex justify-between items-start gap-2 md:gap-4 text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl">
+                                      <div className="flex-1 min-w-0">
+                                        <span className="text-gray-300 font-medium">
+                                          {item.quantity}x {item.products?.name || 'Produto'}
+                                        </span>
+                                        {item.observations && (
+                                          <p className="text-gray-500 text-xs sm:text-sm md:text-base lg:text-lg italic mt-0.5 md:mt-1">
+                                            Obs: {item.observations}
+                                          </p>
+                                        )}
+                                      </div>
+                                      <span className="text-primary-yellow font-semibold whitespace-nowrap">
+                                        {formatCurrency((item.price || 0) * (item.quantity || 1))}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className="mt-2 md:mt-3 lg:mt-4 pt-2 md:pt-3 lg:pt-4 border-t border-gray-800 flex justify-between items-center">
+                                  <span className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl text-gray-400">Subtotal:</span>
+                                  <span className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-semibold text-gray-300">
+                                    {formatCurrency(order.order_items.reduce((sum: number, item: any) => sum + ((item.price || 0) * (item.quantity || 1)), 0))}
+                                  </span>
+                                </div>
+                                {order.delivery_fee && order.delivery_fee > 0 && (
+                                  <div className="flex justify-between items-center mt-1 md:mt-2 lg:mt-3">
+                                    <span className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl text-gray-400">Taxa de Entrega:</span>
+                                    <span className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-semibold text-gray-300">
+                                      {formatCurrency(order.delivery_fee)}
+                                    </span>
+                                  </div>
+                                )}
+                                <div className="flex justify-between items-center mt-2 md:mt-3 lg:mt-4 pt-2 md:pt-3 lg:pt-4 border-t border-gray-700">
+                                  <span className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl font-bold text-gray-200">Total:</span>
+                                  <span className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl 2xl:text-4xl font-bold text-primary-yellow">
+                                    {formatCurrency(order.total)}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
                           </div>
 
-                          <div className="w-full lg:w-auto text-left lg:text-right space-y-2 md:space-y-3">
-                            <p className="text-lg sm:text-xl md:text-2xl font-bold text-primary-yellow mb-2 lg:mb-0">
+                          <div className="w-full lg:w-auto text-left lg:text-right space-y-2 md:space-y-3 lg:space-y-4">
+                            <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-bold text-primary-yellow mb-2 lg:mb-0">
                               {formatCurrency(order.total)}
                             </p>
-                            <div className="flex flex-col sm:flex-row gap-2">
+                            <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
                               <select
                                 value={order.status}
                                 onChange={(e) => updateOrderStatus(order.id, e.target.value)}
-                                className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm"
+                                className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-2 sm:px-3 md:px-4 lg:px-5 py-1.5 sm:py-2 md:py-2.5 lg:py-3 text-xs sm:text-sm md:text-base lg:text-lg"
                               >
                                 <option value="pending">Aguardando</option>
                                 <option value="confirmed">Confirmado</option>
@@ -897,18 +1115,18 @@ function AdminContent() {
                               </select>
                               <button
                                 onClick={() => handleEditOrder(order)}
-                                className="bg-blue-600 hover:bg-blue-700 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg flex items-center justify-center gap-1 text-xs sm:text-sm"
+                                className="bg-blue-600 hover:bg-blue-700 px-2 sm:px-3 md:px-4 lg:px-5 py-1.5 sm:py-2 md:py-2.5 lg:py-3 rounded-lg flex items-center justify-center gap-1 md:gap-2 text-xs sm:text-sm md:text-base lg:text-lg"
                                 title="Editar pedido"
                               >
-                                <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                                <Edit className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-6 lg:w-6 lg:h-6" />
                                 <span className="hidden sm:inline">Editar</span>
                               </button>
                               <button
                                 onClick={() => handleDeleteOrder(order.id)}
-                                className="bg-red-600 hover:bg-red-700 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg flex items-center justify-center gap-1 text-xs sm:text-sm"
+                                className="bg-red-600 hover:bg-red-700 px-2 sm:px-3 md:px-4 lg:px-5 py-1.5 sm:py-2 md:py-2.5 lg:py-3 rounded-lg flex items-center justify-center gap-1 md:gap-2 text-xs sm:text-sm md:text-base lg:text-lg"
                                 title="Excluir pedido"
                               >
-                                <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                                <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-6 lg:w-6 lg:h-6" />
                                 <span className="hidden sm:inline">Excluir</span>
                               </button>
                             </div>
@@ -920,7 +1138,7 @@ function AdminContent() {
                 })}
               </div>
 
-              {orders.length === 0 && (
+              {ordersToShow.length === 0 && (
                 <div className="text-center py-12 text-gray-400">
                   <p className="text-base sm:text-lg">Nenhum pedido encontrado</p>
                 </div>
@@ -930,13 +1148,14 @@ function AdminContent() {
         )}
 
         {/* Categorias */}
-        {activeTab === "categories" && (
+        {(activeTab === "categories" || searchParams.get("tab") === "categories") && (
           <div>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 md:mb-6">
               <h2 className="text-xl md:text-2xl font-bold">Categorias</h2>
               <Link
                 href="/admin/categories/new"
                 className="bg-primary-yellow text-black px-4 py-2 rounded-lg font-bold hover:bg-opacity-90 transition flex items-center gap-2 text-sm md:text-base whitespace-nowrap"
+                style={{ display: 'flex', backgroundColor: '#ccff00' }}
               >
                 <Plus className="w-4 h-4 md:w-5 md:h-5" />
                 Nova Categoria
@@ -972,6 +1191,36 @@ function AdminContent() {
             </div>
           </div>
         )}
+
+        {/* Botões Flutuantes */}
+        {(() => {
+          const currentTab = activeTab || searchParams.get("tab");
+          if (currentTab === "products") {
+            return (
+              <Link
+                href="/admin/products/new"
+                className="fixed bottom-6 right-6 bg-[#ccff00] text-black px-6 py-4 rounded-full font-bold hover:bg-opacity-90 transition shadow-lg shadow-[#ccff00]/30 flex items-center gap-2 z-50"
+                style={{ display: 'flex', backgroundColor: '#ccff00', position: 'fixed' }}
+              >
+                <Plus className="w-5 h-5" />
+                <span className="hidden sm:inline">Novo Produto</span>
+              </Link>
+            );
+          }
+          if (currentTab === "categories") {
+            return (
+              <Link
+                href="/admin/categories/new"
+                className="fixed bottom-6 right-6 bg-[#ccff00] text-black px-6 py-4 rounded-full font-bold hover:bg-opacity-90 transition shadow-lg shadow-[#ccff00]/30 flex items-center gap-2 z-50"
+                style={{ display: 'flex', backgroundColor: '#ccff00', position: 'fixed' }}
+              >
+                <Plus className="w-5 h-5" />
+                <span className="hidden sm:inline">Nova Categoria</span>
+              </Link>
+            );
+          }
+          return null;
+        })()}
       </div>
     </div>
   );

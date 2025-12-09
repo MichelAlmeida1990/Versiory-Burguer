@@ -19,6 +19,7 @@ interface Order {
   delivery_address?: string;
   payment_method: string;
   created_at: string;
+  customer_name?: string;
   order_items: Array<{
     id: string;
     quantity: number;
@@ -86,12 +87,46 @@ export default function PedidoPage() {
   const status = statusConfig[order.status as keyof typeof statusConfig] || statusConfig.pending;
   const StatusIcon = status.icon;
 
+  // Função para obter saudação baseada no horário
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return "Bom dia";
+    if (hour >= 12 && hour < 18) return "Boa tarde";
+    return "Boa noite";
+  };
+
+  // Função para extrair o primeiro nome
+  const getFirstName = (fullName?: string) => {
+    if (!fullName) return null;
+    return fullName.split(" ")[0];
+  };
+
+  const firstName = getFirstName(order.customer_name);
+  const greeting = getGreeting();
+
   return (
     <div className="min-h-screen bg-black text-white">
       <Header />
       <div className="container mx-auto px-4 py-4 md:py-8">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-2xl md:text-4xl font-bold mb-4 md:mb-8">Acompanhamento do Pedido</h1>
+
+          {/* Mensagem de Boas-vindas */}
+          {firstName && (
+            <div className="bg-gradient-to-r from-primary-yellow/15 to-primary-yellow/5 border border-primary-yellow/20 rounded-lg p-4 md:p-5 mb-4 md:mb-6">
+              <div className="flex items-center gap-2 md:gap-3">
+                <span className="text-2xl md:text-3xl">👋</span>
+                <div>
+                  <h2 className="text-lg md:text-xl font-bold text-primary-yellow">
+                    {greeting}, {firstName}!
+                  </h2>
+                  <p className="text-gray-300 text-sm md:text-base mt-1">
+                    Obrigado pelo seu pedido! Acompanhe o status em tempo real abaixo.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Status */}
           <div className="bg-gray-900 rounded-lg p-4 md:p-6 mb-4 md:mb-6">
