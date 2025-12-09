@@ -638,11 +638,11 @@ function AdminContent() {
   return (
     <div className="min-h-screen bg-black text-white">
       <Header />
-      <div className="container mx-auto px-4 py-4 md:py-8">
-        <h1 className="text-2xl md:text-4xl font-bold mb-4 md:mb-8">Painel Administrativo</h1>
+      <div className="container mx-auto px-4 py-3 md:py-5">
+        <h1 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Painel Administrativo</h1>
 
         {/* Tabs */}
-        <div className="flex gap-2 md:gap-4 mb-4 md:mb-8 border-b border-gray-800 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+        <div className="flex gap-2 md:gap-3 mb-3 md:mb-4 border-b border-gray-800 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
           {[
             { id: "dashboard", label: "Dashboard" },
             { id: "products", label: "Produtos" },
@@ -655,7 +655,7 @@ function AdminContent() {
                 setActiveTab(tab.id as any);
                 router.push(`/admin?tab=${tab.id}`);
               }}
-              className={`px-3 md:px-6 py-2 md:py-3 font-medium border-b-2 transition whitespace-nowrap flex-shrink-0 ${
+              className={`px-3 md:px-4 py-2 md:py-2 font-medium border-b-2 transition whitespace-nowrap flex-shrink-0 ${
                 activeTab === tab.id
                   ? "border-primary-yellow text-primary-yellow"
                   : "border-transparent text-gray-400 hover:text-white"
@@ -668,51 +668,51 @@ function AdminContent() {
 
         {/* Dashboard */}
         {activeTab === "dashboard" && (
-          <div className="space-y-6 md:space-y-8">
+          <div className="space-y-4 md:space-y-5">
             {/* Cards de Métricas */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-              <div className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 rounded-lg p-4 md:p-6 border border-yellow-500/30">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+              <div className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 rounded-lg p-3 md:p-4 border border-yellow-500/30">
                 <div className="flex items-center justify-between mb-2">
-                  <Calendar className="w-5 h-5 md:w-6 md:h-6 text-yellow-400" />
+                  <Calendar className="w-4 h-4 md:w-5 md:h-5 text-yellow-400" />
                   <span className="text-xs text-gray-400">Hoje</span>
                 </div>
-                <p className="text-2xl md:text-3xl font-bold mb-1">{formatCurrency(stats.todayRevenue)}</p>
+                <p className="text-xl md:text-2xl font-bold mb-1">{formatCurrency(stats.todayRevenue)}</p>
                 <p className="text-sm text-gray-400">{stats.todayOrders} pedido{stats.todayOrders !== 1 ? 's' : ''}</p>
               </div>
               
-              <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 rounded-lg p-4 md:p-6 border border-blue-500/30">
+              <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 rounded-lg p-3 md:p-4 border border-blue-500/30">
                 <div className="flex items-center justify-between mb-2">
-                  <TrendingUp className="w-5 h-5 md:w-6 md:h-6 text-blue-400" />
+                  <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-blue-400" />
                   <span className="text-xs text-gray-400">7 dias</span>
                 </div>
-                <p className="text-2xl md:text-3xl font-bold mb-1">{formatCurrency(stats.weekRevenue)}</p>
+                <p className="text-xl md:text-2xl font-bold mb-1">{formatCurrency(stats.weekRevenue)}</p>
                 <p className="text-sm text-gray-400">{stats.weekOrders} pedido{stats.weekOrders !== 1 ? 's' : ''}</p>
               </div>
               
-              <div className="bg-gradient-to-br from-green-500/20 to-green-600/10 rounded-lg p-4 md:p-6 border border-green-500/30">
+              <div className="bg-gradient-to-br from-green-500/20 to-green-600/10 rounded-lg p-3 md:p-4 border border-green-500/30">
                 <div className="flex items-center justify-between mb-2">
-                  <DollarSign className="w-5 h-5 md:w-6 md:h-6 text-green-400" />
+                  <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-green-400" />
                   <span className="text-xs text-gray-400">30 dias</span>
                 </div>
-                <p className="text-2xl md:text-3xl font-bold mb-1">{formatCurrency(stats.monthRevenue)}</p>
+                <p className="text-xl md:text-2xl font-bold mb-1">{formatCurrency(stats.monthRevenue)}</p>
                 <p className="text-sm text-gray-400">{stats.monthOrders} pedido{stats.monthOrders !== 1 ? 's' : ''}</p>
               </div>
               
-              <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 rounded-lg p-4 md:p-6 border border-purple-500/30">
+              <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 rounded-lg p-3 md:p-4 border border-purple-500/30">
                 <div className="flex items-center justify-between mb-2">
-                  <Package className="w-5 h-5 md:w-6 md:h-6 text-purple-400" />
+                  <Package className="w-4 h-4 md:w-5 md:h-5 text-purple-400" />
                   <span className="text-xs text-gray-400">Total</span>
                 </div>
-                <p className="text-2xl md:text-3xl font-bold mb-1">{formatCurrency(stats.totalRevenue)}</p>
+                <p className="text-xl md:text-2xl font-bold mb-1">{formatCurrency(stats.totalRevenue)}</p>
                 <p className="text-sm text-gray-400">{stats.totalOrders} pedido{stats.totalOrders !== 1 ? 's' : ''}</p>
               </div>
             </div>
 
             {/* Gráficos */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               {/* Gráfico de Vendas por Dia */}
               <div className="bg-gray-900 rounded-lg p-3 md:p-4 overflow-hidden">
-                <h3 className="text-base md:text-lg font-bold mb-3 md:mb-4">Vendas por Dia (últimos 30 dias)</h3>
+                <h3 className="text-sm md:text-base font-bold mb-2 md:mb-3">Vendas por Dia (últimos 30 dias)</h3>
                 {salesData.length > 0 ? (
                   <div className="w-full" style={{ minHeight: '250px', height: '250px' }}>
                     <ResponsiveContainer width="100%" height="100%">
@@ -744,7 +744,7 @@ function AdminContent() {
 
               {/* Gráfico de Faturamento por Dia */}
               <div className="bg-gray-900 rounded-lg p-3 md:p-4 overflow-hidden">
-                <h3 className="text-base md:text-lg font-bold mb-3 md:mb-4">Faturamento por Dia (últimos 30 dias)</h3>
+                <h3 className="text-sm md:text-base font-bold mb-2 md:mb-3">Faturamento por Dia (últimos 30 dias)</h3>
                 {revenueData.length > 0 ? (
                   <div className="w-full" style={{ minHeight: '250px', height: '250px' }}>
                     <ResponsiveContainer width="100%" height="100%">
@@ -774,10 +774,10 @@ function AdminContent() {
             </div>
 
             {/* Gráficos Inferiores */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
               {/* Top Produtos */}
-              <div className="bg-gray-900 rounded-lg p-4 md:p-6">
-                <h3 className="text-lg md:text-xl font-bold mb-4 md:mb-6">Top 5 Produtos Mais Vendidos</h3>
+              <div className="bg-gray-900 rounded-lg p-3 md:p-4">
+                <h3 className="text-base md:text-lg font-bold mb-3 md:mb-4">Top 5 Produtos Mais Vendidos</h3>
                 <div className="space-y-3">
                   {topProducts.length > 0 ? (
                     topProducts.map((product, index) => (
@@ -802,7 +802,7 @@ function AdminContent() {
 
               {/* Métodos de Pagamento */}
               <div className="bg-gray-900 rounded-lg p-3 md:p-4 overflow-hidden">
-                <h3 className="text-base md:text-lg font-bold mb-3 md:mb-4">Faturamento por Método de Pagamento</h3>
+                <h3 className="text-sm md:text-base font-bold mb-2 md:mb-3">Faturamento por Método de Pagamento</h3>
                 {paymentMethods.length > 0 ? (
                   <div className="w-full" style={{ minHeight: '250px', height: '250px' }}>
                     <ResponsiveContainer width="100%" height="100%">
@@ -838,7 +838,7 @@ function AdminContent() {
 
             {/* Status de Pedidos */}
             <div className="bg-gray-900 rounded-lg p-3 md:p-4">
-              <h3 className="text-base md:text-lg font-bold mb-3 md:mb-4">Status dos Pedidos</h3>
+              <h3 className="text-sm md:text-base font-bold mb-2 md:mb-3">Status dos Pedidos</h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
                 {[
                   { status: 'pending', label: 'Aguardando', color: 'bg-yellow-500', count: orders.filter(o => o.status === 'pending').length },
@@ -850,7 +850,7 @@ function AdminContent() {
                   { status: 'cancelled', label: 'Cancelado', color: 'bg-red-500', count: orders.filter(o => o.status === 'cancelled').length },
                 ].map((item) => (
                   <div key={item.status} className="text-center">
-                    <div className={`${item.color} w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full mx-auto mb-2 flex items-center justify-center text-white font-bold text-sm sm:text-base md:text-lg`}>
+                    <div className={`${item.color} w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full mx-auto mb-2 flex items-center justify-center text-white font-bold text-xs sm:text-sm md:text-base`}>
                       {item.count}
                     </div>
                     <p className="text-xs sm:text-sm text-gray-400 break-words">{item.label}</p>
@@ -865,7 +865,7 @@ function AdminContent() {
         {(activeTab === "products" || searchParams.get("tab") === "products") && (
           <div>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 md:mb-6">
-              <h2 className="text-xl md:text-2xl font-bold">Produtos</h2>
+              <h2 className="text-lg md:text-xl font-bold">Produtos</h2>
               <Link
                 href="/admin/products/new"
                 className="bg-primary-yellow text-black px-4 py-2 rounded-lg font-bold hover:bg-opacity-90 transition flex items-center gap-2 text-sm md:text-base whitespace-nowrap"
@@ -878,9 +878,9 @@ function AdminContent() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
               {products.map((product) => (
                 <div key={product.id} className="bg-gray-900 rounded-lg p-3 md:p-4">
-                  <h3 className="text-lg md:text-xl font-bold mb-1 md:mb-2">{product.name}</h3>
+                  <h3 className="text-base md:text-lg font-bold mb-1 md:mb-2">{product.name}</h3>
                   <p className="text-gray-400 text-xs md:text-sm mb-2 line-clamp-2">{product.description}</p>
-                  <p className="text-primary-yellow font-bold mb-3 md:mb-4 text-base md:text-lg">
+                  <p className="text-primary-yellow font-bold mb-2 md:mb-3 text-sm md:text-base">
                     {formatCurrency(product.price)}
                   </p>
                   <div className="flex gap-2">
@@ -921,7 +921,7 @@ function AdminContent() {
         {activeTab === "orders" && (
             <div>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 md:mb-6">
-              <h2 className="text-xl md:text-2xl font-bold">Pedidos</h2>
+              <h2 className="text-lg md:text-xl font-bold">Pedidos</h2>
                 <div className="flex items-center gap-3 flex-wrap">
                   <div className="flex gap-2">
                     <button
@@ -1006,14 +1006,14 @@ function AdminContent() {
                   return (
                     <div key={order.id} className="relative pl-10 sm:pl-12 md:pl-16">
                       {/* Timeline Dot */}
-                      <div className={`absolute left-1.5 sm:left-2 md:left-4 top-2 w-3 h-3 sm:w-4 sm:h-4 md:w-6 md:h-6 rounded-full ${statusColors[order.status] || "bg-gray-500"} border-2 sm:border-4 border-black z-10`}></div>
+                      <div className={`absolute left-1.5 sm:left-2 md:left-3 top-2 w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 rounded-full ${statusColors[order.status] || "bg-gray-500"} border-2 sm:border-3 border-black z-10`}></div>
 
                       {/* Order Card */}
                       <div className="bg-gray-900 rounded-lg p-3 sm:p-4 md:p-5 hover:bg-gray-800 transition">
                         <div className="flex flex-col md:flex-row justify-between items-start gap-3 md:gap-4">
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-                              <h3 className="text-base sm:text-lg md:text-xl font-bold break-words">
+                              <h3 className="text-sm sm:text-base md:text-lg font-bold break-words">
                                 Pedido #{order.id.slice(0, 8)}
                               </h3>
                               <span className={`px-2 py-1 rounded text-xs sm:text-sm font-medium whitespace-nowrap ${statusColors[order.status] || "bg-gray-500"}`}>
@@ -1095,7 +1095,7 @@ function AdminContent() {
                                 )}
                                 <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-700">
                                   <span className="text-sm sm:text-base font-bold text-gray-200">Total:</span>
-                                  <span className="text-base sm:text-lg md:text-xl font-bold text-primary-yellow">
+                                  <span className="text-sm sm:text-base md:text-lg font-bold text-primary-yellow">
                                     {formatCurrency(order.total)}
                                   </span>
                                 </div>
@@ -1104,7 +1104,7 @@ function AdminContent() {
                           </div>
 
                           <div className="w-full md:w-auto text-left md:text-right space-y-2 md:space-y-3">
-                            <p className="text-lg sm:text-xl md:text-2xl font-bold text-primary-yellow mb-2 md:mb-0">
+                            <p className="text-base sm:text-lg md:text-xl font-bold text-primary-yellow mb-2 md:mb-0">
                               {formatCurrency(order.total)}
                             </p>
                             <div className="flex flex-col sm:flex-row gap-2">
@@ -1159,7 +1159,7 @@ function AdminContent() {
         {(activeTab === "categories" || searchParams.get("tab") === "categories") && (
           <div>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 md:mb-6">
-              <h2 className="text-xl md:text-2xl font-bold">Categorias</h2>
+              <h2 className="text-lg md:text-xl font-bold">Categorias</h2>
               <Link
                 href="/admin/categories/new"
                 className="bg-primary-yellow text-black px-4 py-2 rounded-lg font-bold hover:bg-opacity-90 transition flex items-center gap-2 text-sm md:text-base whitespace-nowrap"
@@ -1172,7 +1172,7 @@ function AdminContent() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
               {categories.map((category) => (
                 <div key={category.id} className="bg-gray-900 rounded-lg p-3 md:p-4">
-                  <h3 className="text-base md:text-xl font-bold mb-3">{category.name}</h3>
+                  <h3 className="text-sm md:text-lg font-bold mb-2">{category.name}</h3>
                   {category.order !== null && (
                     <p className="text-xs text-gray-400 mb-3">Ordem: {category.order}</p>
                   )}
