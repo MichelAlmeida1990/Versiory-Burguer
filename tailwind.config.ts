@@ -18,6 +18,12 @@ const config: Config = {
         },
         background: "#000000",
       },
+      screens: {
+        'sm': '640px',
+        'md': '768px',
+        // Removendo lg, xl e 2xl - tudo acima de 768px usa layout md
+        // Isso evita que o layout fique muito grande em TVs
+      },
     },
   },
   plugins: [],

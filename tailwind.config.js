@@ -1,4 +1,4 @@
-﻿/** @type {import('tailwindcss').Config} */
+/** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
@@ -8,14 +8,24 @@ module.exports = {
   ],
   theme: {
     extend: {
+      colors: {
+        primary: {
+          blue: "#031f5f",
+          azure: "#00afee",
+          pink: "#ca00ca",
+          brown: "#c2af00",
+          yellow: "#ccff00",
+        },
+        background: "#000000",
+      },
       screens: {
         'sm': '640px',
         'md': '768px',
-        'lg': '1024px',
-        // Removendo xl e 2xl para evitar layout muito grande em TVs
-        // Tudo acima de 1024px usa o mesmo layout lg
+        // Removendo lg, xl e 2xl - tudo acima de 768px usa layout md
+        // Isso evita que o layout fique muito grande em TVs
       },
     },
   },
   plugins: [],
 }
+

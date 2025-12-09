@@ -670,7 +670,7 @@ function AdminContent() {
         {activeTab === "dashboard" && (
           <div className="space-y-6 md:space-y-8">
             {/* Cards de Métricas */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
               <div className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 rounded-lg p-4 md:p-6 border border-yellow-500/30">
                 <div className="flex items-center justify-between mb-2">
                   <Calendar className="w-5 h-5 md:w-6 md:h-6 text-yellow-400" />
@@ -709,10 +709,10 @@ function AdminContent() {
             </div>
 
             {/* Gráficos */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               {/* Gráfico de Vendas por Dia */}
-              <div className="bg-gray-900 rounded-lg p-3 md:p-4 lg:p-6 overflow-hidden">
-                <h3 className="text-base md:text-lg lg:text-xl font-bold mb-3 md:mb-4 lg:mb-6">Vendas por Dia (últimos 30 dias)</h3>
+              <div className="bg-gray-900 rounded-lg p-3 md:p-4 overflow-hidden">
+                <h3 className="text-base md:text-lg font-bold mb-3 md:mb-4">Vendas por Dia (últimos 30 dias)</h3>
                 {salesData.length > 0 ? (
                   <div className="w-full" style={{ minHeight: '250px', height: '250px' }}>
                     <ResponsiveContainer width="100%" height="100%">
@@ -743,8 +743,8 @@ function AdminContent() {
               </div>
 
               {/* Gráfico de Faturamento por Dia */}
-              <div className="bg-gray-900 rounded-lg p-3 md:p-4 lg:p-6 overflow-hidden">
-                <h3 className="text-base md:text-lg lg:text-xl font-bold mb-3 md:mb-4 lg:mb-6">Faturamento por Dia (últimos 30 dias)</h3>
+              <div className="bg-gray-900 rounded-lg p-3 md:p-4 overflow-hidden">
+                <h3 className="text-base md:text-lg font-bold mb-3 md:mb-4">Faturamento por Dia (últimos 30 dias)</h3>
                 {revenueData.length > 0 ? (
                   <div className="w-full" style={{ minHeight: '250px', height: '250px' }}>
                     <ResponsiveContainer width="100%" height="100%">
@@ -774,7 +774,7 @@ function AdminContent() {
             </div>
 
             {/* Gráficos Inferiores */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
               {/* Top Produtos */}
               <div className="bg-gray-900 rounded-lg p-4 md:p-6">
                 <h3 className="text-lg md:text-xl font-bold mb-4 md:mb-6">Top 5 Produtos Mais Vendidos</h3>
@@ -801,8 +801,8 @@ function AdminContent() {
               </div>
 
               {/* Métodos de Pagamento */}
-              <div className="bg-gray-900 rounded-lg p-3 md:p-4 lg:p-6 overflow-hidden">
-                <h3 className="text-base md:text-lg lg:text-xl font-bold mb-3 md:mb-4 lg:mb-6">Faturamento por Método de Pagamento</h3>
+              <div className="bg-gray-900 rounded-lg p-3 md:p-4 overflow-hidden">
+                <h3 className="text-base md:text-lg font-bold mb-3 md:mb-4">Faturamento por Método de Pagamento</h3>
                 {paymentMethods.length > 0 ? (
                   <div className="w-full" style={{ minHeight: '250px', height: '250px' }}>
                     <ResponsiveContainer width="100%" height="100%">
@@ -837,9 +837,9 @@ function AdminContent() {
             </div>
 
             {/* Status de Pedidos */}
-            <div className="bg-gray-900 rounded-lg p-3 md:p-4 lg:p-6">
-              <h3 className="text-base md:text-lg lg:text-xl font-bold mb-3 md:mb-4 lg:mb-6">Status dos Pedidos</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 md:gap-4">
+            <div className="bg-gray-900 rounded-lg p-3 md:p-4">
+              <h3 className="text-base md:text-lg font-bold mb-3 md:mb-4">Status dos Pedidos</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
                 {[
                   { status: 'pending', label: 'Aguardando', color: 'bg-yellow-500', count: orders.filter(o => o.status === 'pending').length },
                   { status: 'confirmed', label: 'Confirmado', color: 'bg-blue-500', count: orders.filter(o => o.status === 'confirmed').length },
@@ -850,7 +850,7 @@ function AdminContent() {
                   { status: 'cancelled', label: 'Cancelado', color: 'bg-red-500', count: orders.filter(o => o.status === 'cancelled').length },
                 ].map((item) => (
                   <div key={item.status} className="text-center">
-                    <div className={`${item.color} w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full mx-auto mb-2 flex items-center justify-center text-white font-bold text-sm sm:text-base md:text-lg lg:text-2xl`}>
+                    <div className={`${item.color} w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full mx-auto mb-2 flex items-center justify-center text-white font-bold text-sm sm:text-base md:text-lg`}>
                       {item.count}
                     </div>
                     <p className="text-xs sm:text-sm text-gray-400 break-words">{item.label}</p>
@@ -875,7 +875,7 @@ function AdminContent() {
                 Novo Produto
               </Link>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
               {products.map((product) => (
                 <div key={product.id} className="bg-gray-900 rounded-lg p-3 md:p-4">
                   <h3 className="text-lg md:text-xl font-bold mb-1 md:mb-2">{product.name}</h3>
@@ -981,7 +981,7 @@ function AdminContent() {
                 {/* Timeline Line */}
                 <div className="absolute left-3 sm:left-4 md:left-6 top-0 bottom-0 w-0.5 bg-gray-700"></div>
 
-                <div className="space-y-3 md:space-y-4 lg:space-y-6" key={`orders-section-${filterStatus}`}>
+                <div className="space-y-3 md:space-y-4" key={`orders-section-${filterStatus}`}>
                   {ordersToShow.map((order, index) => {
                   const statusColors: Record<string, string> = {
                     pending: "bg-yellow-500",
@@ -1009,8 +1009,8 @@ function AdminContent() {
                       <div className={`absolute left-1.5 sm:left-2 md:left-4 top-2 w-3 h-3 sm:w-4 sm:h-4 md:w-6 md:h-6 rounded-full ${statusColors[order.status] || "bg-gray-500"} border-2 sm:border-4 border-black z-10`}></div>
 
                       {/* Order Card */}
-                      <div className="bg-gray-900 rounded-lg p-3 sm:p-4 md:p-5 lg:p-6 hover:bg-gray-800 transition">
-                        <div className="flex flex-col lg:flex-row justify-between items-start gap-3 md:gap-4">
+                      <div className="bg-gray-900 rounded-lg p-3 sm:p-4 md:p-5 hover:bg-gray-800 transition">
+                        <div className="flex flex-col md:flex-row justify-between items-start gap-3 md:gap-4">
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
                               <h3 className="text-base sm:text-lg md:text-xl font-bold break-words">
@@ -1103,8 +1103,8 @@ function AdminContent() {
                             )}
                           </div>
 
-                          <div className="w-full lg:w-auto text-left lg:text-right space-y-2 md:space-y-3">
-                            <p className="text-lg sm:text-xl md:text-2xl font-bold text-primary-yellow mb-2 lg:mb-0">
+                          <div className="w-full md:w-auto text-left md:text-right space-y-2 md:space-y-3">
+                            <p className="text-lg sm:text-xl md:text-2xl font-bold text-primary-yellow mb-2 md:mb-0">
                               {formatCurrency(order.total)}
                             </p>
                             <div className="flex flex-col sm:flex-row gap-2">
@@ -1169,7 +1169,7 @@ function AdminContent() {
                 Nova Categoria
               </Link>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
               {categories.map((category) => (
                 <div key={category.id} className="bg-gray-900 rounded-lg p-3 md:p-4">
                   <h3 className="text-base md:text-xl font-bold mb-3">{category.name}</h3>
