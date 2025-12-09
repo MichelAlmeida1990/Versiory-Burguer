@@ -126,7 +126,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1, duration: 0.8 }}
-            className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl mb-4 sm:mb-6 md:mb-8 text-white font-bold drop-shadow-2xl px-2"
+            className="text-lg sm:text-xl md:text-2xl lg:text-3xl mb-4 sm:mb-6 md:mb-8 text-white font-bold drop-shadow-2xl px-2"
           >
             O sistema que sua empresa merece
           </motion.p>
@@ -135,7 +135,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.2, duration: 0.8 }}
-            className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl mb-4 sm:mb-6 md:mb-8 text-white font-semibold max-w-3xl mx-auto px-2 drop-shadow-lg leading-relaxed"
+            className="text-sm sm:text-base md:text-lg lg:text-xl mb-4 sm:mb-6 md:mb-8 text-white font-semibold max-w-3xl mx-auto px-2 drop-shadow-lg leading-relaxed"
           >
             Conquistando empreendedores pela facilidade, eficiência e resultados. Cada detalhe do sistema foi pensado para dar mais agilidade ao seu negócio e melhorar a experiência dos seus clientes.
           </motion.p>
@@ -144,7 +144,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.4, duration: 0.8 }}
-            className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl mb-4 sm:mb-6 md:mb-8 text-white font-semibold max-w-3xl mx-auto px-2 drop-shadow-lg leading-relaxed"
+            className="text-sm sm:text-base md:text-lg lg:text-xl mb-4 sm:mb-6 md:mb-8 text-white font-semibold max-w-3xl mx-auto px-2 drop-shadow-lg leading-relaxed"
           >
             A Versiory traz evolução que seu negócio precisa para vender mais, atender melhor e crescer com tecnologia simples e acessível.
           </motion.p>
@@ -243,7 +243,7 @@ export default function Home() {
                   </div>
                 )}
                 {filteredProducts.length > 0 ? (
-                  <StaggerGrid key={`grid-${selectedCategory || 'all'}`} className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                  <StaggerGrid key={`grid-${selectedCategory || 'all'}`} className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                     {filteredProducts.map((product) => (
                       <StaggerItem key={product.id}>
                         <ProductCard 
