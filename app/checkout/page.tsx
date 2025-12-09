@@ -346,7 +346,7 @@ export default function CheckoutPage() {
               </div>
               <button
                 type="submit"
-                className="w-full bg-primary-yellow text-black py-4 rounded-lg text-lg font-bold hover:bg-opacity-90 transition"
+                className="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-lg text-lg font-bold transition"
               >
                 Confirmar Pedido
               </button>
