@@ -454,6 +454,31 @@ function AdminContent() {
     setPaymentMethods(methods);
   };
 
+  // Função para formatar minutos em horas/minutos/dias
+  const formatMinutes = (minutes: number): string => {
+    if (minutes < 60) {
+      return `${minutes} min`;
+    }
+
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+
+    if (hours < 24) {
+      if (remainingMinutes > 0) {
+        return `${hours}h ${remainingMinutes}min`;
+      }
+      return `${hours}h`;
+    }
+
+    const days = Math.floor(hours / 24);
+    const remainingHours = hours % 24;
+
+    if (remainingHours > 0) {
+      return `${days}d ${remainingHours}h`;
+    }
+    return `${days}d`;
+  };
+
   // Função para calcular tempo no status atual e verificar se está dentro dos limites
   const getTimeStatus = (order: any) => {
     if (!order || order.status === "delivered" || order.status === "cancelled") {
@@ -498,18 +523,19 @@ function AdminContent() {
 
     if (timeInStatus <= maxTime * 0.7) {
       status = "ok";
-      message = `${timeInStatus} min`;
+      message = formatMinutes(timeInStatus);
       color = "text-green-400";
       icon = CheckCircle;
     } else if (timeInStatus <= maxTime) {
       status = "warning";
-      message = `${timeInStatus} min (${maxTime - timeInStatus} min restantes)`;
+      const remaining = maxTime - timeInStatus;
+      message = `${formatMinutes(timeInStatus)} (${formatMinutes(remaining)} restantes)`;
       color = "text-yellow-400";
       icon = Clock;
     } else {
       status = "danger";
       const exceeded = timeInStatus - maxTime;
-      message = `${timeInStatus} min (${exceeded} min de atraso)`;
+      message = `${formatMinutes(timeInStatus)} (${formatMinutes(exceeded)} de atraso)`;
       color = "text-red-400";
       icon = AlertTriangle;
     }
