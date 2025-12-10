@@ -56,15 +56,26 @@ export function getTimeAgo(date: Date | string): string {
   }
 
   const diffInHours = Math.floor(diffInMinutes / 60);
+  const remainingMinutes = diffInMinutes % 60;
+  
   if (diffInHours < 24) {
+    if (remainingMinutes > 0) {
+      return `há ${diffInHours} hora${diffInHours !== 1 ? 's' : ''} e ${remainingMinutes} minuto${remainingMinutes !== 1 ? 's' : ''}`;
+    }
     return `há ${diffInHours} hora${diffInHours !== 1 ? 's' : ''}`;
   }
 
   const diffInDays = Math.floor(diffInHours / 24);
+  const remainingHours = diffInHours % 24;
+  
   if (diffInDays < 7) {
+    if (remainingHours > 0) {
+      return `há ${diffInDays} dia${diffInDays !== 1 ? 's' : ''} e ${remainingHours} hora${remainingHours !== 1 ? 's' : ''}`;
+    }
     return `há ${diffInDays} dia${diffInDays !== 1 ? 's' : ''}`;
   }
 
+  // Para mais de 7 dias, mostrar a data formatada
   return formatDate(date);
 }
 
