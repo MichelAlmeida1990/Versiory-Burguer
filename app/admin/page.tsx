@@ -958,8 +958,8 @@ function AdminContent() {
             <div>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 md:mb-6">
               <h2 className="text-lg md:text-xl font-bold">Pedidos</h2>
-                <div className="flex items-center gap-2 sm:gap-3 flex-wrap w-full sm:w-auto">
-                  <div className="flex gap-1.5 sm:gap-2 flex-wrap overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 w-full sm:w-auto">
+                <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                  <div className="flex gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 w-full sm:w-auto">
                     <button
                       type="button"
                       onClick={(e) => {
