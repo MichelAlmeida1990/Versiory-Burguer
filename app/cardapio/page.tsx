@@ -28,11 +28,12 @@ export default function CardapioPage() {
         .select("*")
         .order("order");
 
-      // Carregar produtos
+      // Carregar produtos - apenas produtos com restaurant_id (produtos de restaurantes cadastrados)
       const { data: productsData } = await supabase
         .from("products")
         .select("*")
         .eq("available", true)
+        .not("restaurant_id", "is", null) // Apenas produtos com restaurant_id
         .order("name");
 
       if (categoriesData) setCategories(categoriesData);

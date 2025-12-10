@@ -20,11 +20,76 @@ export async function POST(request: NextRequest) {
       delivery_fee,
     } = body;
 
-    // Criar pedido
+    // Identificar o restaurante através dos produtos do pedido
+    let restaurantId: string | null = null;
+    
+    if (!items || items.length === 0) {
+      return NextResponse.json(
+        { error: "Nenhum item no pedido" },
+        { status: 400 }
+      );
+    }
+
+    // Buscar todos os produtos do pedido de uma vez
+    const productIds = items.map((item: any) => item.product_id).filter(Boolean);
+    
+    if (productIds.length === 0) {
+      return NextResponse.json(
+        { error: "IDs de produtos inválidos" },
+        { status: 400 }
+      );
+    }
+
+    console.log("Buscando restaurant_id para produtos:", productIds);
+
+    // Buscar produtos com restaurant_id
+    const { data: products, error: productsError } = await supabase
+      .from("products")
+      .select("id, restaurant_id")
+      .in("id", productIds)
+      .not("restaurant_id", "is", null);
+
+    if (productsError) {
+      console.error("Erro ao buscar produtos:", productsError);
+      return NextResponse.json(
+        { error: "Erro ao buscar informações dos produtos" },
+        { status: 500 }
+      );
+    }
+
+    if (!products || products.length === 0) {
+      console.error("Nenhum produto encontrado com restaurant_id. ProductIds:", productIds);
+      return NextResponse.json(
+        { error: "Os produtos selecionados não estão associados a nenhum restaurante. Por favor, adicione produtos válidos ao carrinho." },
+        { status: 400 }
+      );
+    }
+
+    // Pegar o restaurant_id do primeiro produto encontrado
+    // Todos os produtos do pedido devem ser do mesmo restaurante
+    restaurantId = products[0].restaurant_id;
+
+    // Verificar se todos os produtos são do mesmo restaurante
+    const allSameRestaurant = products.every(p => p.restaurant_id === restaurantId);
+    if (!allSameRestaurant) {
+      console.warn("Atenção: Produtos de restaurantes diferentes no mesmo pedido");
+    }
+
+    if (!restaurantId) {
+      console.error("Não foi possível identificar o restaurante. Products:", products);
+      return NextResponse.json(
+        { error: "Não foi possível identificar o restaurante dos produtos" },
+        { status: 400 }
+      );
+    }
+
+    console.log("Restaurante identificado:", restaurantId);
+
+    // Criar pedido associado ao restaurante
     const { data: order, error: orderError } = await supabase
       .from("orders")
       .insert({
-        user_id: `guest_${Date.now()}`, // Em produção, usar autenticação real
+        user_id: restaurantId, // user_id em orders é o ID do restaurante
         status: "pending",
         total: paymentMethod === "pix" ? total * 0.95 : total,
         delivery_address:
