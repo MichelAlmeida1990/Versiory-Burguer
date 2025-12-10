@@ -146,7 +146,18 @@ export function ProductOptionsModal({ product, isOpen, onClose, onConfirm }: Pro
 
   const handleOptionChange = (optionId: string, valueId: string, type: "single" | "multiple") => {
     if (type === "single") {
-      setSelectedOptions({ ...selectedOptions, [optionId]: valueId });
+      // Se clicar na mesma opção já selecionada, desmarcar
+      // Caso contrário, selecionar a nova opção
+      const currentValue = selectedOptions[optionId];
+      if (currentValue === valueId) {
+        // Desmarcar se já estava selecionado
+        const newOptions = { ...selectedOptions };
+        delete newOptions[optionId];
+        setSelectedOptions(newOptions);
+      } else {
+        // Selecionar nova opção
+        setSelectedOptions({ ...selectedOptions, [optionId]: valueId });
+      }
     } else {
       const current = (selectedOptions[optionId] as string[]) || [];
       const newValue = current.includes(valueId)

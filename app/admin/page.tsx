@@ -54,7 +54,7 @@ function AdminContent() {
   const [revenueData, setRevenueData] = useState<any[]>([]);
   const [topProducts, setTopProducts] = useState<any[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
-  const [filterStatus, setFilterStatus] = useState<"all" | "active" | "delivered" | "cancelled">("active");
+  const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "confirmed" | "preparing" | "ready" | "delivering" | "delivered" | "cancelled" | "active">("active");
   const [showDelivered, setShowDelivered] = useState(false);
   const [timerUpdate, setTimerUpdate] = useState(0);
 
@@ -653,13 +653,22 @@ function AdminContent() {
   };
 
   // Calcular filtros de pedidos
-  const activeOrders = orders.filter(o => o.status !== "delivered" && o.status !== "cancelled");
-  const deliveredOrders = orders.filter(o => o.status === "delivered");
-  const cancelledOrders = orders.filter(o => o.status === "cancelled");
+  // Definir todos os status do fluxo de pedidos
+  const activeStatuses = ["pending", "confirmed", "preparing", "ready", "delivering"];
+  const deliveredStatus = "delivered";
+  const cancelledStatus = "cancelled";
   
-  const ordersToShow = filterStatus === "active" ? activeOrders : 
-                       filterStatus === "delivered" ? deliveredOrders : 
-                       filterStatus === "cancelled" ? cancelledOrders : orders;
+  // Filtrar pedidos seguindo o fluxo exato de cada fase
+  const activeOrders = orders.filter(o => activeStatuses.includes(o.status));
+  const deliveredOrders = orders.filter(o => o.status === deliveredStatus);
+  const cancelledOrders = orders.filter(o => o.status === cancelledStatus);
+  
+  // Filtrar pedidos baseado no status selecionado
+  const ordersToShow = filterStatus === "active" ? activeOrders :
+                       filterStatus === "delivered" ? deliveredOrders :
+                       filterStatus === "cancelled" ? cancelledOrders :
+                       filterStatus === "all" ? orders :
+                       orders.filter(o => o.status === filterStatus);
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -697,39 +706,39 @@ function AdminContent() {
           <div className="space-y-4 md:space-y-5">
             {/* Cards de Métricas */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-              <div className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 rounded-lg p-3 md:p-4 border border-yellow-500/30">
+              <div className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 rounded-lg p-3 md:p-4 border border-yellow-500/30 min-w-0">
                 <div className="flex items-center justify-between mb-2">
-                  <Calendar className="w-4 h-4 md:w-5 md:h-5 text-yellow-400" />
+                  <Calendar className="w-4 h-4 md:w-5 md:h-5 text-yellow-400 flex-shrink-0" />
                   <span className="text-xs text-gray-400">Hoje</span>
                 </div>
-                <p className="text-xl md:text-2xl font-bold mb-1">{formatCurrency(stats.todayRevenue)}</p>
+                <p className="text-lg sm:text-xl md:text-2xl font-bold mb-1 text-yellow-300 drop-shadow-lg break-words">{formatCurrency(stats.todayRevenue)}</p>
                 <p className="text-sm text-gray-400">{stats.todayOrders} pedido{stats.todayOrders !== 1 ? 's' : ''}</p>
               </div>
               
-              <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 rounded-lg p-3 md:p-4 border border-blue-500/30">
+              <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 rounded-lg p-3 md:p-4 border border-blue-500/30 min-w-0">
                 <div className="flex items-center justify-between mb-2">
-                  <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-blue-400" />
+                  <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-blue-400 flex-shrink-0" />
                   <span className="text-xs text-gray-400">7 dias</span>
                 </div>
-                <p className="text-xl md:text-2xl font-bold mb-1">{formatCurrency(stats.weekRevenue)}</p>
+                <p className="text-lg sm:text-xl md:text-2xl font-bold mb-1 text-blue-300 drop-shadow-lg break-words">{formatCurrency(stats.weekRevenue)}</p>
                 <p className="text-sm text-gray-400">{stats.weekOrders} pedido{stats.weekOrders !== 1 ? 's' : ''}</p>
               </div>
               
-              <div className="bg-gradient-to-br from-green-500/20 to-green-600/10 rounded-lg p-3 md:p-4 border border-green-500/30">
+              <div className="bg-gradient-to-br from-green-500/20 to-green-600/10 rounded-lg p-3 md:p-4 border border-green-500/30 min-w-0">
                 <div className="flex items-center justify-between mb-2">
-                  <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-green-400" />
+                  <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-green-400 flex-shrink-0" />
                   <span className="text-xs text-gray-400">30 dias</span>
                 </div>
-                <p className="text-xl md:text-2xl font-bold mb-1">{formatCurrency(stats.monthRevenue)}</p>
+                <p className="text-lg sm:text-xl md:text-2xl font-bold mb-1 text-green-300 drop-shadow-lg break-words">{formatCurrency(stats.monthRevenue)}</p>
                 <p className="text-sm text-gray-400">{stats.monthOrders} pedido{stats.monthOrders !== 1 ? 's' : ''}</p>
               </div>
               
-              <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 rounded-lg p-3 md:p-4 border border-purple-500/30">
+              <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 rounded-lg p-3 md:p-4 border border-purple-500/30 min-w-0">
                 <div className="flex items-center justify-between mb-2">
-                  <Package className="w-4 h-4 md:w-5 md:h-5 text-purple-400" />
+                  <Package className="w-4 h-4 md:w-5 md:h-5 text-purple-400 flex-shrink-0" />
                   <span className="text-xs text-gray-400">Total</span>
                 </div>
-                <p className="text-xl md:text-2xl font-bold mb-1">{formatCurrency(stats.totalRevenue)}</p>
+                <p className="text-lg sm:text-xl md:text-2xl font-bold mb-1 text-purple-300 drop-shadow-lg break-words">{formatCurrency(stats.totalRevenue)}</p>
                 <p className="text-sm text-gray-400">{stats.totalOrders} pedido{stats.totalOrders !== 1 ? 's' : ''}</p>
               </div>
             </div>
@@ -849,8 +858,9 @@ function AdminContent() {
                           })}
                         </Pie>
                         <Tooltip 
-                          contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px', fontSize: '12px' }}
-                          labelStyle={{ color: '#F3F4F6' }}
+                          contentStyle={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '12px', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }}
+                          labelStyle={{ color: '#1F2937', fontWeight: 'bold' }}
+                          itemStyle={{ color: '#065F46', fontWeight: 'bold' }}
                           formatter={(value: number) => formatCurrency(value)}
                         />
                       </PieChart>
@@ -949,7 +959,7 @@ function AdminContent() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 md:mb-6">
               <h2 className="text-lg md:text-xl font-bold">Pedidos</h2>
                 <div className="flex items-center gap-3 flex-wrap">
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     <button
                       type="button"
                       onClick={(e) => {
@@ -970,6 +980,81 @@ function AdminContent() {
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
+                        setFilterStatus("pending");
+                      }}
+                      className={`px-3 py-1.5 rounded text-xs sm:text-sm font-medium transition ${
+                        filterStatus === "pending"
+                          ? "bg-yellow-500 text-white font-bold shadow-lg shadow-yellow-500/30"
+                          : "text-gray-400 hover:text-white"
+                      }`}
+                    >
+                      Aguardando ({orders.filter(o => o.status === "pending").length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setFilterStatus("confirmed");
+                      }}
+                      className={`px-3 py-1.5 rounded text-xs sm:text-sm font-medium transition ${
+                        filterStatus === "confirmed"
+                          ? "bg-blue-500 text-white font-bold shadow-lg shadow-blue-500/30"
+                          : "text-gray-400 hover:text-white"
+                      }`}
+                    >
+                      Confirmado ({orders.filter(o => o.status === "confirmed").length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setFilterStatus("preparing");
+                      }}
+                      className={`px-3 py-1.5 rounded text-xs sm:text-sm font-medium transition ${
+                        filterStatus === "preparing"
+                          ? "bg-orange-500 text-white font-bold shadow-lg shadow-orange-500/30"
+                          : "text-gray-400 hover:text-white"
+                      }`}
+                    >
+                      Preparando ({orders.filter(o => o.status === "preparing").length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setFilterStatus("ready");
+                      }}
+                      className={`px-3 py-1.5 rounded text-xs sm:text-sm font-medium transition ${
+                        filterStatus === "ready"
+                          ? "bg-green-500 text-white font-bold shadow-lg shadow-green-500/30"
+                          : "text-gray-400 hover:text-white"
+                      }`}
+                    >
+                      Pronto ({orders.filter(o => o.status === "ready").length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setFilterStatus("delivering");
+                      }}
+                      className={`px-3 py-1.5 rounded text-xs sm:text-sm font-medium transition ${
+                        filterStatus === "delivering"
+                          ? "bg-purple-500 text-white font-bold shadow-lg shadow-purple-500/30"
+                          : "text-gray-400 hover:text-white"
+                      }`}
+                    >
+                      Saiu para Entrega ({orders.filter(o => o.status === "delivering").length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                         setFilterStatus("delivered");
                       }}
                       className={`px-3 py-1.5 rounded text-xs sm:text-sm font-medium transition ${
@@ -978,7 +1063,7 @@ function AdminContent() {
                           : "text-gray-400 hover:text-white"
                       }`}
                     >
-                      Entregues ({deliveredOrders.length})
+                      Entregue ({deliveredOrders.length})
                     </button>
                     <button
                       type="button"
@@ -993,7 +1078,7 @@ function AdminContent() {
                           : "text-gray-400 hover:text-white"
                       }`}
                     >
-                      Cancelados ({cancelledOrders.length})
+                      Cancelado ({cancelledOrders.length})
                     </button>
                   </div>
                   <div className="text-sm text-gray-400">
