@@ -958,8 +958,8 @@ function AdminContent() {
             <div>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 md:mb-6">
               <h2 className="text-lg md:text-xl font-bold">Pedidos</h2>
-                <div className="flex items-center gap-3 flex-wrap">
-                  <div className="flex gap-2 flex-wrap">
+                <div className="flex items-center gap-2 sm:gap-3 flex-wrap w-full sm:w-auto">
+                  <div className="flex gap-1.5 sm:gap-2 flex-wrap overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 w-full sm:w-auto">
                     <button
                       type="button"
                       onClick={(e) => {
@@ -967,7 +967,7 @@ function AdminContent() {
                         e.stopPropagation();
                         setFilterStatus("active");
                       }}
-                      className={`px-3 py-1.5 rounded text-xs sm:text-sm font-medium transition ${
+                      className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded text-xs font-medium transition whitespace-nowrap flex-shrink-0 ${
                         filterStatus === "active"
                           ? "bg-[#ccff00] text-black font-bold shadow-lg shadow-[#ccff00]/30"
                           : "text-gray-400 hover:text-white"
@@ -982,7 +982,7 @@ function AdminContent() {
                         e.stopPropagation();
                         setFilterStatus("pending");
                       }}
-                      className={`px-3 py-1.5 rounded text-xs sm:text-sm font-medium transition ${
+                      className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded text-xs font-medium transition whitespace-nowrap flex-shrink-0 ${
                         filterStatus === "pending"
                           ? "bg-yellow-500 text-white font-bold shadow-lg shadow-yellow-500/30"
                           : "text-gray-400 hover:text-white"
@@ -997,7 +997,7 @@ function AdminContent() {
                         e.stopPropagation();
                         setFilterStatus("confirmed");
                       }}
-                      className={`px-3 py-1.5 rounded text-xs sm:text-sm font-medium transition ${
+                      className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded text-xs font-medium transition whitespace-nowrap flex-shrink-0 ${
                         filterStatus === "confirmed"
                           ? "bg-blue-500 text-white font-bold shadow-lg shadow-blue-500/30"
                           : "text-gray-400 hover:text-white"
@@ -1012,7 +1012,7 @@ function AdminContent() {
                         e.stopPropagation();
                         setFilterStatus("preparing");
                       }}
-                      className={`px-3 py-1.5 rounded text-xs sm:text-sm font-medium transition ${
+                      className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded text-xs font-medium transition whitespace-nowrap flex-shrink-0 ${
                         filterStatus === "preparing"
                           ? "bg-orange-500 text-white font-bold shadow-lg shadow-orange-500/30"
                           : "text-gray-400 hover:text-white"
@@ -1027,7 +1027,7 @@ function AdminContent() {
                         e.stopPropagation();
                         setFilterStatus("ready");
                       }}
-                      className={`px-3 py-1.5 rounded text-xs sm:text-sm font-medium transition ${
+                      className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded text-xs font-medium transition whitespace-nowrap flex-shrink-0 ${
                         filterStatus === "ready"
                           ? "bg-green-500 text-white font-bold shadow-lg shadow-green-500/30"
                           : "text-gray-400 hover:text-white"
@@ -1042,7 +1042,7 @@ function AdminContent() {
                         e.stopPropagation();
                         setFilterStatus("delivering");
                       }}
-                      className={`px-3 py-1.5 rounded text-xs sm:text-sm font-medium transition ${
+                      className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded text-xs font-medium transition whitespace-nowrap flex-shrink-0 ${
                         filterStatus === "delivering"
                           ? "bg-purple-500 text-white font-bold shadow-lg shadow-purple-500/30"
                           : "text-gray-400 hover:text-white"
@@ -1057,7 +1057,7 @@ function AdminContent() {
                         e.stopPropagation();
                         setFilterStatus("delivered");
                       }}
-                      className={`px-3 py-1.5 rounded text-xs sm:text-sm font-medium transition ${
+                      className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded text-xs font-medium transition whitespace-nowrap flex-shrink-0 ${
                         filterStatus === "delivered"
                           ? "bg-green-600 text-white font-bold shadow-lg shadow-green-600/30"
                           : "text-gray-400 hover:text-white"
@@ -1072,7 +1072,7 @@ function AdminContent() {
                         e.stopPropagation();
                         setFilterStatus("cancelled");
                       }}
-                      className={`px-3 py-1.5 rounded text-xs sm:text-sm font-medium transition ${
+                      className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded text-xs font-medium transition whitespace-nowrap flex-shrink-0 ${
                         filterStatus === "cancelled"
                           ? "bg-red-600 text-white font-bold shadow-lg shadow-red-600/30"
                           : "text-gray-400 hover:text-white"
