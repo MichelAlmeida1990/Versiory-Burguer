@@ -1,9 +1,18 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Cliente Supabase com configuração de persistência de sessão
+export const supabase = createSupabaseClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    storageKey: 'sb-auth-token',
+  },
+});
 
 // Tipos para o banco de dados
 export interface Product {
@@ -14,6 +23,7 @@ export interface Product {
   image: string;
   category_id: string;
   available: boolean;
+  restaurant_id?: string | null; // ID do restaurante (UUID ou null)
   created_at: string;
   updated_at: string;
 }

@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
       items,
       total,
       delivery_fee,
+      restaurant_id, // ID do restaurante (opcional, usado quando produtos são antigos)
     } = body;
 
     // Identificar o restaurante através dos produtos do pedido
@@ -40,17 +41,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("Buscando restaurant_id para produtos:", productIds);
-
-    // Buscar produtos com restaurant_id
+    // Buscar produtos (com ou sem restaurant_id)
     const { data: products, error: productsError } = await supabase
       .from("products")
-      .select("id, restaurant_id")
-      .in("id", productIds)
-      .not("restaurant_id", "is", null);
+      .select("id, restaurant_id, name")
+      .in("id", productIds);
 
     if (productsError) {
-      console.error("Erro ao buscar produtos:", productsError);
+      console.error("❌ Erro ao buscar produtos:", productsError);
       return NextResponse.json(
         { error: "Erro ao buscar informações dos produtos" },
         { status: 500 }
@@ -58,38 +56,126 @@ export async function POST(request: NextRequest) {
     }
 
     if (!products || products.length === 0) {
-      console.error("Nenhum produto encontrado com restaurant_id. ProductIds:", productIds);
       return NextResponse.json(
-        { error: "Os produtos selecionados não estão associados a nenhum restaurante. Por favor, adicione produtos válidos ao carrinho." },
+        { error: "Produtos não encontrados" },
         { status: 400 }
       );
     }
 
-    // Pegar o restaurant_id do primeiro produto encontrado
-    // Todos os produtos do pedido devem ser do mesmo restaurante
-    restaurantId = products[0].restaurant_id;
+    console.log("📦 Produtos encontrados:", products.map(p => ({ 
+      id: p.id, 
+      name: p.name, 
+      restaurant_id: p.restaurant_id,
+      restaurant_id_string: p.restaurant_id ? String(p.restaurant_id) : null,
+      restaurant_id_tipo: typeof p.restaurant_id 
+    })));
 
-    // Verificar se todos os produtos são do mesmo restaurante
-    const allSameRestaurant = products.every(p => p.restaurant_id === restaurantId);
-    if (!allSameRestaurant) {
-      console.warn("Atenção: Produtos de restaurantes diferentes no mesmo pedido");
+    // Identificar o restaurante:
+    // 1. Primeiro tenta pelos produtos (se algum produto tiver restaurant_id) - PRIORIDADE MÁXIMA
+    // 2. Se todos os produtos forem antigos (sem restaurant_id), usa o restaurant_id do body
+    // 3. Se não conseguir identificar, REJEITA o pedido
+    const produtosComRestaurante = products.filter(p => p.restaurant_id);
+    const produtosSemRestaurante = products.filter(p => !p.restaurant_id);
+    
+    console.log("🔍 Análise de produtos:");
+    console.log("   - Produtos com restaurante:", produtosComRestaurante.length);
+    console.log("   - Produtos sem restaurante:", produtosSemRestaurante.length);
+    console.log("   - restaurant_id do body:", restaurant_id);
+
+    if (produtosComRestaurante.length > 0) {
+      // PRIORIDADE 1: Se tem produtos com restaurant_id, usar o restaurant_id deles
+      const primeiroProdutoComRestaurante = produtosComRestaurante[0];
+      restaurantId = primeiroProdutoComRestaurante.restaurant_id;
+      
+      console.log("✅ Restaurante identificado pelos produtos:", restaurantId);
+      
+      // Verificar se TODOS os produtos (com restaurant_id) pertencem ao MESMO restaurante
+      const todosMesmoRestaurante = produtosComRestaurante.every(p => p.restaurant_id === restaurantId);
+      if (!todosMesmoRestaurante) {
+        console.error("❌ Produtos de restaurantes diferentes no pedido!");
+        const restaurantesNoPedido = [...new Set(produtosComRestaurante.map(p => p.restaurant_id).filter(Boolean))];
+        console.error("   Restaurantes encontrados:", restaurantesNoPedido);
+        return NextResponse.json(
+          { 
+            error: `Os produtos selecionados são de restaurantes diferentes. Por favor, adicione apenas produtos do mesmo restaurante.` 
+          },
+          { status: 400 }
+        );
+      }
+      
+      // Se tem produtos sem restaurante E produtos com restaurante, rejeitar
+      if (produtosSemRestaurante.length > 0) {
+        console.error("❌ Mistura de produtos antigos e novos no pedido!");
+        return NextResponse.json(
+          { 
+            error: "Não é possível misturar produtos antigos (sem restaurante) com produtos novos (com restaurante). Por favor, faça pedidos separados." 
+          },
+          { status: 400 }
+        );
+      }
+    } else if (produtosSemRestaurante.length > 0) {
+      // PRIORIDADE 2: Se TODOS os produtos são antigos (sem restaurant_id)
+      // Tentar usar o restaurant_id do body primeiro
+      if (restaurant_id) {
+        restaurantId = restaurant_id;
+        console.log("⚠️ Pedido com produtos antigos, usando restaurant_id do body:", restaurantId);
+      } else {
+        // Se não tem restaurant_id no body, usar automaticamente o UUID do demo@versiory.com.br
+        // (que é o dono dos produtos antigos)
+        // UUID conhecido do demo: f5f457d9-821e-4a21-9029-e181b1bee792
+        restaurantId = "f5f457d9-821e-4a21-9029-e181b1bee792";
+        console.log("✅ Pedido com produtos antigos, associando automaticamente ao demo@versiory.com.br");
+        console.log("   UUID do demo:", restaurantId);
+      }
+    } else {
+      // Caso impossível, mas por segurança
+      console.error("❌ Nenhum produto encontrado no pedido (caso impossível)");
+      return NextResponse.json(
+        { error: "Erro interno: nenhum produto encontrado" },
+        { status: 500 }
+      );
     }
-
+    
     if (!restaurantId) {
-      console.error("Não foi possível identificar o restaurante. Products:", products);
       return NextResponse.json(
-        { error: "Não foi possível identificar o restaurante dos produtos" },
+        { error: "Não foi possível identificar o restaurante" },
         { status: 400 }
       );
     }
 
-    console.log("Restaurante identificado:", restaurantId);
+    // VALIDAÇÃO FINAL: Garantir que restaurantId foi identificado
+    if (!restaurantId) {
+      console.error("❌ ERRO CRÍTICO: restaurantId não foi identificado após todas as tentativas!");
+      console.error("   Produtos com restaurante:", produtosComRestaurante.length);
+      console.error("   Produtos sem restaurante:", produtosSemRestaurante.length);
+      console.error("   restaurant_id do body:", restaurant_id);
+      return NextResponse.json(
+        { 
+          error: "Erro interno: não foi possível identificar o restaurante. Por favor, tente novamente ou entre em contato com o suporte." 
+        },
+        { status: 500 }
+      );
+    }
+
+    const restaurantIdString = String(restaurantId);
+    console.log("✅ Restaurante identificado com SUCESSO:", restaurantIdString);
+    console.log("✅ Total de produtos no pedido:", products.length);
+    console.log("✅ Produtos com restaurante:", produtosComRestaurante.length);
+    console.log("✅ Produtos antigos:", produtosSemRestaurante.length);
+    console.log("📦 Criando pedido com user_id (restaurant_id):", restaurantIdString);
+    console.log("📦 Tipo do restaurantIdString:", typeof restaurantIdString);
+    console.log("📦 Valor exato que será salvo:", restaurantIdString);
 
     // Criar pedido associado ao restaurante
+    // user_id em orders é VARCHAR, então garantir que seja string
+    // IMPORTANTE: Garantir que o user_id seja exatamente o UUID do restaurante como string
+    const finalUserId = String(restaurantId).trim();
+    console.log("💾 Salvando pedido com user_id final:", finalUserId, "Tipo:", typeof finalUserId);
+    
     const { data: order, error: orderError } = await supabase
       .from("orders")
       .insert({
-        user_id: restaurantId, // user_id em orders é o ID do restaurante
+        user_id: finalUserId, // user_id em orders é o ID do restaurante (garantir string)
         status: "pending",
         total: paymentMethod === "pix" ? total * 0.95 : total,
         delivery_address:
@@ -105,7 +191,18 @@ export async function POST(request: NextRequest) {
       .select()
       .single();
 
-    if (orderError) throw orderError;
+    if (orderError) {
+      console.error("❌ Erro ao criar pedido:", orderError);
+      console.error("❌ Detalhes do erro:", JSON.stringify(orderError, null, 2));
+      throw orderError;
+    }
+    
+    console.log("✅ Pedido criado com sucesso!");
+    console.log("   - ID do pedido:", order.id);
+    console.log("   - user_id salvo no banco:", order.user_id);
+    console.log("   - user_id que enviamos:", finalUserId);
+    console.log("   - Comparação:", String(order.user_id) === String(finalUserId));
+    console.log("   - Restaurante identificado:", restaurantIdString);
 
     // Criar itens do pedido
     const orderItems = items.map((item: any) => ({

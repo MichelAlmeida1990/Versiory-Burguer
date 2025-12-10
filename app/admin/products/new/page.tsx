@@ -144,7 +144,16 @@ export default function NewProductPage() {
         return;
       }
 
+      // Obter usuário logado para associar ao restaurante
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("Você precisa estar logado para criar produtos");
+        return;
+      }
+
       const { data: newProduct, error } = await supabase.from("products").insert({
+        restaurant_id: user.id,
         name: formData.name.trim(),
         description: formData.description.trim() || null,
         price: parseFloat(formData.price),

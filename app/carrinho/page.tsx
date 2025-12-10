@@ -50,6 +50,22 @@ export default function CarrinhoPage() {
     loadOptionNames();
   }, [loadOptionNames]);
 
+  // Verificar se há produtos de restaurantes diferentes no carrinho
+  useEffect(() => {
+    const restaurantIds = new Set(
+      items
+        .map(item => item.product.restaurant_id)
+        .filter(id => id !== null && id !== undefined)
+    );
+    
+    // Se houver produtos de restaurantes diferentes (e nenhum produto antigo), avisar
+    // Produtos antigos (sem restaurant_id) são permitidos
+    if (restaurantIds.size > 1) {
+      console.warn("⚠️ Produtos de restaurantes diferentes no carrinho:", Array.from(restaurantIds));
+      toast.error("Você tem produtos de restaurantes diferentes no carrinho. Adicione apenas produtos do mesmo restaurante.");
+    }
+  }, [items, removeItem]);
+
   const subtotal = getTotal();
   const total = subtotal + deliveryFee - discount;
 

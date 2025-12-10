@@ -47,12 +47,12 @@ export default function Home() {
 
       setCategories(categoriesData);
 
-      // Carregar produtos - apenas produtos com restaurant_id (produtos de restaurantes cadastrados)
+      // Carregar produtos - produtos com restaurant_id OU produtos antigos (sem restaurant_id)
+      // Produtos antigos aparecem no cardápio público para todos os clientes
       const { data: productsData, error: productsError } = await supabase
         .from("products")
         .select("id, name, description, price, image, category_id, available, restaurant_id, created_at, updated_at")
-        .eq("available", true)
-        .not("restaurant_id", "is", null) // Apenas produtos com restaurant_id
+        .eq("available", true) // Apenas produtos ativos
         .order("name");
 
       if (productsError) {
@@ -65,12 +65,14 @@ export default function Home() {
         return;
       }
 
-      // Verificar produtos e suas categorias - apenas produtos com restaurant_id
+      // Verificar produtos e suas categorias
+      // Produtos podem ter restaurant_id (novos) ou não ter (antigos)
       const categoryIds = new Set(categoriesData.map(c => c.id));
       const validProducts = productsData.filter(p => {
-        return p.category_id && categoryIds.has(p.category_id) && p.restaurant_id; // Garantir que tem restaurant_id
+        return p.category_id && categoryIds.has(p.category_id); // Apenas verificar categoria
       });
       
+      console.log("📦 Produtos válidos:", validProducts.length, "de", productsData.length);
       setProducts(validProducts);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);

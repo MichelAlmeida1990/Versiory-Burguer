@@ -106,7 +106,16 @@ export default function NewCategoryPage() {
         return;
       }
 
+      // Obter usuário logado para associar ao restaurante
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("Você precisa estar logado para criar categorias");
+        return;
+      }
+
       const { error } = await supabase.from("categories").insert({
+        restaurant_id: user.id,
         name: formData.name.trim(),
         image: formData.image.trim() || null,
         order: parseInt(formData.order) || 0,

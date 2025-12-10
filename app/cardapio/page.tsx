@@ -28,14 +28,15 @@ export default function CardapioPage() {
         .select("*")
         .order("order");
 
-      // Carregar produtos - apenas produtos com restaurant_id (produtos de restaurantes cadastrados)
+      // Carregar produtos - produtos com restaurant_id OU produtos antigos (sem restaurant_id)
+      // Produtos antigos aparecem no cardápio público para todos os clientes
       const { data: productsData } = await supabase
         .from("products")
         .select("*")
-        .eq("available", true)
-        .not("restaurant_id", "is", null) // Apenas produtos com restaurant_id
+        .eq("available", true) // Apenas produtos ativos
         .order("name");
 
+      console.log("📦 Produtos no cardápio (com restaurant_id):", productsData?.length || 0);
       if (categoriesData) setCategories(categoriesData);
       if (productsData) setProducts(productsData);
     } catch (error) {

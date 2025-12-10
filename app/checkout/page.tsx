@@ -46,12 +46,60 @@ export default function CheckoutPage() {
       return;
     }
 
+    // Email é obrigatório para identificar pedidos do cliente
+    if (!formData.email || !formData.email.trim()) {
+      toast.error("O email é obrigatório para acompanhar seus pedidos");
+      return;
+    }
+
     if (formData.deliveryType === "delivery" && !formData.address) {
       toast.error("Preencha o endereço de entrega");
       return;
     }
 
+    // Desabilitar o botão de submit para evitar múltiplos envios
+    const submitButton = e.currentTarget.querySelector('button[type="submit"]') as HTMLButtonElement;
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = "Processando...";
+    }
+
     try {
+      // Identificar restaurante pelos produtos do carrinho
+      // VALIDAÇÃO: Garantir que todos os produtos pertencem ao mesmo restaurante
+      const produtosComRestaurante = items.filter(item => item.product.restaurant_id);
+      const produtosSemRestaurante = items.filter(item => !item.product.restaurant_id);
+      
+      let restaurantId: string | null = null;
+      
+      if (produtosComRestaurante.length > 0) {
+        // Se tem produtos com restaurante, usar o restaurante deles
+        restaurantId = produtosComRestaurante[0].product.restaurant_id || null;
+        
+        // Verificar se TODOS os produtos com restaurante pertencem ao MESMO restaurante
+        const todosMesmoRestaurante = produtosComRestaurante.every(
+          item => item.product.restaurant_id === restaurantId
+        );
+        
+        if (!todosMesmoRestaurante) {
+          toast.error("Os produtos selecionados são de restaurantes diferentes. Por favor, adicione apenas produtos do mesmo restaurante.");
+          return;
+        }
+        
+        // Não permitir misturar produtos com e sem restaurante
+        if (produtosSemRestaurante.length > 0) {
+          toast.error("Não é possível misturar produtos antigos com produtos novos. Por favor, faça pedidos separados.");
+          return;
+        }
+        
+        console.log("✅ Restaurante identificado pelos produtos:", restaurantId);
+      } else if (produtosSemRestaurante.length > 0) {
+        // Se todos os produtos são antigos, a API vai buscar automaticamente o UUID do demo@versiory.com.br
+        // (que é o dono dos produtos antigos)
+        restaurantId = null; // Deixar a API identificar automaticamente
+        console.log("⚠️ Pedido com produtos antigos, API vai identificar o restaurante automaticamente");
+      }
+
       // Criar pedido no Supabase
       const response = await fetch("/api/orders", {
         method: "POST",
@@ -67,6 +115,7 @@ export default function CheckoutPage() {
           })),
           total: formData.paymentMethod === "pix" ? total * 0.95 : total,
           delivery_fee: formData.deliveryType === "delivery" ? deliveryFee : 0,
+          restaurant_id: restaurantId, // Enviar restaurant_id se identificado
         }),
       });
 
@@ -80,12 +129,36 @@ export default function CheckoutPage() {
         throw new Error("Resposta inválida do servidor");
       }
 
-      toast.success("Pedido realizado com sucesso!");
+      // Salvar informações do cliente no localStorage para filtrar pedidos depois
+      // Usar uma chave única baseada em nome+telefone+email para evitar conflitos
+      if (typeof window !== 'undefined' && formData.email) {
+        const clientKey = `${formData.name}_${formData.phone}_${formData.email}`.toLowerCase().replace(/\s+/g, '_');
+        localStorage.setItem('lastOrderEmail', formData.email);
+        localStorage.setItem('lastOrderClientKey', clientKey);
+        localStorage.setItem('lastOrderName', formData.name);
+        localStorage.setItem('lastOrderPhone', formData.phone);
+      }
+
+      // Limpar carrinho antes de redirecionar
       clearCart();
-      router.push(`/pedidos/${result.id}`);
+      
+      // Mostrar mensagem de sucesso
+      toast.success("Pedido realizado com sucesso!");
+      
+      // Aguardar um pouco antes de redirecionar para garantir que o toast apareça
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Redirecionar usando window.location para garantir que funcione
+      window.location.href = `/pedidos/${result.id}`;
     } catch (error: any) {
       console.error("Erro ao criar pedido:", error);
       toast.error(error.message || "Erro ao finalizar pedido. Tente novamente.");
+      
+      // Reabilitar o botão em caso de erro
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = "Confirmar Pedido";
+      }
     }
   };
 
@@ -164,16 +237,21 @@ export default function CheckoutPage() {
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium mb-2">
-                    E-mail
+                    E-mail *
                   </label>
                   <input
                     type="email"
+                    required
                     value={formData.email}
                     onChange={(e) =>
                       setFormData({ ...formData, email: e.target.value })
                     }
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-primary-yellow"
+                    placeholder="seu@email.com"
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Obrigatório para acompanhar seus pedidos
+                  </p>
                 </div>
               </div>
             </div>

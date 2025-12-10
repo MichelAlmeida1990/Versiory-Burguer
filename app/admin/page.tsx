@@ -3,9 +3,10 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
+import { AuthGuard } from "@/components/admin/auth-guard";
 import { Product, Category, supabase } from "@/lib/supabase";
 import { formatCurrency, formatDate, formatTime, formatDateTime, getTimeAgo } from "@/lib/utils";
-import { Plus, Edit, Trash2, Package, Users, DollarSign, TrendingUp, Calendar, ShoppingBag, Clock, CheckCircle, AlertTriangle } from "lucide-react";
+import { Plus, Edit, Trash2, Package, Users, DollarSign, TrendingUp, Calendar, ShoppingBag, Clock, CheckCircle, AlertTriangle, LogOut } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -36,6 +37,7 @@ function AdminContent() {
     }
     return "dashboard";
   });
+  const [user, setUser] = useState<any>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
@@ -70,35 +72,88 @@ function AdminContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
-  // Atualizar timer a cada minuto
+  // Atualizar timer e recarregar dados automaticamente
   useEffect(() => {
+    // Recarregar a cada 30 segundos (mais frequente para pegar pedidos novos)
     const interval = setInterval(() => {
       setTimerUpdate(prev => prev + 1);
-    }, 60000); // Atualizar a cada minuto
+      // Recarregar dados automaticamente
+      if (activeTab === "orders" || activeTab === "dashboard") {
+        loadData();
+      }
+    }, 30000); // Atualizar a cada 30 segundos
+    
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]); // Recarregar quando mudar de aba
+
+  // Carregar informações do usuário
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+    });
   }, []);
 
   const loadData = async () => {
     try {
+      // Obter usuário logado para filtrar dados
+      const { data: { user } } = await supabase.auth.getUser();
+      const restaurantId = user?.id;
+
+      if (!restaurantId) {
+        console.warn("⚠️ Usuário não autenticado, não é possível carregar dados");
+        return;
+      }
+
+      console.log("🔍 Admin - Filtrando dados para restaurante:", restaurantId, "Email:", user?.email);
+
       if (activeTab === "products" || activeTab === "dashboard") {
-        const { data: productsData } = await supabase
+        // Filtrar produtos do restaurante logado
+        // Demo tem produtos antigos associados, então busca apenas produtos do demo
+        const { data: productsData, error: productsError } = await supabase
           .from("products")
           .select("*")
+          .eq("restaurant_id", restaurantId)
           .order("name");
-        if (productsData) setProducts(productsData);
+        
+        if (productsError) {
+          console.error("❌ Erro ao buscar produtos:", productsError);
+        } else {
+          console.log("📦 Produtos no admin:", productsData?.length || 0, "Restaurante:", restaurantId);
+          setProducts(productsData || []);
+        }
       }
 
       if (activeTab === "categories" || activeTab === "dashboard") {
-        const { data: categoriesData } = await supabase
+        // Filtrar categorias do restaurante logado
+        // Demo tem categorias antigas associadas, então busca apenas categorias do demo
+        const { data: categoriesData, error: categoriesError } = await supabase
           .from("categories")
           .select("*")
+          .eq("restaurant_id", restaurantId)
           .order("order");
-        if (categoriesData) setCategories(categoriesData);
+        
+        if (categoriesError) {
+          console.error("❌ Erro ao buscar categorias:", categoriesError);
+        } else {
+          console.log("📁 Categorias no admin:", categoriesData?.length || 0, "Restaurante:", restaurantId);
+          setCategories(categoriesData || []);
+        }
       }
 
       if (activeTab === "orders" || activeTab === "dashboard") {
-        // Carregar pedidos com itens e histórico de status
-        const { data: ordersData } = await supabase
+        // Carregar pedidos com itens e histórico de status - apenas do restaurante logado
+        // user_id em orders é o ID do restaurante (pode ser UUID ou legacy_timestamp)
+        console.log("🔍 Admin - Buscando pedidos para restaurante:", restaurantId, "Tipo:", typeof restaurantId, "Email:", user?.email);
+        
+        // Buscar pedidos - user_id é VARCHAR, então converter para string
+        // Tentar buscar com o UUID como string
+        const restaurantIdString = String(restaurantId);
+        console.log("🔍 Buscando pedidos com user_id (string):", restaurantIdString);
+        console.log("🔍 UUID original:", restaurantId);
+        
+        // Tentar buscar pedidos - user_id é VARCHAR no banco
+        let query = supabase
           .from("orders")
           .select(`
             *,
@@ -107,9 +162,197 @@ function AdminContent() {
               products (*)
             ),
             order_status_history (*)
-          `)
+          `);
+        
+        // Comparar user_id como string (VARCHAR no banco)
+        // Garantir que ambos sejam strings para comparação exata
+        const cleanRestaurantId = String(restaurantId).trim();
+        query = query.eq("user_id", cleanRestaurantId);
+        
+        let { data: ordersData, error: ordersError } = await query
           .order("created_at", { ascending: false })
           .limit(500);
+        
+        console.log("🔍 Query executada - Pedidos encontrados:", ordersData?.length || 0);
+        console.log("🔍 Buscando com user_id:", cleanRestaurantId);
+        if (ordersData && ordersData.length > 0) {
+          console.log("📋 Primeiro pedido encontrado - user_id:", ordersData[0].user_id, "Tipo:", typeof ordersData[0].user_id);
+          console.log("📋 RestaurantId esperado:", cleanRestaurantId, "Tipo:", typeof cleanRestaurantId);
+          console.log("📋 Comparação direta:", ordersData[0].user_id === cleanRestaurantId);
+          console.log("📋 Comparação com String():", String(ordersData[0].user_id) === String(cleanRestaurantId));
+        } else {
+          console.log("⚠️ Nenhum pedido encontrado com user_id =", cleanRestaurantId);
+          // Buscar todos os pedidos recentes para debug
+          const { data: allRecentOrders } = await supabase
+            .from("orders")
+            .select("id, user_id, customer_name, customer_email, created_at")
+            .order("created_at", { ascending: false })
+            .limit(10);
+          console.log("🔍 Últimos 10 pedidos no banco:", allRecentOrders?.map(o => ({
+            id: o.id,
+            user_id: o.user_id,
+            user_id_type: typeof o.user_id,
+            customer_name: o.customer_name,
+            customer_email: o.customer_email,
+            created_at: o.created_at,
+            user_id_matches: String(o.user_id) === cleanRestaurantId,
+            user_id_trimmed_matches: String(o.user_id).trim() === cleanRestaurantId
+          })));
+        }
+
+        // Se não encontrou pedidos pelo user_id, tentar buscar por produtos do restaurante
+        // (fallback para pedidos criados com ID legado mas que têm produtos do restaurante)
+        if (!ordersError && (!ordersData || ordersData.length === 0)) {
+          console.log("⚠️ Nenhum pedido encontrado pelo user_id, tentando buscar por produtos do restaurante...");
+          console.log("🔍 RestaurantId para comparação:", restaurantId, "Tipo:", typeof restaurantId);
+          console.log("🔍 RestaurantIdString para comparação:", restaurantIdString, "Tipo:", typeof restaurantIdString);
+          
+          // UUID do demo (dono dos produtos antigos)
+          const DEMO_UUID = "f5f457d9-821e-4a21-9029-e181b1bee792";
+          const isDemoRestaurant = String(restaurantId) === DEMO_UUID;
+          
+          // Se for demo, buscar pedidos mais antigos também (30 dias) para pegar pedidos com produtos antigos
+          const daysToSearch = isDemoRestaurant ? 30 : 7;
+          
+          // Buscar TODOS os pedidos recentes para análise
+          const { data: ordersByProducts, error: errorByProducts } = await supabase
+            .from("orders")
+            .select(`
+              *,
+              order_items (
+                *,
+                products (*)
+              ),
+              order_status_history (*)
+            `)
+            .gte("created_at", new Date(Date.now() - daysToSearch * 24 * 60 * 60 * 1000).toISOString())
+            .order("created_at", { ascending: false })
+            .limit(500);
+          
+          console.log("🔍 Total de pedidos encontrados para análise:", ordersByProducts?.length || 0);
+          console.log("🔍 Buscando pedidos dos últimos", daysToSearch, "dias (é demo?", isDemoRestaurant, ")");
+          
+          if (!errorByProducts && ordersByProducts) {
+            // Filtrar apenas pedidos que têm produtos do restaurante
+            const filteredOrders = ordersByProducts.filter((order: any) => {
+              if (!order.order_items || order.order_items.length === 0) {
+                console.log("⚠️ Pedido", order.id, "sem itens");
+                return false;
+              }
+              
+              // Log detalhado dos produtos do pedido
+              const productDetails = order.order_items.map((item: any) => ({
+                product_id: item.product_id,
+                product_name: item.products?.name,
+                product_restaurant_id: item.products?.restaurant_id,
+                product_restaurant_id_type: typeof item.products?.restaurant_id,
+                restaurant_id_match: item.products?.restaurant_id === restaurantId,
+                restaurant_id_string_match: String(item.products?.restaurant_id) === restaurantIdString,
+              }));
+              
+              console.log("📦 Pedido", order.id, "- Produtos:", productDetails);
+              console.log("📦 Pedido", order.id, "- user_id atual:", order.user_id, "| user_id esperado:", restaurantIdString);
+              
+              // Verificar se todos os produtos pertencem ao restaurante OU são produtos antigos
+              const allProductsFromRestaurant = order.order_items.every((item: any) => {
+                const product = item.products;
+                if (!product) return false;
+                
+                // Converter ambos para string para comparação segura
+                const productRestaurantId = product.restaurant_id ? String(product.restaurant_id) : null;
+                const expectedRestaurantId = String(restaurantId);
+                
+                // Produto pertence ao restaurante OU é produto antigo (sem restaurant_id)
+                return productRestaurantId === expectedRestaurantId || productRestaurantId === null;
+              });
+              
+              // Verificar se pelo menos um produto pertence ao restaurante
+              const hasProductFromRestaurant = order.order_items.some((item: any) => {
+                const product = item.products;
+                if (!product) return false;
+                
+                // Converter ambos para string para comparação segura
+                const productRestaurantId = product.restaurant_id ? String(product.restaurant_id) : null;
+                const expectedRestaurantId = String(restaurantId);
+                
+                return productRestaurantId === expectedRestaurantId;
+              });
+              
+              // Verificar se todos os produtos são antigos (sem restaurant_id)
+              const allProductsAreOld = order.order_items.every((item: any) => {
+                const product = item.products;
+                if (!product) return false;
+                return !product.restaurant_id;
+              });
+              
+              // Incluir o pedido se:
+              // 1. Todos os produtos pertencem ao restaurante OU são antigos
+              // 2. E (pelo menos um produto pertence ao restaurante OU (é demo E todos são antigos))
+              const shouldInclude = allProductsFromRestaurant && (
+                hasProductFromRestaurant || (isDemoRestaurant && allProductsAreOld)
+              );
+              
+              console.log("🔍 Pedido", order.id, "- Incluir?", shouldInclude, "| Tem produto do restaurante?", hasProductFromRestaurant, "| Todos produtos válidos?", allProductsFromRestaurant, "| Todos antigos?", allProductsAreOld, "| É demo?", isDemoRestaurant);
+              
+              return shouldInclude;
+            });
+            
+            if (filteredOrders.length > 0) {
+              console.log("✅ Encontrados", filteredOrders.length, "pedidos por produtos do restaurante");
+              
+              // Atualizar o user_id desses pedidos para o restaurante correto ANTES de usar
+              // (correção automática)
+              for (const order of filteredOrders) {
+                if (String(order.user_id) !== restaurantIdString) {
+                  console.log("🔧 Corrigindo user_id do pedido", order.id, "de", order.user_id, "para", restaurantIdString);
+                  const { error: updateError } = await supabase
+                    .from("orders")
+                    .update({ user_id: restaurantIdString })
+                    .eq("id", order.id);
+                  
+                  if (updateError) {
+                    console.error("❌ Erro ao corrigir user_id do pedido", order.id, ":", updateError);
+                  } else {
+                    console.log("✅ user_id corrigido com sucesso para o pedido", order.id);
+                    // Atualizar o user_id no objeto local também
+                    order.user_id = restaurantIdString;
+                  }
+                }
+              }
+              
+              ordersData = filteredOrders;
+            } else {
+              console.log("⚠️ Nenhum pedido encontrado mesmo após busca por produtos");
+            }
+          } else if (errorByProducts) {
+            console.error("❌ Erro ao buscar pedidos por produtos:", errorByProducts);
+          }
+        }
+
+        if (ordersError) {
+          console.error("❌ Erro ao buscar pedidos:", ordersError);
+          console.error("❌ Detalhes do erro:", JSON.stringify(ordersError, null, 2));
+        } else {
+          console.log("✅ Pedidos encontrados:", ordersData?.length || 0);
+          if (ordersData && ordersData.length > 0) {
+            console.log("📋 Primeiro pedido user_id:", ordersData[0].user_id, "Tipo:", typeof ordersData[0].user_id);
+            console.log("📋 RestaurantId esperado:", restaurantIdString, "Tipo:", typeof restaurantIdString);
+            console.log("📋 Comparação:", ordersData[0].user_id === restaurantIdString);
+          } else {
+            // Se não encontrou pedidos, buscar todos para debug
+            const { data: allOrders } = await supabase
+              .from("orders")
+              .select("id, user_id, customer_name, created_at")
+              .order("created_at", { ascending: false })
+              .limit(10);
+            console.log("🔍 Últimos 10 pedidos no banco (para debug):", allOrders?.map(o => ({
+              id: o.id,
+              user_id: o.user_id,
+              customer_name: o.customer_name,
+              created_at: o.created_at
+            })));
+          }
+        }
         
         // Ordenar order_status_history por created_at
         if (ordersData) {
@@ -122,37 +365,41 @@ function AdminContent() {
           });
         }
         
-        if (ordersData) {
-          setOrders(ordersData);
-          const activeOrders = ordersData.filter((o) => o.status !== "cancelled");
-          
-          // Calcular métricas
-          const now = new Date();
-          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-          const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-          const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-          
-          const todayOrders = activeOrders.filter(o => new Date(o.created_at) >= today);
-          const weekOrders = activeOrders.filter(o => new Date(o.created_at) >= weekAgo);
-          const monthOrders = activeOrders.filter(o => new Date(o.created_at) >= monthAgo);
-          
-          setStats({
-            totalOrders: ordersData.length,
-            totalRevenue: activeOrders.reduce((sum, o) => sum + Number(o.total), 0),
-            pendingOrders: ordersData.filter((o) => o.status === "pending").length,
-            todayRevenue: todayOrders.reduce((sum, o) => sum + Number(o.total), 0),
-            todayOrders: todayOrders.length,
-            weekRevenue: weekOrders.reduce((sum, o) => sum + Number(o.total), 0),
-            weekOrders: weekOrders.length,
-            monthRevenue: monthOrders.reduce((sum, o) => sum + Number(o.total), 0),
-            monthOrders: monthOrders.length,
-          });
+        // Sempre atualizar pedidos e estatísticas (mesmo que seja array vazio)
+        const finalOrdersData = ordersData || [];
+        setOrders(finalOrdersData);
+        
+        const activeOrders = finalOrdersData.filter((o) => o.status !== "cancelled");
+        
+        // Calcular métricas (sempre, mesmo que não tenha pedidos)
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+        
+        const todayOrders = activeOrders.filter(o => new Date(o.created_at) >= today);
+        const weekOrders = activeOrders.filter(o => new Date(o.created_at) >= weekAgo);
+        const monthOrders = activeOrders.filter(o => new Date(o.created_at) >= monthAgo);
+        
+        const newStats = {
+          totalOrders: finalOrdersData.length,
+          totalRevenue: activeOrders.reduce((sum, o) => sum + Number(o.total || 0), 0),
+          pendingOrders: finalOrdersData.filter((o) => o.status === "pending").length,
+          todayRevenue: todayOrders.reduce((sum, o) => sum + Number(o.total || 0), 0),
+          todayOrders: todayOrders.length,
+          weekRevenue: weekOrders.reduce((sum, o) => sum + Number(o.total || 0), 0),
+          weekOrders: weekOrders.length,
+          monthRevenue: monthOrders.reduce((sum, o) => sum + Number(o.total || 0), 0),
+          monthOrders: monthOrders.length,
+        };
+        
+        console.log("📊 Estatísticas calculadas:", newStats);
+        setStats(newStats);
 
-          // Processar dados para gráficos
-          processChartData(activeOrders);
-          processTopProducts(ordersData);
-          processPaymentMethods(activeOrders);
-        }
+        // Processar dados para gráficos (sempre, mesmo que seja array vazio)
+        processChartData(activeOrders);
+        processTopProducts(finalOrdersData);
+        processPaymentMethods(activeOrders);
       }
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
@@ -670,11 +917,73 @@ function AdminContent() {
                        filterStatus === "all" ? orders :
                        orders.filter(o => o.status === filterStatus);
 
+  // Função para obter nome do usuário
+  const getUserName = () => {
+    if (!user) return null;
+    
+    // Tentar pegar do metadata primeiro
+    const metadata = user.user_metadata;
+    if (metadata?.name) return metadata.name;
+    if (metadata?.full_name) return metadata.full_name;
+    
+    // Se não tiver, extrair do email
+    if (user.email) {
+      const emailParts = user.email.split('@')[0];
+      // Capitalizar primeira letra e remover pontos/traços
+      return emailParts
+        .split(/[._-]/)
+        .map((part: string) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+    }
+    
+    return null;
+  };
+
+  // Função para obter saudação baseada no horário
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return "Bom dia";
+    if (hour >= 12 && hour < 18) return "Boa tarde";
+    return "Boa noite";
+  };
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success("Logout realizado com sucesso!");
+      router.push("/admin/login");
+    } catch (error: any) {
+      toast.error("Erro ao fazer logout");
+      console.error(error);
+    }
+  };
+
+  const userName = getUserName();
+  const greeting = getGreeting();
+
   return (
     <div className="min-h-screen bg-black text-white">
       <Header />
       <div className="container mx-auto px-4 py-3 md:py-5">
-        <h1 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Painel Administrativo</h1>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 md:mb-4">
+          <div>
+            <h1 className="text-xl md:text-2xl font-bold">Painel Administrativo</h1>
+            {userName && (
+              <p className="text-sm md:text-base text-gray-400 mt-1">
+                {greeting}, <span className="text-primary-yellow font-semibold">{userName}</span>! 👋
+              </p>
+            )}
+          </div>
+          {user && (
+            <button
+              onClick={handleLogout}
+              className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded text-xs sm:text-sm font-medium transition flex items-center gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Sair</span>
+            </button>
+          )}
+        </div>
 
         {/* Tabs */}
         <div className="flex gap-2 md:gap-3 mb-3 md:mb-4 border-b border-gray-800 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
@@ -1347,16 +1656,20 @@ function AdminContent() {
 
 export default function AdminPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-black text-white">
-        <Header />
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">Carregando...</div>
+    <AuthGuard>
+      <Suspense fallback={
+        <div className="min-h-screen bg-black text-white">
+          <Header />
+          <div className="container mx-auto px-4 py-8">
+            <div className="text-center">Carregando...</div>
+          </div>
         </div>
-      </div>
-    }>
-      <AdminContent />
-    </Suspense>
+      }>
+        <AdminContent />
+      </Suspense>
+    </AuthGuard>
   );
 }
+
+// Exportar AdminContent como named export
 

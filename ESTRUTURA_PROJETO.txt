@@ -1,0 +1,170 @@
+C:\Projetos\restaurante\.deploy-trigger
+C:\Projetos\restaurante\.env.local
+C:\Projetos\restaurante\.eslintrc.json
+C:\Projetos\restaurante\.gitignore
+C:\Projetos\restaurante\.nvmrc
+C:\Projetos\restaurante\.vercelignore
+C:\Projetos\restaurante\ANALISE_COZINHA.md
+C:\Projetos\restaurante\ANALISE_ONEDRIVE.md
+C:\Projetos\restaurante\app\admin\categories\[id]\edit\page.tsx
+C:\Projetos\restaurante\app\admin\categories\new\page.tsx
+C:\Projetos\restaurante\app\admin\delivery\page.tsx
+C:\Projetos\restaurante\app\admin\layout.tsx
+C:\Projetos\restaurante\app\admin\login\page.tsx
+C:\Projetos\restaurante\app\admin\page.tsx
+C:\Projetos\restaurante\app\admin\products\[id]\edit\page.tsx
+C:\Projetos\restaurante\app\admin\products\new\page.tsx
+C:\Projetos\restaurante\app\api\orders\[id]\route.ts
+C:\Projetos\restaurante\app\api\orders\[id]\status\route.ts
+C:\Projetos\restaurante\app\api\orders\route.ts
+C:\Projetos\restaurante\app\cardapio\page.tsx
+C:\Projetos\restaurante\app\carrinho\page.tsx
+C:\Projetos\restaurante\app\checkout\page.tsx
+C:\Projetos\restaurante\app\cozinha\page.tsx
+C:\Projetos\restaurante\app\globals.css
+C:\Projetos\restaurante\app\layout.tsx
+C:\Projetos\restaurante\app\page.tsx
+C:\Projetos\restaurante\app\pedidos\[id]\page.tsx
+C:\Projetos\restaurante\app\pedidos\page.tsx
+C:\Projetos\restaurante\app\types\global.d.ts
+C:\Projetos\restaurante\BUILD_APOS_NODE22.md
+C:\Projetos\restaurante\COMO_CRIAR_USUARIO_ADMIN.md
+C:\Projetos\restaurante\COMO_EXECUTAR_OPCOES.md
+C:\Projetos\restaurante\COMO_USAR_SCRIPT_OPCOES.sql
+C:\Projetos\restaurante\components\admin\product-options-manager.tsx
+C:\Projetos\restaurante\components\animations\animated-title.tsx
+C:\Projetos\restaurante\components\animations\pulse-button.tsx
+C:\Projetos\restaurante\components\animations\scroll-animation.tsx
+C:\Projetos\restaurante\components\animations\stagger-grid.tsx
+C:\Projetos\restaurante\components\animations\stagger-item.tsx
+C:\Projetos\restaurante\components\cart\cart-button.tsx
+C:\Projetos\restaurante\components\layout\admin-header.tsx
+C:\Projetos\restaurante\components\layout\header.tsx
+C:\Projetos\restaurante\components\loading\video-loading.tsx
+C:\Projetos\restaurante\components\products\product-card.tsx
+C:\Projetos\restaurante\components\products\product-options-modal.tsx
+C:\Projetos\restaurante\components\theme\theme-toggle.tsx
+C:\Projetos\restaurante\components\ui\button.tsx
+C:\Projetos\restaurante\CONFIGURACOES_COMPLETAS.md
+C:\Projetos\restaurante\CONFIGURAR_STORAGE.md
+C:\Projetos\restaurante\contexts\theme-context.tsx
+C:\Projetos\restaurante\CORRECOES_COZINHA.md
+C:\Projetos\restaurante\CORRECOES_TEMA.md
+C:\Projetos\restaurante\CORRIGIR_EXCLUSAO_PRODUTOS.md
+C:\Projetos\restaurante\CORRIGIR_IMAGENS_SUPABASE.md
+C:\Projetos\restaurante\DEPLOY_NETLIFY.md
+C:\Projetos\restaurante\DEPLOY_VS_LOCAL.md
+C:\Projetos\restaurante\DESINSTALAR_NODE22_E_INSTALAR_NODE20.ps1
+C:\Projetos\restaurante\DIAGNOSTICO_OPCOES.md
+C:\Projetos\restaurante\ESTRUTURA_PROJETO.txt
+C:\Projetos\restaurante\EXEMPLOS_OPCOES_PRODUTOS.md
+C:\Projetos\restaurante\GUIA_PASSO_A_PASSO_OPCOES.md
+C:\Projetos\restaurante\GUIA_TEMA_CLARO_ESCURO.md
+C:\Projetos\restaurante\INICIAR_SERVIDOR.ps1
+C:\Projetos\restaurante\INSTALAR_DEPENDENCIAS.ps1
+C:\Projetos\restaurante\INSTALAR_NODE20.md
+C:\Projetos\restaurante\instalar-node22-completo.ps1
+C:\Projetos\restaurante\instalar-node22-e-build.ps1
+C:\Projetos\restaurante\instalar-node22.ps1
+C:\Projetos\restaurante\LEIA_ISSO_PRIMEIRO.md
+C:\Projetos\restaurante\lib\auth.ts
+C:\Projetos\restaurante\lib\cep-utils.ts
+C:\Projetos\restaurante\lib\delivery-fee.ts
+C:\Projetos\restaurante\lib\supabase.ts
+C:\Projetos\restaurante\lib\utils.ts
+C:\Projetos\restaurante\middleware.ts
+C:\Projetos\restaurante\netlify.toml
+C:\Projetos\restaurante\next-env.d.ts
+C:\Projetos\restaurante\next.config.js
+C:\Projetos\restaurante\package-lock.json
+C:\Projetos\restaurante\package.json
+C:\Projetos\restaurante\postcss.config.js
+C:\Projetos\restaurante\PROBLEMA_NPM_CRITICO.md
+C:\Projetos\restaurante\PROPOSTA_OPCOES_PRODUTOS.md
+C:\Projetos\restaurante\public\_redirects
+C:\Projetos\restaurante\public\images\banners\banner.jpg
+C:\Projetos\restaurante\public\images\banners\Imagem do WhatsApp de 2025-10-22 à(s) 18.42.52_12725434.jpg
+C:\Projetos\restaurante\public\images\banners\Imagem do WhatsApp de 2025-10-22 à(s) 18.42.52_ff444b45.jpg
+C:\Projetos\restaurante\public\images\banners\Imagem do WhatsApp de 2025-10-22 à(s) 18.42.53_29835af0.jpg
+C:\Projetos\restaurante\public\images\categorias\Imagem do WhatsApp de 2025-10-22 à(s) 18.37.29_3f3b11f1.jpg
+C:\Projetos\restaurante\public\images\categorias\Imagem do WhatsApp de 2025-10-22 à(s) 18.37.30_049befce.jpg
+C:\Projetos\restaurante\public\images\categorias\Imagem do WhatsApp de 2025-10-22 à(s) 18.37.30_0a041da7.jpg
+C:\Projetos\restaurante\public\images\categorias\Imagem do WhatsApp de 2025-10-22 à(s) 18.37.30_35366cce.jpg
+C:\Projetos\restaurante\public\images\produtos\agua.png
+C:\Projetos\restaurante\public\images\produtos\aneisCebola.png
+C:\Projetos\restaurante\public\images\produtos\bruscheta.png
+C:\Projetos\restaurante\public\images\produtos\frangoGrelhado.png
+C:\Projetos\restaurante\public\images\produtos\Imagem do WhatsApp de 2025-10-22 à(s) 18.37.30_3b71f701.jpg
+C:\Projetos\restaurante\public\images\produtos\Imagem do WhatsApp de 2025-10-22 à(s) 18.37.30_4ed8d302.jpg
+C:\Projetos\restaurante\public\images\produtos\Imagem do WhatsApp de 2025-10-22 à(s) 18.37.30_5cff64d0.jpg
+C:\Projetos\restaurante\public\images\produtos\Imagem do WhatsApp de 2025-10-22 à(s) 18.37.30_66a61847.jpg
+C:\Projetos\restaurante\public\images\produtos\Imagem do WhatsApp de 2025-10-22 à(s) 18.37.30_9559e521.jpg
+C:\Projetos\restaurante\public\images\produtos\Imagem do WhatsApp de 2025-10-22 à(s) 18.37.30_970c1913.jpg
+C:\Projetos\restaurante\public\images\produtos\Imagem do WhatsApp de 2025-10-22 à(s) 18.37.30_9a319a20.jpg
+C:\Projetos\restaurante\public\images\produtos\Imagem do WhatsApp de 2025-10-22 à(s) 18.37.30_a4c49307.jpg
+C:\Projetos\restaurante\public\images\produtos\Imagem do WhatsApp de 2025-10-22 à(s) 18.37.30_bfb80ad5.jpg
+C:\Projetos\restaurante\public\images\produtos\Imagem do WhatsApp de 2025-10-22 à(s) 18.37.30_c68c2d26.jpg
+C:\Projetos\restaurante\public\images\produtos\Imagem do WhatsApp de 2025-10-22 à(s) 18.37.30_cb690340.jpg
+C:\Projetos\restaurante\public\images\produtos\Imagem do WhatsApp de 2025-10-22 à(s) 18.37.30_cefb6531.jpg
+C:\Projetos\restaurante\public\images\produtos\Imagem do WhatsApp de 2025-10-22 à(s) 18.37.30_e4c3a3ae.jpg
+C:\Projetos\restaurante\public\images\produtos\Imagem do WhatsApp de 2025-10-22 à(s) 18.37.30_e9600334.jpg
+C:\Projetos\restaurante\public\images\produtos\Imagem do WhatsApp de 2025-10-22 à(s) 18.37.30_ec9d9f9d.jpg
+C:\Projetos\restaurante\public\images\produtos\Imagem do WhatsApp de 2025-10-22 à(s) 18.37.30_f3ba7e99.jpg
+C:\Projetos\restaurante\public\images\produtos\Imagem do WhatsApp de 2025-10-22 à(s) 18.42.53_9c9eb711.jpg
+C:\Projetos\restaurante\public\images\produtos\Imagem do WhatsApp de 2025-10-22 à(s) 18.42.53_b17dd369.jpg
+C:\Projetos\restaurante\public\images\produtos\Imagem do WhatsApp de 2025-10-22 à(s) 18.42.53_d3c8433c.jpg
+C:\Projetos\restaurante\public\images\produtos\Imagem do WhatsApp de 2025-10-22 à(s) 18.42.53_ea199d35.jpg
+C:\Projetos\restaurante\public\images\produtos\Imagem do WhatsApp de 2025-10-22 à(s) 18.42.53_f24ded21.jpg
+C:\Projetos\restaurante\public\images\produtos\Imagem do WhatsApp de 2025-10-22 à(s) 18.42.53_f4d7d328.jpg
+C:\Projetos\restaurante\public\images\produtos\logo.jpg
+C:\Projetos\restaurante\public\images\produtos\mousseChocolate.png
+C:\Projetos\restaurante\public\images\produtos\petitGateau.png
+C:\Projetos\restaurante\public\images\produtos\refrigerante.png
+C:\Projetos\restaurante\public\images\produtos\risotoCamarao.png
+C:\Projetos\restaurante\public\images\produtos\vinhoTinto.png
+C:\Projetos\restaurante\public\reset-theme.html
+C:\Projetos\restaurante\public\videos\food-animation.mp4
+C:\Projetos\restaurante\public\videos\junk-food-loading.mp4
+C:\Projetos\restaurante\README.md
+C:\Projetos\restaurante\RESUMO_OPCOES_PRODUTOS.md
+C:\Projetos\restaurante\RESUMO_RAPIDO_OPCOES.md
+C:\Projetos\restaurante\ROADMAP_GESTAO_ESTOQUE.md
+C:\Projetos\restaurante\ROADMAP_LOGIN_E_COZINHA.md
+C:\Projetos\restaurante\scripts\pre-deploy-check.ps1
+C:\Projetos\restaurante\scripts\pre-deploy-check.sh
+C:\Projetos\restaurante\SISTEMA_FRETE.md
+C:\Projetos\restaurante\SOLUCAO_404_LOGIN.md
+C:\Projetos\restaurante\SOLUCAO_FINAL.md
+C:\Projetos\restaurante\SOLUCAO_RAPIDA.md
+C:\Projetos\restaurante\store\cart-store.ts
+C:\Projetos\restaurante\SUGESTOES_ADICIONAIS_CARDAPIO.md
+C:\Projetos\restaurante\supabase\CLIENTES_E_AUTH.sql
+C:\Projetos\restaurante\supabase\COMPLETO_SEM_COMENTARIOS.sql
+C:\Projetos\restaurante\supabase\COMPLETO.sql
+C:\Projetos\restaurante\supabase\CRIAR_ADMIN.sql
+C:\Projetos\restaurante\supabase\DELIVERY_FEE_CONFIG_SEM_COMENTARIOS.sql
+C:\Projetos\restaurante\supabase\DELIVERY_FEE_CONFIG.sql
+C:\Projetos\restaurante\supabase\DIAGNOSTICO_CATEGORIAS.sql
+C:\Projetos\restaurante\supabase\EXEMPLO_OPCOES_PIZZA.sql
+C:\Projetos\restaurante\supabase\INSERIR_OPCOES_TODOS_PRODUTOS_SEM_COMENTARIOS.sql
+C:\Projetos\restaurante\supabase\INSERIR_OPCOES_TODOS_PRODUTOS.sql
+C:\Projetos\restaurante\supabase\ORDER_STATUS_HISTORY.sql
+C:\Projetos\restaurante\supabase\POLITICAS_CATEGORIAS_DELETE.sql
+C:\Projetos\restaurante\supabase\POLITICAS_CATEGORIAS.sql
+C:\Projetos\restaurante\supabase\POLITICAS_PEDIDOS.sql
+C:\Projetos\restaurante\supabase\POLITICAS_PRODUTOS_DELETE.sql
+C:\Projetos\restaurante\supabase\POLITICAS_PRODUTOS.sql
+C:\Projetos\restaurante\supabase\PRODUTO_OPCOES_COMPLETO.sql
+C:\Projetos\restaurante\supabase\PRODUTO_OPCOES_SEM_COMENTARIOS.sql
+C:\Projetos\restaurante\supabase\PRODUTO_OPCOES.sql
+C:\Projetos\restaurante\supabase\schema.sql
+C:\Projetos\restaurante\supabase\STORAGE_POLICIES_INTERFACE.md
+C:\Projetos\restaurante\supabase\STORAGE_POLICIES.sql
+C:\Projetos\restaurante\tailwind.config.js
+C:\Projetos\restaurante\TESTE_LOGIN.md
+C:\Projetos\restaurante\tsconfig.json
+C:\Projetos\restaurante\tsconfig.tsbuildinfo
+C:\Projetos\restaurante\VERCEL_DEPLOY_NAO_APARECE.md
+C:\Projetos\restaurante\vercel.json
+C:\Projetos\restaurante\Versiory-Burguer.zip
+C:\Projetos\restaurante\VERSOES_COMPATIVEIS.md

@@ -16,6 +16,8 @@ interface Order {
 export default function PedidosPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchEmail, setSearchEmail] = useState("");
+  const [showSearch, setShowSearch] = useState(false);
 
   useEffect(() => {
     loadOrders();
@@ -23,14 +25,55 @@ export default function PedidosPage() {
 
   const loadOrders = async () => {
     try {
-      const { data, error } = await supabase
+      if (typeof window === 'undefined') {
+        setLoading(false);
+        return;
+      }
+
+      // Obter informações do último pedido (armazenadas no localStorage)
+      const lastOrderEmail = localStorage.getItem('lastOrderEmail');
+      const lastOrderName = localStorage.getItem('lastOrderName');
+      const lastOrderPhone = localStorage.getItem('lastOrderPhone');
+
+      // Se não houver informações salvas, permitir busca manual
+      if (!lastOrderEmail && !lastOrderName && !lastOrderPhone) {
+        setOrders([]);
+        setLoading(false);
+        setShowSearch(true); // Mostrar campo de busca
+        return;
+      }
+
+      // Filtrar pedidos usando email (prioritário) ou nome+telefone como fallback
+      let query = supabase
         .from("orders")
-        .select("*")
+        .select("*");
+
+      if (lastOrderEmail) {
+        // Prioridade: filtrar por email (mais preciso)
+        query = query.eq("customer_email", lastOrderEmail);
+      } else if (lastOrderName && lastOrderPhone) {
+        // Fallback: filtrar por nome E telefone (caso email não esteja disponível)
+        query = query.eq("customer_name", lastOrderName)
+                    .eq("customer_phone", lastOrderPhone);
+      } else {
+        // Se não tiver informações suficientes, não mostrar pedidos
+        setOrders([]);
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await query
         .order("created_at", { ascending: false })
         .limit(50);
 
       if (error) throw error;
-      if (data) setOrders(data);
+      if (data) {
+        // Filtro adicional de segurança: garantir que o email corresponde (se disponível)
+        const filteredData = lastOrderEmail 
+          ? data.filter(order => order.customer_email === lastOrderEmail)
+          : data;
+        setOrders(filteredData);
+      }
     } catch (error) {
       console.error("Erro ao carregar pedidos:", error);
     } finally {
@@ -64,6 +107,33 @@ export default function PedidosPage() {
     return labels[status] || status;
   };
 
+  const handleSearchByEmail = async () => {
+    if (!searchEmail || !searchEmail.trim()) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("customer_email", searchEmail.trim())
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+      if (data) {
+        setOrders(data);
+        // Salvar email pesquisado no localStorage
+        localStorage.setItem('lastOrderEmail', searchEmail.trim());
+      }
+    } catch (error) {
+      console.error("Erro ao buscar pedidos:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -80,13 +150,39 @@ export default function PedidosPage() {
 
         {orders.length === 0 ? (
           <div className="text-center py-12 md:py-16">
-            <p className="text-xl md:text-2xl text-gray-400 mb-4">Nenhum pedido encontrado</p>
-            <Link
-              href="/#cardapio"
-              className="inline-block bg-primary-yellow text-black px-6 md:px-8 py-3 md:py-4 rounded-lg text-lg md:text-xl font-bold hover:bg-opacity-90 transition"
-            >
-              Ver Cardápio
-            </Link>
+            {showSearch || !loading ? (
+              <>
+                <p className="text-xl md:text-2xl text-gray-400 mb-6">
+                  {showSearch ? "Informe seu email para buscar seus pedidos" : "Nenhum pedido encontrado"}
+                </p>
+                <div className="max-w-md mx-auto mb-6">
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      value={searchEmail}
+                      onChange={(e) => setSearchEmail(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleSearchByEmail()}
+                      placeholder="seu@email.com"
+                      className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-primary-yellow text-white"
+                    />
+                    <button
+                      onClick={handleSearchByEmail}
+                      className="bg-primary-yellow text-black px-6 py-3 rounded-lg font-bold hover:bg-opacity-90 transition"
+                    >
+                      Buscar
+                    </button>
+                  </div>
+                </div>
+                <Link
+                  href="/#cardapio"
+                  className="inline-block bg-primary-yellow text-black px-6 md:px-8 py-3 md:py-4 rounded-lg text-lg md:text-xl font-bold hover:bg-opacity-90 transition"
+                >
+                  Ver Cardápio
+                </Link>
+              </>
+            ) : (
+              <p className="text-xl md:text-2xl text-gray-400">Carregando...</p>
+            )}
           </div>
         ) : (
           <div className="space-y-3 md:space-y-4">
