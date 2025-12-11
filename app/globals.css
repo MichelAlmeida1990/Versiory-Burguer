@@ -47,6 +47,12 @@ a {
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+  
+  /* Scroll suave para mobile */
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
 }
 
 @keyframes fade-in-up {

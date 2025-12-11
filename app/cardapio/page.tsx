@@ -103,31 +103,33 @@ export default function CardapioPage() {
           Nosso Cardápio
         </h1>
 
-        {/* Categorias */}
-        <div className="flex flex-wrap gap-2 sm:gap-4 mb-4 sm:mb-6 md:mb-8 justify-center">
-          <button
-            onClick={() => setSelectedCategory(null)}
-            className={`px-3 sm:px-4 md:px-6 py-2 text-sm sm:text-base rounded-lg font-medium transition ${
-              selectedCategory === null
-                ? "bg-primary-yellow text-black"
-                : "bg-gray-200 hover:bg-gray-300 text-gray-900"
-            }`}
-          >
-            Todos
-          </button>
-          {categories.map((category) => (
+        {/* Categorias - Scroll horizontal no mobile */}
+        <div className="mb-4 sm:mb-6 md:mb-8">
+          <div className="flex gap-2 sm:gap-4 overflow-x-auto pb-2 sm:pb-0 scrollbar-hide -mx-3 sm:mx-0 px-3 sm:px-0 sm:flex-wrap sm:justify-center">
             <button
-              key={category.id}
-              onClick={() => setSelectedCategory(category.id)}
-              className={`px-3 sm:px-4 md:px-6 py-2 text-sm sm:text-base rounded-lg font-medium transition ${
-                selectedCategory === category.id
-                  ? "bg-primary-yellow text-black"
+              onClick={() => setSelectedCategory(null)}
+              className={`flex-shrink-0 px-4 sm:px-4 md:px-6 py-2.5 sm:py-2 text-sm sm:text-base rounded-lg font-medium transition whitespace-nowrap ${
+                selectedCategory === null
+                  ? "bg-primary-yellow text-black shadow-md"
                   : "bg-gray-200 hover:bg-gray-300 text-gray-900"
               }`}
             >
-              {category.name}
+              Todos
             </button>
-          ))}
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                onClick={() => setSelectedCategory(category.id)}
+                className={`flex-shrink-0 px-4 sm:px-4 md:px-6 py-2.5 sm:py-2 text-sm sm:text-base rounded-lg font-medium transition whitespace-nowrap ${
+                  selectedCategory === category.id
+                    ? "bg-primary-yellow text-black shadow-md"
+                    : "bg-gray-200 hover:bg-gray-300 text-gray-900"
+                }`}
+              >
+                {category.name}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Produtos */}
