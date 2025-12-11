@@ -28,11 +28,29 @@ export default function Home() {
 
   const loadData = async () => {
     try {
-      // Carregar categorias
-      const { data: categoriesData, error: categoriesError } = await supabase
+      // Verificar se há restaurante logado
+      const { data: { user } } = await supabase.auth.getUser();
+      const restaurantId = user?.id;
+      const DEMO_UUID = "f5f457d9-821e-4a21-9029-e181b1bee792";
+      const isDemo = restaurantId === DEMO_UUID;
+      
+      // Carregar categorias:
+      // - Se for demo ou não houver login: mostra categorias do demo
+      // - Se for outro restaurante: mostra apenas categorias desse restaurante
+      let categoriesQuery = supabase
         .from("categories")
         .select("*")
         .order("order");
+      
+      if (restaurantId && !isDemo) {
+        // Outro restaurante logado: mostrar apenas categorias desse restaurante
+        categoriesQuery = categoriesQuery.eq("restaurant_id", restaurantId);
+      } else {
+        // Demo ou sem login: mostrar apenas categorias do demo
+        categoriesQuery = categoriesQuery.eq("restaurant_id", DEMO_UUID);
+      }
+      
+      const { data: categoriesData, error: categoriesError } = await categoriesQuery;
 
       if (categoriesError) {
         console.error("Erro ao carregar categorias:", categoriesError);
@@ -47,13 +65,26 @@ export default function Home() {
 
       setCategories(categoriesData);
 
-      // Carregar produtos - produtos com restaurant_id OU produtos antigos (sem restaurant_id)
-      // Produtos antigos aparecem no cardápio público para todos os clientes
-      const { data: productsData, error: productsError } = await supabase
+      // Carregar produtos:
+      // - Se for demo ou não houver login: mostra produtos do demo (antigos)
+      // - Se for outro restaurante: mostra apenas produtos desse restaurante (não mostra antigos)
+      let productsQuery = supabase
         .from("products")
         .select("id, name, description, price, image, category_id, available, restaurant_id, created_at, updated_at")
         .eq("available", true) // Apenas produtos ativos
         .order("name");
+      
+      if (restaurantId && !isDemo) {
+        // Outro restaurante logado: mostrar apenas produtos desse restaurante (não produtos antigos)
+        productsQuery = productsQuery.eq("restaurant_id", restaurantId);
+        console.log("🔍 Carregando produtos do restaurante:", restaurantId);
+      } else {
+        // Demo ou sem login: mostrar apenas produtos do demo (antigos)
+        productsQuery = productsQuery.eq("restaurant_id", DEMO_UUID);
+        console.log("🔍 Carregando produtos do demo (antigos)");
+      }
+      
+      const { data: productsData, error: productsError } = await productsQuery;
 
       if (productsError) {
         console.error("Erro ao carregar produtos:", productsError);
