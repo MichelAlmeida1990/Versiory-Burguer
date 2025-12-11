@@ -8,9 +8,11 @@ import { supabase, SelectedOption, ProductOptionValue } from "@/lib/supabase";
 import Image from "next/image";
 import { Plus, Minus, Trash2, ShoppingBag } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
 export default function CarrinhoPage() {
+  const router = useRouter();
   const { items, updateQuantity, removeItem, getTotal, clearCart } =
     useCartStore();
   const [deliveryFee] = useState(5.0);
@@ -340,6 +342,14 @@ export default function CarrinhoPage() {
                 </div>
               </div>
 
+              <button
+                type="button"
+                onClick={() => router.push("/cardapio")}
+                className="w-full bg-gray-800 hover:bg-gray-700 text-white py-3 px-4 rounded-lg font-bold transition flex items-center justify-center gap-2 mb-3 border border-gray-700"
+              >
+                <ShoppingBag className="w-5 h-5" />
+                Continuar Comprando
+              </button>
               <button
                 onClick={handleCheckout}
                 className="w-full bg-red-600 hover:bg-red-700 text-white py-3 sm:py-4 rounded-lg text-base sm:text-lg font-bold transition"

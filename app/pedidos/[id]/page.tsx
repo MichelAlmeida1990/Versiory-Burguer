@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { Header } from "@/components/layout/header";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { formatCurrency, formatDate, formatTime, getTimeAgo } from "@/lib/utils";
-import { Clock, CheckCircle, XCircle, Package } from "lucide-react";
+import { Clock, CheckCircle, XCircle, Package, ShoppingBag } from "lucide-react";
 
 interface OrderStatusHistory {
   id: string;
@@ -45,6 +45,7 @@ const statusConfig = {
 
 export default function PedidoPage() {
   const params = useParams();
+  const router = useRouter();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -137,9 +138,16 @@ export default function PedidoPage() {
                 <p className={`text-base md:text-lg ${status.color}`}>{status.label}</p>
               </div>
             </div>
-            <p className="text-gray-400 text-sm md:text-base">
+            <p className="text-gray-400 text-sm md:text-base mb-4">
               Realizado em {formatDate(order.created_at)}
             </p>
+            <button
+              onClick={() => router.push("/cardapio")}
+              className="w-full sm:w-auto bg-primary-yellow text-black py-3 px-6 rounded-lg font-bold hover:bg-opacity-90 transition flex items-center justify-center gap-2"
+            >
+              <ShoppingBag className="w-5 h-5" />
+              Continuar Comprando
+            </button>
           </div>
 
           {/* Timeline de Status */}

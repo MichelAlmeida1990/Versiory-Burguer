@@ -6,7 +6,7 @@ import { Header } from "@/components/layout/header";
 import { AuthGuard } from "@/components/admin/auth-guard";
 import { Product, Category, supabase } from "@/lib/supabase";
 import { formatCurrency, formatDate, formatTime, formatDateTime, getTimeAgo } from "@/lib/utils";
-import { Plus, Edit, Trash2, Package, Users, DollarSign, TrendingUp, Calendar, ShoppingBag, Clock, CheckCircle, AlertTriangle, LogOut } from "lucide-react";
+import { Plus, Edit, Trash2, Package, Users, DollarSign, TrendingUp, Calendar, ShoppingBag, Clock, CheckCircle, AlertTriangle, LogOut, X, FileDown } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -26,6 +26,16 @@ function TimeAgo({ date }: { date: Date | string }) {
 
   return <span>{timeAgo || "carregando..."}</span>;
 }
+
+const statusLabels: Record<string, string> = {
+  pending: "Aguardando",
+  confirmed: "Confirmado",
+  preparing: "Preparando",
+  ready: "Pronto",
+  delivering: "Saiu para Entrega",
+  delivered: "Entregue",
+  cancelled: "Cancelado",
+};
 
 function AdminContent() {
   const router = useRouter();
@@ -59,6 +69,14 @@ function AdminContent() {
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "confirmed" | "preparing" | "ready" | "delivering" | "delivered" | "cancelled" | "active">("active");
   const [showDelivered, setShowDelivered] = useState(false);
   const [timerUpdate, setTimerUpdate] = useState(0);
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const [orderDetails, setOrderDetails] = useState<any | null>(null);
+  const [loadingOrderDetails, setLoadingOrderDetails] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const tabParam = searchParams.get("tab");
@@ -899,6 +917,216 @@ function AdminContent() {
     }
   };
 
+  const loadOrderDetails = async (orderId: string) => {
+    setLoadingOrderDetails(true);
+    try {
+      const response = await fetch(`/api/orders?id=${orderId}`);
+      if (!response.ok) throw new Error("Erro ao carregar detalhes");
+      
+      const order = await response.json();
+      
+      // Buscar opções dos itens se existirem
+      if (order?.order_items && Array.isArray(order.order_items) && order.order_items.length > 0) {
+        try {
+          const itemIds = order.order_items
+            .map((item: any) => item?.id)
+            .filter((id: any) => id);
+          
+          if (itemIds.length > 0) {
+            const { data: optionsData, error: optionsError } = await supabase
+              .from("order_item_options")
+              .select(`
+                *,
+                product_options (name),
+                product_option_values (name)
+              `)
+              .in("order_item_id", itemIds);
+            
+            if (!optionsError && optionsData) {
+              order.order_items = order.order_items.map((item: any) => ({
+                ...item,
+                options: (optionsData || []).filter((opt: any) => opt?.order_item_id === item?.id)
+              }));
+            }
+          }
+        } catch (optionsError) {
+          console.warn("Erro ao carregar opções dos itens:", optionsError);
+        }
+      }
+      
+      setOrderDetails(order);
+    } catch (error: any) {
+      console.error("Erro ao carregar detalhes:", error);
+      toast.error("Erro ao carregar detalhes do pedido");
+      setOrderDetails(null);
+    } finally {
+      setLoadingOrderDetails(false);
+    }
+  };
+
+  const handleViewOrder = async (order: any) => {
+    setSelectedOrder(order);
+    await loadOrderDetails(order.id);
+  };
+
+  const closeOrderModal = () => {
+    setSelectedOrder(null);
+    setOrderDetails(null);
+  };
+
+  const exportToPDF = async () => {
+    if (!orderDetails) return;
+
+    // Importação dinâmica do jsPDF (apenas no cliente)
+    const { default: jsPDF } = await import("jspdf");
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    let yPos = margin;
+
+    // Função para adicionar nova página se necessário
+    const checkPageBreak = (requiredSpace: number) => {
+      if (yPos + requiredSpace > doc.internal.pageSize.getHeight() - margin) {
+        doc.addPage();
+        yPos = margin;
+      }
+    };
+
+    // Título
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text("Detalhes do Pedido", margin, yPos);
+    yPos += 10;
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Pedido #${orderDetails.id.slice(0, 8)}`, margin, yPos);
+    yPos += 8;
+
+    // Informações do Cliente
+    checkPageBreak(30);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("Informações do Cliente", margin, yPos);
+    yPos += 8;
+
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Nome: ${orderDetails.customer_name || "Não informado"}`, margin, yPos);
+    yPos += 6;
+    doc.text(`Telefone: ${orderDetails.customer_phone || "Não informado"}`, margin, yPos);
+    yPos += 6;
+    doc.text(`E-mail: ${orderDetails.customer_email || "Não informado"}`, margin, yPos);
+    yPos += 6;
+    doc.text(`Data: ${formatDateTime(orderDetails.created_at)}`, margin, yPos);
+    yPos += 10;
+
+    // Endereço de Entrega
+    if (orderDetails.delivery_address) {
+      checkPageBreak(15);
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("Endereço de Entrega", margin, yPos);
+      yPos += 8;
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      const addressLines = doc.splitTextToSize(orderDetails.delivery_address, pageWidth - 2 * margin);
+      doc.text(addressLines, margin, yPos);
+      yPos += addressLines.length * 6 + 5;
+    }
+
+    // Itens do Pedido
+    checkPageBreak(20);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("Itens do Pedido", margin, yPos);
+    yPos += 8;
+
+    if (orderDetails.order_items && Array.isArray(orderDetails.order_items) && orderDetails.order_items.length > 0) {
+      orderDetails.order_items.forEach((item: any) => {
+        checkPageBreak(25);
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        const itemText = `${item.quantity}x ${item.products?.name || "Produto"}`;
+        doc.text(itemText, margin, yPos);
+        yPos += 6;
+
+        if (item.observations) {
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "italic");
+          doc.text(`Obs: ${item.observations}`, margin + 5, yPos);
+          yPos += 5;
+        }
+
+        if (item.options && Array.isArray(item.options) && item.options.length > 0) {
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "normal");
+          item.options.forEach((opt: any) => {
+            if (opt) {
+              const optText = `• ${opt.product_options?.name || "Opção"}: ${opt.product_option_values?.name || "Valor"}`;
+              doc.text(optText, margin + 5, yPos);
+              yPos += 5;
+            }
+          });
+        }
+
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        const priceText = `Preço: ${formatCurrency((item.price || 0) * (item.quantity || 1))}`;
+        doc.text(priceText, pageWidth - margin - 50, yPos - (item.options?.length || 0) * 5 - (item.observations ? 5 : 0) - 6, { align: "right" });
+        yPos += 8;
+      });
+    } else {
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text("Nenhum item encontrado", margin, yPos);
+      yPos += 8;
+    }
+
+    // Resumo Financeiro
+    checkPageBreak(30);
+    yPos += 5;
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("Resumo Financeiro", margin, yPos);
+    yPos += 8;
+
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    const subtotal = (orderDetails.total || 0) - (orderDetails.delivery_fee || 0);
+    doc.text(`Subtotal: ${formatCurrency(subtotal)}`, margin, yPos);
+    yPos += 6;
+
+    if (orderDetails.delivery_fee > 0) {
+      doc.text(`Taxa de Entrega: ${formatCurrency(orderDetails.delivery_fee)}`, margin, yPos);
+      yPos += 6;
+    }
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Total: ${formatCurrency(orderDetails.total)}`, margin, yPos);
+    yPos += 8;
+
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    const paymentMethod = orderDetails.payment_method === "pix"
+      ? "PIX"
+      : orderDetails.payment_method === "card"
+      ? "Cartão"
+      : "Dinheiro";
+    doc.text(`Forma de Pagamento: ${paymentMethod}`, margin, yPos);
+    yPos += 6;
+
+    const statusText = statusLabels[orderDetails.status] || orderDetails.status;
+    doc.text(`Status: ${statusText}`, margin, yPos);
+
+    // Salvar PDF
+    const fileName = `pedido-${orderDetails.id.slice(0, 8)}-${new Date().toISOString().split('T')[0]}.pdf`;
+    doc.save(fileName);
+    toast.success("PDF exportado com sucesso!");
+  };
+
   // Calcular filtros de pedidos
   // Definir todos os status do fluxo de pedidos
   const activeStatuses = ["pending", "confirmed", "preparing", "ready", "delivering"];
@@ -1413,23 +1641,16 @@ function AdminContent() {
                     cancelled: "bg-red-500",
                   };
 
-                  const statusLabels: Record<string, string> = {
-                    pending: "Aguardando",
-                    confirmed: "Confirmado",
-                    preparing: "Preparando",
-                    ready: "Pronto",
-                    delivering: "Saiu para Entrega",
-                    delivered: "Entregue",
-                    cancelled: "Cancelado",
-                  };
-
                   return (
                     <div key={order.id} className="relative pl-10 sm:pl-12 md:pl-16">
                       {/* Timeline Dot */}
                       <div className={`absolute left-1.5 sm:left-2 md:left-3 top-2 w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 rounded-full ${statusColors[order.status] || "bg-gray-500"} border-2 sm:border-3 border-black z-10`}></div>
 
                       {/* Order Card */}
-                      <div className="bg-gray-900 rounded-lg p-3 sm:p-4 md:p-5 hover:bg-gray-800 transition">
+                      <div 
+                        className="bg-gray-900 rounded-lg p-3 sm:p-4 md:p-5 hover:bg-gray-800 transition cursor-pointer"
+                        onClick={() => handleViewOrder(order)}
+                      >
                         <div className="flex flex-col md:flex-row justify-between items-start gap-3 md:gap-4">
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
@@ -1530,7 +1751,11 @@ function AdminContent() {
                             <div className="flex flex-col sm:flex-row gap-2">
                               <select
                                 value={order.status}
-                                onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                                onChange={(e) => {
+                                  e.stopPropagation();
+                                  updateOrderStatus(order.id, e.target.value);
+                                }}
+                                onClick={(e) => e.stopPropagation()}
                                 className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm"
                               >
                                 <option value="pending">Aguardando</option>
@@ -1542,7 +1767,10 @@ function AdminContent() {
                                 <option value="cancelled">Cancelado</option>
                               </select>
                               <button
-                                onClick={() => handleEditOrder(order)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditOrder(order);
+                                }}
                                 className="bg-blue-600 hover:bg-blue-700 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg flex items-center justify-center gap-1 text-xs sm:text-sm"
                                 title="Editar pedido"
                               >
@@ -1550,7 +1778,10 @@ function AdminContent() {
                                 <span className="hidden sm:inline">Editar</span>
                               </button>
                               <button
-                                onClick={() => handleDeleteOrder(order.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteOrder(order.id);
+                                }}
                                 className="bg-red-600 hover:bg-red-700 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg flex items-center justify-center gap-1 text-xs sm:text-sm"
                                 title="Excluir pedido"
                               >
@@ -1571,6 +1802,170 @@ function AdminContent() {
                   <p className="text-base sm:text-lg">Nenhum pedido encontrado</p>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Detalhes do Pedido */}
+        {mounted && selectedOrder && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4"
+            onClick={closeOrderModal}
+          >
+            <div 
+              className="bg-gray-900 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="sticky top-0 bg-gray-900 border-b border-gray-800 p-4 md:p-6 flex justify-between items-center z-10">
+                <h2 className="text-xl md:text-2xl font-bold">
+                  Detalhes do Pedido #{selectedOrder.id.slice(0, 8)}
+                </h2>
+                <div className="flex items-center gap-2">
+                  {orderDetails && (
+                    <button
+                      onClick={exportToPDF}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition flex items-center gap-2"
+                      title="Exportar para PDF"
+                    >
+                      <FileDown className="w-5 h-5" />
+                      <span className="hidden sm:inline">Exportar PDF</span>
+                    </button>
+                  )}
+                  <button
+                    onClick={closeOrderModal}
+                    className="text-gray-400 hover:text-white transition p-2"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-4 md:p-6 space-y-6">
+                {loadingOrderDetails ? (
+                  <div className="text-center py-12">
+                    <p className="text-gray-400">Carregando detalhes...</p>
+                  </div>
+                ) : orderDetails ? (
+                  <>
+                    {/* Informações do Cliente */}
+                    <div className="bg-gray-800 rounded-lg p-4 md:p-6">
+                      <h3 className="text-lg md:text-xl font-bold mb-4">Informações do Cliente</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-gray-400 text-sm mb-1">Nome</p>
+                          <p className="font-medium">{orderDetails.customer_name || "Não informado"}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-400 text-sm mb-1">Telefone</p>
+                          <p className="font-medium">{orderDetails.customer_phone || "Não informado"}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-400 text-sm mb-1">E-mail</p>
+                          <p className="font-medium">{orderDetails.customer_email || "Não informado"}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-400 text-sm mb-1">Data do Pedido</p>
+                          <p className="font-medium">{formatDateTime(orderDetails.created_at)}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Endereço de Entrega */}
+                    {orderDetails.delivery_address && (
+                      <div className="bg-gray-800 rounded-lg p-4 md:p-6">
+                        <h3 className="text-lg md:text-xl font-bold mb-4">Endereço de Entrega</h3>
+                        <p className="font-medium break-words">{orderDetails.delivery_address}</p>
+                      </div>
+                    )}
+
+                    {/* Itens do Pedido */}
+                    <div className="bg-gray-800 rounded-lg p-4 md:p-6">
+                      <h3 className="text-lg md:text-xl font-bold mb-4">Itens do Pedido</h3>
+                      <div className="space-y-4">
+                        {orderDetails.order_items && Array.isArray(orderDetails.order_items) && orderDetails.order_items.length > 0 ? (
+                          orderDetails.order_items.map((item: any) => (
+                            <div key={item.id} className="border-b border-gray-700 pb-4 last:border-0 last:pb-0">
+                              <div className="flex justify-between items-start mb-2">
+                                <div className="flex-1">
+                                  <p className="font-bold text-base md:text-lg">
+                                    {item.quantity}x {item.products?.name || "Produto"}
+                                  </p>
+                                  {item.observations && (
+                                    <p className="text-gray-400 text-sm italic mt-1">
+                                      Obs: {item.observations}
+                                    </p>
+                                  )}
+                                  {item.options && Array.isArray(item.options) && item.options.length > 0 && (
+                                    <div className="mt-2 space-y-1">
+                                      {item.options.map((opt: any, idx: number) => (
+                                        opt && (
+                                          <div key={idx} className="text-sm text-gray-300">
+                                            <span className="text-gray-400">• </span>
+                                            {opt.product_options?.name || "Opção"}: {opt.product_option_values?.name || "Valor"}
+                                            {opt.price_modifier !== undefined && opt.price_modifier !== 0 && (
+                                              <span className="text-green-400 ml-2">
+                                                ({opt.price_modifier > 0 ? '+' : ''}{formatCurrency(opt.price_modifier)})
+                                              </span>
+                                            )}
+                                          </div>
+                                        )
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                                <p className="text-primary-yellow font-bold text-lg md:text-xl ml-4">
+                                  {formatCurrency((item.price || 0) * (item.quantity || 1))}
+                                </p>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-gray-400">Nenhum item encontrado</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Resumo Financeiro */}
+                    <div className="bg-gray-800 rounded-lg p-4 md:p-6">
+                      <h3 className="text-lg md:text-xl font-bold mb-4">Resumo Financeiro</h3>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-gray-400">
+                          <span>Subtotal</span>
+                          <span>{formatCurrency((orderDetails.total || 0) - (orderDetails.delivery_fee || 0))}</span>
+                        </div>
+                        {orderDetails.delivery_fee > 0 && (
+                          <div className="flex justify-between text-gray-400">
+                            <span>Taxa de Entrega</span>
+                            <span>{formatCurrency(orderDetails.delivery_fee)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-lg md:text-xl font-bold pt-2 border-t border-gray-700">
+                          <span>Total</span>
+                          <span className="text-primary-yellow">{formatCurrency(orderDetails.total)}</span>
+                        </div>
+                        <div className="flex justify-between text-gray-400 mt-2">
+                          <span>Forma de Pagamento</span>
+                          <span className="capitalize">
+                            {orderDetails.payment_method === "pix"
+                              ? "PIX"
+                              : orderDetails.payment_method === "card"
+                              ? "Cartão"
+                              : "Dinheiro"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-gray-400">
+                          <span>Status</span>
+                          <span className="capitalize">{statusLabels[orderDetails.status] || orderDetails.status}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-12">
+                    <p className="text-gray-400">Erro ao carregar detalhes</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
