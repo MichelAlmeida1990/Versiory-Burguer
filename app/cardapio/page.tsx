@@ -89,28 +89,28 @@ export default function CardapioPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-white text-gray-900 flex items-center justify-center">
         <div className="text-xl">Carregando cardápio...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-white text-gray-900">
       <Header />
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold mb-8 text-center">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 md:mb-8 text-center text-gray-900">
           Nosso Cardápio
         </h1>
 
         {/* Categorias */}
-        <div className="flex flex-wrap gap-4 mb-8 justify-center">
+        <div className="flex flex-wrap gap-2 sm:gap-4 mb-4 sm:mb-6 md:mb-8 justify-center">
           <button
             onClick={() => setSelectedCategory(null)}
-            className={`px-6 py-2 rounded-lg font-medium transition ${
+            className={`px-3 sm:px-4 md:px-6 py-2 text-sm sm:text-base rounded-lg font-medium transition ${
               selectedCategory === null
                 ? "bg-primary-yellow text-black"
-                : "bg-gray-800 hover:bg-gray-700"
+                : "bg-gray-200 hover:bg-gray-300 text-gray-900"
             }`}
           >
             Todos
@@ -119,10 +119,10 @@ export default function CardapioPage() {
             <button
               key={category.id}
               onClick={() => setSelectedCategory(category.id)}
-              className={`px-6 py-2 rounded-lg font-medium transition ${
+              className={`px-3 sm:px-4 md:px-6 py-2 text-sm sm:text-base rounded-lg font-medium transition ${
                 selectedCategory === category.id
                   ? "bg-primary-yellow text-black"
-                  : "bg-gray-800 hover:bg-gray-700"
+                  : "bg-gray-200 hover:bg-gray-300 text-gray-900"
               }`}
             >
               {category.name}
@@ -131,13 +131,13 @@ export default function CardapioPage() {
         </div>
 
         {/* Produtos */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
           {filteredProducts.map((product) => (
             <div
               key={product.id}
-              className="bg-gray-900 rounded-lg overflow-hidden hover:scale-105 transition-transform"
+              className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:scale-105 transition-transform shadow-md hover:shadow-lg"
             >
-              <div className="relative w-full h-48 bg-gray-800">
+              <div className="relative w-full h-40 sm:h-48 bg-gray-100">
                 {product.image ? (
                   <Image
                     src={product.image}
@@ -146,25 +146,25 @@ export default function CardapioPage() {
                     className="object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-500">
+                  <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
                     Sem imagem
                   </div>
                 )}
               </div>
-              <div className="p-4">
-                <h3 className="text-xl font-bold mb-2">{product.name}</h3>
-                <p className="text-gray-400 text-sm mb-4 line-clamp-2">
+              <div className="p-3 sm:p-4">
+                <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900">{product.name}</h3>
+                <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4 line-clamp-2">
                   {product.description}
                 </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-primary-yellow">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
+                  <span className="text-xl sm:text-2xl font-bold text-primary-yellow">
                     {formatCurrency(product.price)}
                   </span>
                   <button
                     onClick={() => handleAddToCart(product)}
-                    className="bg-primary-yellow text-black px-4 py-2 rounded-lg font-bold hover:bg-opacity-90 transition flex items-center gap-2"
+                    className="w-full sm:w-auto bg-primary-yellow text-black px-3 sm:px-4 py-2 text-sm sm:text-base rounded-lg font-bold hover:bg-opacity-90 transition flex items-center justify-center gap-2"
                   >
-                    <Plus className="w-5 h-5" />
+                    <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                     Adicionar
                   </button>
                 </div>
@@ -174,7 +174,7 @@ export default function CardapioPage() {
         </div>
 
         {filteredProducts.length === 0 && (
-          <div className="text-center py-12 text-gray-400">
+          <div className="text-center py-12 text-gray-600">
             Nenhum produto encontrado nesta categoria.
           </div>
         )}
