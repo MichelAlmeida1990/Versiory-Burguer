@@ -205,7 +205,7 @@ export default function RestaurantePage() {
       <LoyaltyChatbot primaryColor={settings?.primary_color || "#dc2626"} />
 
       {/* Hero Section */}
-      <section id="inicio" className="relative min-h-screen flex items-center justify-center overflow-hidden py-20 sm:py-0 sm:h-screen">
+      <section id="inicio" className="relative min-h-[70vh] sm:min-h-screen flex items-center justify-center overflow-hidden py-16 sm:py-20 md:py-0 sm:h-screen">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
@@ -222,10 +222,10 @@ export default function RestaurantePage() {
           }}
         ></div>
         
-        <div className="relative z-10 text-center px-3 sm:px-4 md:px-6 max-w-4xl mx-auto w-full">
+        <div className="relative z-10 text-center px-4 sm:px-6 md:px-8 max-w-4xl mx-auto w-full">
           <AnimatedTitle 
             text={settings?.home_title || "Bem-vindo"}
-            className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-3 sm:mb-4 md:mb-6 text-white"
+            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-bold mb-3 sm:mb-4 md:mb-6 text-white px-2"
           />
           
           {settings?.home_subtitle && (
@@ -233,7 +233,7 @@ export default function RestaurantePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1, duration: 0.8 }}
-              className="text-lg sm:text-xl md:text-2xl lg:text-3xl mb-4 sm:mb-6 md:mb-8 text-white font-bold drop-shadow-2xl px-2"
+              className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl mb-3 sm:mb-4 md:mb-6 lg:mb-8 text-white font-bold drop-shadow-2xl px-2"
             >
               {settings.home_subtitle}
             </motion.p>
@@ -254,7 +254,7 @@ export default function RestaurantePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.4, duration: 0.8 }}
-            className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center"
+            className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-2"
           >
             <PulseButton href="#cardapio">
               <span 
@@ -307,7 +307,7 @@ export default function RestaurantePage() {
       />
 
       {/* Cardápio Section */}
-      <section id="cardapio" className="py-20 px-3 sm:px-4 bg-white w-full overflow-x-hidden">
+      <section id="cardapio" className="py-12 sm:py-16 md:py-20 px-3 sm:px-4 md:px-6 bg-white w-full overflow-x-hidden">
         <div className="max-w-7xl mx-auto w-full">
           <ScrollAnimation>
             <div className="text-center mb-12">

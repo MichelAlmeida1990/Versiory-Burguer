@@ -1,7 +1,4 @@
 "use client";
-
-export const dynamic = 'force-dynamic';
-
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
@@ -934,43 +931,44 @@ function AdminContent() {
             {!loadingProducts && !productsError && products.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                 {products.map((product) => (
-                <div key={product.id} className="bg-gray-900 rounded-lg p-3 md:p-4">
-                  <h3 className="text-lg md:text-xl font-bold mb-1 md:mb-2">{product.name}</h3>
-                  <p className="text-gray-400 text-xs md:text-sm mb-2 line-clamp-2">{product.description}</p>
-                  <p className="text-primary-yellow font-bold mb-3 md:mb-4 text-base md:text-lg">
-                    {formatCurrency(product.price)}
-                  </p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => toggleProductAvailability(product)}
-                      className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium ${
-                        product.available
-                          ? "bg-green-600 hover:bg-green-700"
-                          : "bg-gray-700 hover:bg-gray-600"
-                      }`}
-                    >
-                      {product.available ? "Ativo" : "Inativo"}
-                    </button>
-                    <Link
-                      href={`/admin/products/${product.id}/edit`}
-                      className="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg flex items-center justify-center transition"
-                      title="Editar produto"
-                    >
-                      <Edit className="w-4 h-4 md:w-5 md:h-5" />
-                      <span className="hidden sm:inline ml-1 text-xs md:text-sm">Editar</span>
-                    </Link>
-                    <button
-                      onClick={() => handleDeleteProduct(product.id)}
-                      className="bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg flex items-center justify-center transition"
-                      title="Excluir produto"
-                    >
-                      <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
-                      <span className="hidden sm:inline ml-1 text-xs md:text-sm">Excluir</span>
-                    </button>
+                  <div key={product.id} className="bg-gray-900 rounded-lg p-3 md:p-4">
+                    <h3 className="text-lg md:text-xl font-bold mb-1 md:mb-2">{product.name}</h3>
+                    <p className="text-gray-400 text-xs md:text-sm mb-2 line-clamp-2">{product.description}</p>
+                    <p className="text-primary-yellow font-bold mb-3 md:mb-4 text-base md:text-lg">
+                      {formatCurrency(product.price)}
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => toggleProductAvailability(product)}
+                        className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium ${
+                          product.available
+                            ? "bg-green-600 hover:bg-green-700"
+                            : "bg-gray-700 hover:bg-gray-600"
+                        }`}
+                      >
+                        {product.available ? "Ativo" : "Inativo"}
+                      </button>
+                      <Link
+                        href={`/admin/products/${product.id}/edit`}
+                        className="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg flex items-center justify-center transition"
+                        title="Editar produto"
+                      >
+                        <Edit className="w-4 h-4 md:w-5 md:h-5" />
+                        <span className="hidden sm:inline ml-1 text-xs md:text-sm">Editar</span>
+                      </Link>
+                      <button
+                        onClick={() => handleDeleteProduct(product.id)}
+                        className="bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg flex items-center justify-center transition"
+                        title="Excluir produto"
+                      >
+                        <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
+                        <span className="hidden sm:inline ml-1 text-xs md:text-sm">Excluir</span>
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
