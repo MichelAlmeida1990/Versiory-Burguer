@@ -52,7 +52,7 @@ export function ClientAuthProvider({ children }: { children: ReactNode }) {
           
           // Se não encontrou no pathname, buscar no localStorage
           if (!restaurantSlug && typeof window !== 'undefined') {
-            restaurantSlug = localStorage.getItem('lastRestaurantContext');
+            restaurantSlug = localStorage.getItem('lastRestaurantContext') || undefined;
           }
           
           // Sempre redirecionar para a página do restaurante se houver slug

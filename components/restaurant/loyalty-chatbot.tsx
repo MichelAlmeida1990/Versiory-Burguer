@@ -348,7 +348,10 @@ export function LoyaltyChatbot({ primaryColor = "#dc2626" }: LoyaltyChatbotProps
                   onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
                   placeholder="Digite sua dúvida..."
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-0 text-sm"
-                  style={{ focusRingColor: primaryColor }}
+                  style={{ '--tw-ring-color': primaryColor } as React.CSSProperties}
+                  onFocus={(e) => {
+                    e.currentTarget.style.setProperty('--tw-ring-color', primaryColor);
+                  }}
                 />
                 <button
                   onClick={handleSendMessage}
