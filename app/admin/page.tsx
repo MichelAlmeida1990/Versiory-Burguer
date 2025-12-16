@@ -50,6 +50,10 @@ function AdminContent() {
   const [revenueData, setRevenueData] = useState<any[]>([]);
   const [topProducts, setTopProducts] = useState<any[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+  const [productsError, setProductsError] = useState<string | null>(null);
 
   useEffect(() => {
     const tabParam = searchParams.get("tab");
@@ -59,6 +63,16 @@ function AdminContent() {
   }, [searchParams]);
 
   useEffect(() => {
+    // Resetar estados de loading quando mudar de aba
+    if (activeTab === "products") {
+      setLoadingProducts(true);
+      setProductsError(null);
+    } else if (activeTab === "categories") {
+      setLoadingCategories(true);
+    } else if (activeTab === "orders") {
+      setLoadingOrders(true);
+    }
+    
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
@@ -76,24 +90,59 @@ function AdminContent() {
       const restaurantId = user.id;
       
       if (activeTab === "products" || activeTab === "dashboard") {
-        const { data: productsData } = await supabase
-          .from("products")
-          .select("*")
-          .eq("restaurant_id", restaurantId)
-          .order("name");
-        if (productsData) setProducts(productsData);
+        setLoadingProducts(true);
+        setProductsError(null);
+        try {
+          const { data: productsData, error: productsError } = await supabase
+            .from("products")
+            .select("*")
+            .eq("restaurant_id", restaurantId)
+            .order("name");
+          
+          if (productsError) {
+            console.error("Erro ao carregar produtos:", productsError);
+            setProductsError("Erro ao carregar produtos. Tente recarregar a página.");
+            setProducts([]);
+          } else {
+            setProducts(productsData || []);
+            setProductsError(null);
+          }
+        } catch (error: any) {
+          console.error("Erro ao carregar produtos:", error);
+          setProductsError("Erro ao carregar produtos. Tente recarregar a página.");
+          setProducts([]);
+        } finally {
+          setLoadingProducts(false);
+        }
       }
 
       if (activeTab === "categories" || activeTab === "dashboard") {
-        const { data: categoriesData } = await supabase
-          .from("categories")
-          .select("*")
-          .eq("restaurant_id", restaurantId)
-          .order("order");
-        if (categoriesData) setCategories(categoriesData);
+        setLoadingCategories(true);
+        try {
+          const { data: categoriesData, error: categoriesError } = await supabase
+            .from("categories")
+            .select("*")
+            .eq("restaurant_id", restaurantId)
+            .order("order");
+          
+          if (categoriesError) {
+            console.error("Erro ao carregar categorias:", categoriesError);
+            toast.error("Erro ao carregar categorias");
+            setCategories([]);
+          } else {
+            setCategories(categoriesData || []);
+          }
+        } catch (error: any) {
+          console.error("Erro ao carregar categorias:", error);
+          toast.error("Erro ao carregar categorias");
+          setCategories([]);
+        } finally {
+          setLoadingCategories(false);
+        }
       }
 
       if (activeTab === "orders" || activeTab === "dashboard") {
+        setLoadingOrders(true);
         // Filtrar pedidos apenas do restaurante logado (user já foi obtido acima)
         // IMPORTANTE: user_id na tabela orders armazena o restaurant_id como string
         // Usar comparação exata com o UUID do restaurante logado
@@ -175,10 +224,14 @@ function AdminContent() {
           processTopProducts(filteredOrders);
           processPaymentMethods(activeOrders);
         }
+        setLoadingOrders(false);
       }
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
       toast.error("Erro ao carregar dados");
+      setLoadingProducts(false);
+      setLoadingCategories(false);
+      setLoadingOrders(false);
     }
   };
 
@@ -839,8 +892,48 @@ function AdminContent() {
                 Novo Produto
               </Link>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-              {products.map((product) => (
+            
+            {/* Loading State */}
+            {loadingProducts && (
+              <div className="bg-gray-900 rounded-lg p-8 md:p-12 text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-yellow mx-auto mb-4"></div>
+                <p className="text-gray-400">Carregando produtos...</p>
+              </div>
+            )}
+            
+            {/* Error State */}
+            {!loadingProducts && productsError && (
+              <div className="bg-red-900/20 border border-red-500/50 rounded-lg p-6 md:p-8 text-center">
+                <p className="text-red-400 font-semibold mb-4">{productsError}</p>
+                <button
+                  onClick={() => loadData()}
+                  className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium transition"
+                >
+                  Tentar Novamente
+                </button>
+              </div>
+            )}
+            
+            {/* Empty State */}
+            {!loadingProducts && !productsError && products.length === 0 && (
+              <div className="bg-gray-900 rounded-lg p-8 md:p-12 text-center">
+                <Package className="w-16 h-16 md:w-20 md:h-20 text-gray-600 mx-auto mb-4" />
+                <h3 className="text-xl md:text-2xl font-bold mb-2">Nenhum produto cadastrado</h3>
+                <p className="text-gray-400 mb-6">Comece adicionando seu primeiro produto ao cardápio</p>
+                <Link
+                  href="/admin/products/new"
+                  className="bg-primary-yellow text-black px-6 py-3 rounded-lg font-bold hover:bg-opacity-90 transition inline-flex items-center gap-2"
+                >
+                  <Plus className="w-5 h-5" />
+                  Adicionar Primeiro Produto
+                </Link>
+              </div>
+            )}
+            
+            {/* Products Grid */}
+            {!loadingProducts && !productsError && products.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+                {products.map((product) => (
                 <div key={product.id} className="bg-gray-900 rounded-lg p-3 md:p-4">
                   <h3 className="text-lg md:text-xl font-bold mb-1 md:mb-2">{product.name}</h3>
                   <p className="text-gray-400 text-xs md:text-sm mb-2 line-clamp-2">{product.description}</p>
