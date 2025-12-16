@@ -3,10 +3,9 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
-import { AuthGuard } from "@/components/admin/auth-guard";
 import { Product, Category, supabase } from "@/lib/supabase";
 import { formatCurrency, formatDate, formatTime, formatDateTime, getTimeAgo } from "@/lib/utils";
-import { Plus, Edit, Trash2, Package, Users, DollarSign, TrendingUp, Calendar, ShoppingBag, Clock, CheckCircle, AlertTriangle, LogOut, X, FileDown } from "lucide-react";
+import { Plus, Edit, Trash2, Package, Users, DollarSign, TrendingUp, Calendar, ShoppingBag, LogOut } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -27,27 +26,10 @@ function TimeAgo({ date }: { date: Date | string }) {
   return <span>{timeAgo || "carregando..."}</span>;
 }
 
-const statusLabels: Record<string, string> = {
-  pending: "Aguardando",
-  confirmed: "Confirmado",
-  preparing: "Preparando",
-  ready: "Pronto",
-  delivering: "Saiu para Entrega",
-  delivered: "Entregue",
-  cancelled: "Cancelado",
-};
-
 function AdminContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState<"dashboard" | "products" | "orders" | "categories">(() => {
-    const tabParam = searchParams.get("tab");
-    if (tabParam && ["dashboard", "products", "orders", "categories"].includes(tabParam)) {
-      return tabParam as "dashboard" | "products" | "orders" | "categories";
-    }
-    return "dashboard";
-  });
-  const [user, setUser] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<"dashboard" | "products" | "orders" | "categories">("dashboard");
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
@@ -66,17 +48,6 @@ function AdminContent() {
   const [revenueData, setRevenueData] = useState<any[]>([]);
   const [topProducts, setTopProducts] = useState<any[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
-  const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "confirmed" | "preparing" | "ready" | "delivering" | "delivered" | "cancelled" | "active">("active");
-  const [showDelivered, setShowDelivered] = useState(false);
-  const [timerUpdate, setTimerUpdate] = useState(0);
-  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
-  const [orderDetails, setOrderDetails] = useState<any | null>(null);
-  const [loadingOrderDetails, setLoadingOrderDetails] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     const tabParam = searchParams.get("tab");
@@ -90,334 +61,118 @@ function AdminContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
-  // Atualizar timer e recarregar dados automaticamente
-  useEffect(() => {
-    // Recarregar a cada 30 segundos (mais frequente para pegar pedidos novos)
-    const interval = setInterval(() => {
-      setTimerUpdate(prev => prev + 1);
-      // Recarregar dados automaticamente
-      if (activeTab === "orders" || activeTab === "dashboard") {
-        loadData();
-      }
-    }, 30000); // Atualizar a cada 30 segundos
-    
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]); // Recarregar quando mudar de aba
-
-  // Carregar informações do usuário
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
-    });
-  }, []);
-
   const loadData = async () => {
     try {
       // Obter usuário logado para filtrar dados
       const { data: { user } } = await supabase.auth.getUser();
-      const restaurantId = user?.id;
-
-      if (!restaurantId) {
-        console.warn("⚠️ Usuário não autenticado, não é possível carregar dados");
+      
+      if (!user) {
+        console.error("Usuário não autenticado");
         return;
       }
-
-      console.log("🔍 Admin - Filtrando dados para restaurante:", restaurantId, "Email:", user?.email);
-
+      
+      const restaurantId = user.id;
+      
       if (activeTab === "products" || activeTab === "dashboard") {
-        // Filtrar produtos do restaurante logado
-        // Demo tem produtos antigos associados, então busca apenas produtos do demo
-        const { data: productsData, error: productsError } = await supabase
+        const { data: productsData } = await supabase
           .from("products")
           .select("*")
           .eq("restaurant_id", restaurantId)
           .order("name");
-        
-        if (productsError) {
-          console.error("❌ Erro ao buscar produtos:", productsError);
-        } else {
-          console.log("📦 Produtos no admin:", productsData?.length || 0, "Restaurante:", restaurantId);
-          setProducts(productsData || []);
-        }
+        if (productsData) setProducts(productsData);
       }
 
       if (activeTab === "categories" || activeTab === "dashboard") {
-        // Filtrar categorias do restaurante logado
-        // Demo tem categorias antigas associadas, então busca apenas categorias do demo
-        const { data: categoriesData, error: categoriesError } = await supabase
+        const { data: categoriesData } = await supabase
           .from("categories")
           .select("*")
           .eq("restaurant_id", restaurantId)
           .order("order");
-        
-        if (categoriesError) {
-          console.error("❌ Erro ao buscar categorias:", categoriesError);
-        } else {
-          console.log("📁 Categorias no admin:", categoriesData?.length || 0, "Restaurante:", restaurantId);
-          setCategories(categoriesData || []);
-        }
+        if (categoriesData) setCategories(categoriesData);
       }
 
       if (activeTab === "orders" || activeTab === "dashboard") {
-        // Carregar pedidos com itens e histórico de status - apenas do restaurante logado
-        // user_id em orders é o ID do restaurante (pode ser UUID ou legacy_timestamp)
-        console.log("🔍 Admin - Buscando pedidos para restaurante:", restaurantId, "Tipo:", typeof restaurantId, "Email:", user?.email);
+        // Filtrar pedidos apenas do restaurante logado (user já foi obtido acima)
+        // IMPORTANTE: user_id na tabela orders armazena o restaurant_id como string
+        // Usar comparação exata com o UUID do restaurante logado
+        const restaurantIdString = String(restaurantId).trim();
         
-        // Buscar pedidos - user_id é VARCHAR, então converter para string
-        // Tentar buscar com o UUID como string
-        const restaurantIdString = String(restaurantId);
-        console.log("🔍 Buscando pedidos com user_id (string):", restaurantIdString);
-        console.log("🔍 UUID original:", restaurantId);
+        console.log("🔍 Buscando pedidos para o restaurante:", restaurantIdString);
         
-        // Tentar buscar pedidos - user_id é VARCHAR no banco
-        let query = supabase
+        // Carregar pedidos com itens para dashboard
+        // IMPORTANTE: Filtrar APENAS pedidos deste restaurante específico
+        const { data: ordersData, error: ordersError } = await supabase
           .from("orders")
           .select(`
             *,
             order_items (
               *,
               products (*)
-            ),
-            order_status_history (*)
-          `);
-        
-        // Comparar user_id como string (VARCHAR no banco)
-        // Garantir que ambos sejam strings para comparação exata
-        const cleanRestaurantId = String(restaurantId).trim();
-        query = query.eq("user_id", cleanRestaurantId);
-        
-        let { data: ordersData, error: ordersError } = await query
+            )
+          `)
+          .eq("user_id", restaurantIdString)
           .order("created_at", { ascending: false })
           .limit(500);
-        
-        console.log("🔍 Query executada - Pedidos encontrados:", ordersData?.length || 0);
-        console.log("🔍 Buscando com user_id:", cleanRestaurantId);
-        if (ordersData && ordersData.length > 0) {
-          console.log("📋 Primeiro pedido encontrado - user_id:", ordersData[0].user_id, "Tipo:", typeof ordersData[0].user_id);
-          console.log("📋 RestaurantId esperado:", cleanRestaurantId, "Tipo:", typeof cleanRestaurantId);
-          console.log("📋 Comparação direta:", ordersData[0].user_id === cleanRestaurantId);
-          console.log("📋 Comparação com String():", String(ordersData[0].user_id) === String(cleanRestaurantId));
-        } else {
-          console.log("⚠️ Nenhum pedido encontrado com user_id =", cleanRestaurantId);
-          // Buscar todos os pedidos recentes para debug
-          const { data: allRecentOrders } = await supabase
-            .from("orders")
-            .select("id, user_id, customer_name, customer_email, created_at")
-            .order("created_at", { ascending: false })
-            .limit(10);
-          console.log("🔍 Últimos 10 pedidos no banco:", allRecentOrders?.map(o => ({
-            id: o.id,
-            user_id: o.user_id,
-            user_id_type: typeof o.user_id,
-            customer_name: o.customer_name,
-            customer_email: o.customer_email,
-            created_at: o.created_at,
-            user_id_matches: String(o.user_id) === cleanRestaurantId,
-            user_id_trimmed_matches: String(o.user_id).trim() === cleanRestaurantId
-          })));
-        }
-
-        // Se não encontrou pedidos pelo user_id, tentar buscar por produtos do restaurante
-        // (fallback para pedidos criados com ID legado mas que têm produtos do restaurante)
-        if (!ordersError && (!ordersData || ordersData.length === 0)) {
-          console.log("⚠️ Nenhum pedido encontrado pelo user_id, tentando buscar por produtos do restaurante...");
-          console.log("🔍 RestaurantId para comparação:", restaurantId, "Tipo:", typeof restaurantId);
-          console.log("🔍 RestaurantIdString para comparação:", restaurantIdString, "Tipo:", typeof restaurantIdString);
-          
-          // UUID do demo (dono dos produtos antigos)
-          const DEMO_UUID = "f5f457d9-821e-4a21-9029-e181b1bee792";
-          const isDemoRestaurant = String(restaurantId) === DEMO_UUID;
-          
-          // Se for demo, buscar pedidos mais antigos também (30 dias) para pegar pedidos com produtos antigos
-          const daysToSearch = isDemoRestaurant ? 30 : 7;
-          
-          // Buscar TODOS os pedidos recentes para análise
-          const { data: ordersByProducts, error: errorByProducts } = await supabase
-            .from("orders")
-            .select(`
-              *,
-              order_items (
-                *,
-                products (*)
-              ),
-              order_status_history (*)
-            `)
-            .gte("created_at", new Date(Date.now() - daysToSearch * 24 * 60 * 60 * 1000).toISOString())
-            .order("created_at", { ascending: false })
-            .limit(500);
-          
-          console.log("🔍 Total de pedidos encontrados para análise:", ordersByProducts?.length || 0);
-          console.log("🔍 Buscando pedidos dos últimos", daysToSearch, "dias (é demo?", isDemoRestaurant, ")");
-          
-          if (!errorByProducts && ordersByProducts) {
-            // Filtrar apenas pedidos que têm produtos do restaurante
-            const filteredOrders = ordersByProducts.filter((order: any) => {
-              if (!order.order_items || order.order_items.length === 0) {
-                console.log("⚠️ Pedido", order.id, "sem itens");
-                return false;
-              }
-              
-              // Log detalhado dos produtos do pedido
-              const productDetails = order.order_items.map((item: any) => ({
-                product_id: item.product_id,
-                product_name: item.products?.name,
-                product_restaurant_id: item.products?.restaurant_id,
-                product_restaurant_id_type: typeof item.products?.restaurant_id,
-                restaurant_id_match: item.products?.restaurant_id === restaurantId,
-                restaurant_id_string_match: String(item.products?.restaurant_id) === restaurantIdString,
-              }));
-              
-              console.log("📦 Pedido", order.id, "- Produtos:", productDetails);
-              console.log("📦 Pedido", order.id, "- user_id atual:", order.user_id, "| user_id esperado:", restaurantIdString);
-              
-              // Verificar se todos os produtos pertencem ao restaurante OU são produtos antigos
-              const allProductsFromRestaurant = order.order_items.every((item: any) => {
-                const product = item.products;
-                if (!product) return false;
-                
-                // Converter ambos para string para comparação segura
-                const productRestaurantId = product.restaurant_id ? String(product.restaurant_id) : null;
-                const expectedRestaurantId = String(restaurantId);
-                
-                // Produto pertence ao restaurante OU é produto antigo (sem restaurant_id)
-                return productRestaurantId === expectedRestaurantId || productRestaurantId === null;
-              });
-              
-              // Verificar se pelo menos um produto pertence ao restaurante
-              const hasProductFromRestaurant = order.order_items.some((item: any) => {
-                const product = item.products;
-                if (!product) return false;
-                
-                // Converter ambos para string para comparação segura
-                const productRestaurantId = product.restaurant_id ? String(product.restaurant_id) : null;
-                const expectedRestaurantId = String(restaurantId);
-                
-                return productRestaurantId === expectedRestaurantId;
-              });
-              
-              // Verificar se todos os produtos são antigos (sem restaurant_id)
-              const allProductsAreOld = order.order_items.every((item: any) => {
-                const product = item.products;
-                if (!product) return false;
-                return !product.restaurant_id;
-              });
-              
-              // Incluir o pedido se:
-              // 1. Todos os produtos pertencem ao restaurante OU são antigos
-              // 2. E (pelo menos um produto pertence ao restaurante OU (é demo E todos são antigos))
-              const shouldInclude = allProductsFromRestaurant && (
-                hasProductFromRestaurant || (isDemoRestaurant && allProductsAreOld)
-              );
-              
-              console.log("🔍 Pedido", order.id, "- Incluir?", shouldInclude, "| Tem produto do restaurante?", hasProductFromRestaurant, "| Todos produtos válidos?", allProductsFromRestaurant, "| Todos antigos?", allProductsAreOld, "| É demo?", isDemoRestaurant);
-              
-              return shouldInclude;
-            });
-            
-            if (filteredOrders.length > 0) {
-              console.log("✅ Encontrados", filteredOrders.length, "pedidos por produtos do restaurante");
-              
-              // Atualizar o user_id desses pedidos para o restaurante correto ANTES de usar
-              // (correção automática)
-              for (const order of filteredOrders) {
-                if (String(order.user_id) !== restaurantIdString) {
-                  console.log("🔧 Corrigindo user_id do pedido", order.id, "de", order.user_id, "para", restaurantIdString);
-                  const { error: updateError } = await supabase
-                    .from("orders")
-                    .update({ user_id: restaurantIdString })
-                    .eq("id", order.id);
-                  
-                  if (updateError) {
-                    console.error("❌ Erro ao corrigir user_id do pedido", order.id, ":", updateError);
-                  } else {
-                    console.log("✅ user_id corrigido com sucesso para o pedido", order.id);
-                    // Atualizar o user_id no objeto local também
-                    order.user_id = restaurantIdString;
-                  }
-                }
-              }
-              
-              ordersData = filteredOrders;
-            } else {
-              console.log("⚠️ Nenhum pedido encontrado mesmo após busca por produtos");
-            }
-          } else if (errorByProducts) {
-            console.error("❌ Erro ao buscar pedidos por produtos:", errorByProducts);
-          }
-        }
 
         if (ordersError) {
           console.error("❌ Erro ao buscar pedidos:", ordersError);
-          console.error("❌ Detalhes do erro:", JSON.stringify(ordersError, null, 2));
+          toast.error("Erro ao carregar pedidos");
         } else {
-          console.log("✅ Pedidos encontrados:", ordersData?.length || 0);
-          if (ordersData && ordersData.length > 0) {
-            console.log("📋 Primeiro pedido user_id:", ordersData[0].user_id, "Tipo:", typeof ordersData[0].user_id);
-            console.log("📋 RestaurantId esperado:", restaurantIdString, "Tipo:", typeof restaurantIdString);
-            console.log("📋 Comparação:", ordersData[0].user_id === restaurantIdString);
-          } else {
-            // Se não encontrou pedidos, buscar todos para debug
-            const { data: allOrders } = await supabase
-              .from("orders")
-              .select("id, user_id, customer_name, created_at")
-              .order("created_at", { ascending: false })
-              .limit(10);
-            console.log("🔍 Últimos 10 pedidos no banco (para debug):", allOrders?.map(o => ({
+          // VALIDAÇÃO ADICIONAL: Garantir que todos os pedidos retornados são realmente deste restaurante
+          // Isso previne problemas de comparação de UUID
+          const filteredOrders = ordersData?.filter(order => {
+            const orderUserId = String(order.user_id).trim();
+            const currentRestaurantId = String(restaurantId).trim();
+            return orderUserId === currentRestaurantId;
+          }) || [];
+          
+          console.log("✅ Pedidos encontrados (antes do filtro):", ordersData?.length || 0);
+          console.log("✅ Pedidos após validação rigorosa:", filteredOrders.length);
+          
+          if (filteredOrders.length !== (ordersData?.length || 0)) {
+            console.warn("⚠️ ATENÇÃO: Alguns pedidos foram filtrados por não pertencerem a este restaurante!");
+          }
+          
+          if (filteredOrders.length > 0) {
+            console.log("📦 Primeiros pedidos válidos:", filteredOrders.slice(0, 3).map(o => ({
               id: o.id,
               user_id: o.user_id,
-              customer_name: o.customer_name,
-              created_at: o.created_at
+              customer_email: o.customer_email,
+              total: o.total
             })));
           }
-        }
-        
-        // Ordenar order_status_history por created_at
-        if (ordersData) {
-          ordersData.forEach((order: any) => {
-            if (order.order_status_history) {
-              order.order_status_history.sort((a: any, b: any) => 
-                new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-              );
-            }
+          
+          // Usar apenas os pedidos validados
+          setOrders(filteredOrders);
+          const activeOrders = filteredOrders.filter((o) => o.status !== "cancelled");
+          
+          // Calcular métricas usando apenas os pedidos validados deste restaurante
+          const now = new Date();
+          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+          const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+          
+          const todayOrders = activeOrders.filter(o => new Date(o.created_at) >= today);
+          const weekOrders = activeOrders.filter(o => new Date(o.created_at) >= weekAgo);
+          const monthOrders = activeOrders.filter(o => new Date(o.created_at) >= monthAgo);
+          
+          setStats({
+            totalOrders: filteredOrders.length,
+            totalRevenue: activeOrders.reduce((sum, o) => sum + Number(o.total), 0),
+            pendingOrders: filteredOrders.filter((o) => o.status === "pending").length,
+            todayRevenue: todayOrders.reduce((sum, o) => sum + Number(o.total), 0),
+            todayOrders: todayOrders.length,
+            weekRevenue: weekOrders.reduce((sum, o) => sum + Number(o.total), 0),
+            weekOrders: weekOrders.length,
+            monthRevenue: monthOrders.reduce((sum, o) => sum + Number(o.total), 0),
+            monthOrders: monthOrders.length,
           });
-        }
-        
-        // Sempre atualizar pedidos e estatísticas (mesmo que seja array vazio)
-        const finalOrdersData = ordersData || [];
-        setOrders(finalOrdersData);
-        
-        const activeOrders = finalOrdersData.filter((o) => o.status !== "cancelled");
-        
-        // Calcular métricas (sempre, mesmo que não tenha pedidos)
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-        const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-        
-        const todayOrders = activeOrders.filter(o => new Date(o.created_at) >= today);
-        const weekOrders = activeOrders.filter(o => new Date(o.created_at) >= weekAgo);
-        const monthOrders = activeOrders.filter(o => new Date(o.created_at) >= monthAgo);
-        
-        const newStats = {
-          totalOrders: finalOrdersData.length,
-          totalRevenue: activeOrders.reduce((sum, o) => sum + Number(o.total || 0), 0),
-          pendingOrders: finalOrdersData.filter((o) => o.status === "pending").length,
-          todayRevenue: todayOrders.reduce((sum, o) => sum + Number(o.total || 0), 0),
-          todayOrders: todayOrders.length,
-          weekRevenue: weekOrders.reduce((sum, o) => sum + Number(o.total || 0), 0),
-          weekOrders: weekOrders.length,
-          monthRevenue: monthOrders.reduce((sum, o) => sum + Number(o.total || 0), 0),
-          monthOrders: monthOrders.length,
-        };
-        
-        console.log("📊 Estatísticas calculadas:", newStats);
-        setStats(newStats);
 
-        // Processar dados para gráficos (sempre, mesmo que seja array vazio)
-        processChartData(activeOrders);
-        processTopProducts(finalOrdersData);
-        processPaymentMethods(activeOrders);
+          // Processar dados para gráficos usando apenas pedidos validados
+          processChartData(activeOrders);
+          processTopProducts(filteredOrders);
+          processPaymentMethods(activeOrders);
+        }
       }
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
@@ -719,103 +474,6 @@ function AdminContent() {
     setPaymentMethods(methods);
   };
 
-  // Função para formatar minutos em horas/minutos/dias
-  const formatMinutes = (minutes: number): string => {
-    if (minutes < 60) {
-      return `${minutes} min`;
-    }
-
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-
-    if (hours < 24) {
-      if (remainingMinutes > 0) {
-        return `${hours}h ${remainingMinutes}min`;
-      }
-      return `${hours}h`;
-    }
-
-    const days = Math.floor(hours / 24);
-    const remainingHours = hours % 24;
-
-    if (remainingHours > 0) {
-      return `${days}d ${remainingHours}h`;
-    }
-    return `${days}d`;
-  };
-
-  // Função para calcular tempo no status atual e verificar se está dentro dos limites
-  const getTimeStatus = (order: any) => {
-    if (!order || order.status === "delivered" || order.status === "cancelled") {
-      return null;
-    }
-
-    const maxTimes: Record<string, number> = {
-      pending: 5,      // 5 minutos para aceitar
-      confirmed: 30,   // 30 minutos para preparar
-      preparing: 30,   // 30 minutos para preparar
-      ready: 25,       // 25 minutos para entregar
-      delivering: 25,  // 25 minutos para entregar
-    };
-
-    const maxTime = maxTimes[order.status];
-    if (!maxTime) return null;
-
-    let statusStartTime: Date;
-    if (order.order_status_history && order.order_status_history.length > 0) {
-      const currentStatusHistory = order.order_status_history
-        .filter((h: any) => h.status === order.status)
-        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
-      
-      if (currentStatusHistory) {
-        statusStartTime = new Date(currentStatusHistory.created_at);
-      } else {
-        statusStartTime = new Date(order.created_at);
-      }
-    } else {
-      statusStartTime = new Date(order.created_at);
-    }
-
-    const now = new Date();
-    const timeInStatus = Math.floor((now.getTime() - statusStartTime.getTime()) / 1000 / 60); // minutos
-
-    const percentage = Math.min((timeInStatus / maxTime) * 100, 100);
-
-    let status: "ok" | "warning" | "danger";
-    let message: string;
-    let color: string;
-    let icon: any;
-
-    if (timeInStatus <= maxTime * 0.7) {
-      status = "ok";
-      message = formatMinutes(timeInStatus);
-      color = "text-green-400";
-      icon = CheckCircle;
-    } else if (timeInStatus <= maxTime) {
-      status = "warning";
-      const remaining = maxTime - timeInStatus;
-      message = `${formatMinutes(timeInStatus)} (${formatMinutes(remaining)} restantes)`;
-      color = "text-yellow-400";
-      icon = Clock;
-    } else {
-      status = "danger";
-      const exceeded = timeInStatus - maxTime;
-      message = `${formatMinutes(timeInStatus)} (${formatMinutes(exceeded)} de atraso)`;
-      color = "text-red-400";
-      icon = AlertTriangle;
-    }
-
-    return {
-      timeInStatus,
-      maxTime,
-      percentage,
-      status,
-      message,
-      color,
-      icon,
-    };
-  };
-
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
       const response = await fetch(`/api/orders/${orderId}/status`, {
@@ -917,264 +575,6 @@ function AdminContent() {
     }
   };
 
-  const loadOrderDetails = async (orderId: string) => {
-    setLoadingOrderDetails(true);
-    try {
-      const response = await fetch(`/api/orders?id=${orderId}`);
-      if (!response.ok) throw new Error("Erro ao carregar detalhes");
-      
-      const order = await response.json();
-      
-      // Buscar opções dos itens se existirem
-      if (order?.order_items && Array.isArray(order.order_items) && order.order_items.length > 0) {
-        try {
-          const itemIds = order.order_items
-            .map((item: any) => item?.id)
-            .filter((id: any) => id);
-          
-          if (itemIds.length > 0) {
-            const { data: optionsData, error: optionsError } = await supabase
-              .from("order_item_options")
-              .select(`
-                *,
-                product_options (name),
-                product_option_values (name)
-              `)
-              .in("order_item_id", itemIds);
-            
-            if (!optionsError && optionsData) {
-              order.order_items = order.order_items.map((item: any) => ({
-                ...item,
-                options: (optionsData || []).filter((opt: any) => opt?.order_item_id === item?.id)
-              }));
-            }
-          }
-        } catch (optionsError) {
-          console.warn("Erro ao carregar opções dos itens:", optionsError);
-        }
-      }
-      
-      setOrderDetails(order);
-    } catch (error: any) {
-      console.error("Erro ao carregar detalhes:", error);
-      toast.error("Erro ao carregar detalhes do pedido");
-      setOrderDetails(null);
-    } finally {
-      setLoadingOrderDetails(false);
-    }
-  };
-
-  const handleViewOrder = async (order: any) => {
-    setSelectedOrder(order);
-    await loadOrderDetails(order.id);
-  };
-
-  const closeOrderModal = () => {
-    setSelectedOrder(null);
-    setOrderDetails(null);
-  };
-
-  const exportToPDF = async () => {
-    if (!orderDetails) return;
-
-    // Importação dinâmica do jsPDF (apenas no cliente)
-    const { default: jsPDF } = await import("jspdf");
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 15;
-    let yPos = margin;
-
-    // Função para adicionar nova página se necessário
-    const checkPageBreak = (requiredSpace: number) => {
-      if (yPos + requiredSpace > doc.internal.pageSize.getHeight() - margin) {
-        doc.addPage();
-        yPos = margin;
-      }
-    };
-
-    // Título
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    doc.text("Detalhes do Pedido", margin, yPos);
-    yPos += 10;
-
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Pedido #${orderDetails.id.slice(0, 8)}`, margin, yPos);
-    yPos += 8;
-
-    // Informações do Cliente
-    checkPageBreak(30);
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.text("Informações do Cliente", margin, yPos);
-    yPos += 8;
-
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Nome: ${orderDetails.customer_name || "Não informado"}`, margin, yPos);
-    yPos += 6;
-    doc.text(`Telefone: ${orderDetails.customer_phone || "Não informado"}`, margin, yPos);
-    yPos += 6;
-    doc.text(`E-mail: ${orderDetails.customer_email || "Não informado"}`, margin, yPos);
-    yPos += 6;
-    doc.text(`Data: ${formatDateTime(orderDetails.created_at)}`, margin, yPos);
-    yPos += 10;
-
-    // Endereço de Entrega
-    if (orderDetails.delivery_address) {
-      checkPageBreak(15);
-      doc.setFontSize(14);
-      doc.setFont("helvetica", "bold");
-      doc.text("Endereço de Entrega", margin, yPos);
-      yPos += 8;
-
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      const addressLines = doc.splitTextToSize(orderDetails.delivery_address, pageWidth - 2 * margin);
-      doc.text(addressLines, margin, yPos);
-      yPos += addressLines.length * 6 + 5;
-    }
-
-    // Itens do Pedido
-    checkPageBreak(20);
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.text("Itens do Pedido", margin, yPos);
-    yPos += 8;
-
-    if (orderDetails.order_items && Array.isArray(orderDetails.order_items) && orderDetails.order_items.length > 0) {
-      orderDetails.order_items.forEach((item: any) => {
-        checkPageBreak(25);
-        doc.setFontSize(11);
-        doc.setFont("helvetica", "bold");
-        const itemText = `${item.quantity}x ${item.products?.name || "Produto"}`;
-        doc.text(itemText, margin, yPos);
-        yPos += 6;
-
-        if (item.observations) {
-          doc.setFontSize(9);
-          doc.setFont("helvetica", "italic");
-          doc.text(`Obs: ${item.observations}`, margin + 5, yPos);
-          yPos += 5;
-        }
-
-        if (item.options && Array.isArray(item.options) && item.options.length > 0) {
-          doc.setFontSize(9);
-          doc.setFont("helvetica", "normal");
-          item.options.forEach((opt: any) => {
-            if (opt) {
-              const optText = `• ${opt.product_options?.name || "Opção"}: ${opt.product_option_values?.name || "Valor"}`;
-              doc.text(optText, margin + 5, yPos);
-              yPos += 5;
-            }
-          });
-        }
-
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
-        const priceText = `Preço: ${formatCurrency((item.price || 0) * (item.quantity || 1))}`;
-        doc.text(priceText, pageWidth - margin - 50, yPos - (item.options?.length || 0) * 5 - (item.observations ? 5 : 0) - 6, { align: "right" });
-        yPos += 8;
-      });
-    } else {
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.text("Nenhum item encontrado", margin, yPos);
-      yPos += 8;
-    }
-
-    // Resumo Financeiro
-    checkPageBreak(30);
-    yPos += 5;
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.text("Resumo Financeiro", margin, yPos);
-    yPos += 8;
-
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    const subtotal = (orderDetails.total || 0) - (orderDetails.delivery_fee || 0);
-    doc.text(`Subtotal: ${formatCurrency(subtotal)}`, margin, yPos);
-    yPos += 6;
-
-    if (orderDetails.delivery_fee > 0) {
-      doc.text(`Taxa de Entrega: ${formatCurrency(orderDetails.delivery_fee)}`, margin, yPos);
-      yPos += 6;
-    }
-
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text(`Total: ${formatCurrency(orderDetails.total)}`, margin, yPos);
-    yPos += 8;
-
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    const paymentMethod = orderDetails.payment_method === "pix"
-      ? "PIX"
-      : orderDetails.payment_method === "card"
-      ? "Cartão"
-      : "Dinheiro";
-    doc.text(`Forma de Pagamento: ${paymentMethod}`, margin, yPos);
-    yPos += 6;
-
-    const statusText = statusLabels[orderDetails.status] || orderDetails.status;
-    doc.text(`Status: ${statusText}`, margin, yPos);
-
-    // Salvar PDF
-    const fileName = `pedido-${orderDetails.id.slice(0, 8)}-${new Date().toISOString().split('T')[0]}.pdf`;
-    doc.save(fileName);
-    toast.success("PDF exportado com sucesso!");
-  };
-
-  // Calcular filtros de pedidos
-  // Definir todos os status do fluxo de pedidos
-  const activeStatuses = ["pending", "confirmed", "preparing", "ready", "delivering"];
-  const deliveredStatus = "delivered";
-  const cancelledStatus = "cancelled";
-  
-  // Filtrar pedidos seguindo o fluxo exato de cada fase
-  const activeOrders = orders.filter(o => activeStatuses.includes(o.status));
-  const deliveredOrders = orders.filter(o => o.status === deliveredStatus);
-  const cancelledOrders = orders.filter(o => o.status === cancelledStatus);
-  
-  // Filtrar pedidos baseado no status selecionado
-  const ordersToShow = filterStatus === "active" ? activeOrders :
-                       filterStatus === "delivered" ? deliveredOrders :
-                       filterStatus === "cancelled" ? cancelledOrders :
-                       filterStatus === "all" ? orders :
-                       orders.filter(o => o.status === filterStatus);
-
-  // Função para obter nome do usuário
-  const getUserName = () => {
-    if (!user) return null;
-    
-    // Tentar pegar do metadata primeiro
-    const metadata = user.user_metadata;
-    if (metadata?.name) return metadata.name;
-    if (metadata?.full_name) return metadata.full_name;
-    
-    // Se não tiver, extrair do email
-    if (user.email) {
-      const emailParts = user.email.split('@')[0];
-      // Capitalizar primeira letra e remover pontos/traços
-      return emailParts
-        .split(/[._-]/)
-        .map((part: string) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' ');
-    }
-    
-    return null;
-  };
-
-  // Função para obter saudação baseada no horário
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour >= 5 && hour < 12) return "Bom dia";
-    if (hour >= 12 && hour < 18) return "Boa tarde";
-    return "Boa noite";
-  };
-
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -1186,35 +586,34 @@ function AdminContent() {
     }
   };
 
-  const userName = getUserName();
-  const greeting = getGreeting();
-
   return (
     <div className="min-h-screen bg-black text-white">
       <Header />
-      <div className="container mx-auto px-4 py-3 md:py-5">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 md:mb-4">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold">Painel Administrativo</h1>
-            {userName && (
-              <p className="text-sm md:text-base text-gray-400 mt-1">
-                {greeting}, <span className="text-primary-yellow font-semibold">{userName}</span>! 👋
-              </p>
-            )}
-          </div>
-          {user && (
+      <div className="container mx-auto px-4 py-4 md:py-8">
+        <div className="flex justify-between items-center mb-4 md:mb-8">
+          <h1 className="text-2xl md:text-4xl font-bold">Painel Administrativo</h1>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/admin/settings"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition flex items-center gap-2"
+              title="Configurações"
+            >
+              <span className="hidden sm:inline">Configurações</span>
+              <span className="sm:hidden">⚙️</span>
+            </Link>
             <button
               onClick={handleLogout}
-              className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded text-xs sm:text-sm font-medium transition flex items-center gap-2"
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition flex items-center gap-2"
+              title="Sair"
             >
-              <LogOut className="w-4 h-4" />
-              <span>Sair</span>
+              <LogOut className="w-4 h-4 md:w-5 md:h-5" />
+              <span className="hidden sm:inline">Sair</span>
             </button>
-          )}
+          </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 md:gap-3 mb-3 md:mb-4 border-b border-gray-800 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+        <div className="flex gap-2 md:gap-4 mb-4 md:mb-8 border-b border-gray-800 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
           {[
             { id: "dashboard", label: "Dashboard" },
             { id: "products", label: "Produtos" },
@@ -1227,7 +626,7 @@ function AdminContent() {
                 setActiveTab(tab.id as any);
                 router.push(`/admin?tab=${tab.id}`);
               }}
-              className={`px-3 md:px-4 py-2 md:py-2 font-medium border-b-2 transition whitespace-nowrap flex-shrink-0 ${
+              className={`px-3 md:px-6 py-2 md:py-3 font-medium border-b-2 transition whitespace-nowrap flex-shrink-0 ${
                 activeTab === tab.id
                   ? "border-primary-yellow text-primary-yellow"
                   : "border-transparent text-gray-400 hover:text-white"
@@ -1240,55 +639,54 @@ function AdminContent() {
 
         {/* Dashboard */}
         {activeTab === "dashboard" && (
-          <div className="space-y-4 md:space-y-5">
+          <div className="space-y-6 md:space-y-8">
             {/* Cards de Métricas */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-              <div className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 rounded-lg p-3 md:p-4 border border-yellow-500/30 min-w-0">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+              <div className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 rounded-lg p-4 md:p-6 border border-yellow-500/30">
                 <div className="flex items-center justify-between mb-2">
-                  <Calendar className="w-4 h-4 md:w-5 md:h-5 text-yellow-400 flex-shrink-0" />
+                  <Calendar className="w-5 h-5 md:w-6 md:h-6 text-yellow-400" />
                   <span className="text-xs text-gray-400">Hoje</span>
                 </div>
-                <p className="text-lg sm:text-xl md:text-2xl font-bold mb-1 text-yellow-300 drop-shadow-lg break-words">{formatCurrency(stats.todayRevenue)}</p>
+                <p className="text-2xl md:text-3xl font-bold mb-1">{formatCurrency(stats.todayRevenue)}</p>
                 <p className="text-sm text-gray-400">{stats.todayOrders} pedido{stats.todayOrders !== 1 ? 's' : ''}</p>
               </div>
               
-              <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 rounded-lg p-3 md:p-4 border border-blue-500/30 min-w-0">
+              <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 rounded-lg p-4 md:p-6 border border-blue-500/30">
                 <div className="flex items-center justify-between mb-2">
-                  <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-blue-400 flex-shrink-0" />
+                  <TrendingUp className="w-5 h-5 md:w-6 md:h-6 text-blue-400" />
                   <span className="text-xs text-gray-400">7 dias</span>
                 </div>
-                <p className="text-lg sm:text-xl md:text-2xl font-bold mb-1 text-blue-300 drop-shadow-lg break-words">{formatCurrency(stats.weekRevenue)}</p>
+                <p className="text-2xl md:text-3xl font-bold mb-1">{formatCurrency(stats.weekRevenue)}</p>
                 <p className="text-sm text-gray-400">{stats.weekOrders} pedido{stats.weekOrders !== 1 ? 's' : ''}</p>
               </div>
               
-              <div className="bg-gradient-to-br from-green-500/20 to-green-600/10 rounded-lg p-3 md:p-4 border border-green-500/30 min-w-0">
+              <div className="bg-gradient-to-br from-green-500/20 to-green-600/10 rounded-lg p-4 md:p-6 border border-green-500/30">
                 <div className="flex items-center justify-between mb-2">
-                  <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-green-400 flex-shrink-0" />
+                  <DollarSign className="w-5 h-5 md:w-6 md:h-6 text-green-400" />
                   <span className="text-xs text-gray-400">30 dias</span>
                 </div>
-                <p className="text-lg sm:text-xl md:text-2xl font-bold mb-1 text-green-300 drop-shadow-lg break-words">{formatCurrency(stats.monthRevenue)}</p>
+                <p className="text-2xl md:text-3xl font-bold mb-1">{formatCurrency(stats.monthRevenue)}</p>
                 <p className="text-sm text-gray-400">{stats.monthOrders} pedido{stats.monthOrders !== 1 ? 's' : ''}</p>
               </div>
               
-              <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 rounded-lg p-3 md:p-4 border border-purple-500/30 min-w-0">
+              <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 rounded-lg p-4 md:p-6 border border-purple-500/30">
                 <div className="flex items-center justify-between mb-2">
-                  <Package className="w-4 h-4 md:w-5 md:h-5 text-purple-400 flex-shrink-0" />
+                  <Package className="w-5 h-5 md:w-6 md:h-6 text-purple-400" />
                   <span className="text-xs text-gray-400">Total</span>
                 </div>
-                <p className="text-lg sm:text-xl md:text-2xl font-bold mb-1 text-purple-300 drop-shadow-lg break-words">{formatCurrency(stats.totalRevenue)}</p>
+                <p className="text-2xl md:text-3xl font-bold mb-1">{formatCurrency(stats.totalRevenue)}</p>
                 <p className="text-sm text-gray-400">{stats.totalOrders} pedido{stats.totalOrders !== 1 ? 's' : ''}</p>
               </div>
             </div>
 
             {/* Gráficos */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
               {/* Gráfico de Vendas por Dia */}
-              <div className="bg-gray-900 rounded-lg p-3 md:p-4 overflow-hidden">
-                <h3 className="text-sm md:text-base font-bold mb-2 md:mb-3">Vendas por Dia (últimos 30 dias)</h3>
-                {salesData.length > 0 ? (
-                  <div className="w-full" style={{ minHeight: '250px', height: '250px' }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={salesData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+              <div className="bg-gray-900 rounded-lg p-3 md:p-4 lg:p-6 overflow-hidden">
+                <h3 className="text-base md:text-lg lg:text-xl font-bold mb-3 md:mb-4 lg:mb-6">Vendas por Dia (últimos 30 dias)</h3>
+                <div className="w-full" style={{ height: '250px' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={salesData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                       <XAxis dataKey="date" stroke="#9CA3AF" fontSize={10} angle={-45} textAnchor="end" height={60} />
                       <YAxis stroke="#9CA3AF" fontSize={10} />
@@ -1306,21 +704,17 @@ function AdminContent() {
                         dot={{ fill: '#FCD34D', r: 3 }}
                         activeDot={{ r: 5 }}
                       />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                ) : (
-                  <p className="text-gray-400 text-center py-8">Nenhum dado disponível</p>
-                )}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
 
               {/* Gráfico de Faturamento por Dia */}
-              <div className="bg-gray-900 rounded-lg p-3 md:p-4 overflow-hidden">
-                <h3 className="text-sm md:text-base font-bold mb-2 md:mb-3">Faturamento por Dia (últimos 30 dias)</h3>
-                {revenueData.length > 0 ? (
-                  <div className="w-full" style={{ minHeight: '250px', height: '250px' }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={revenueData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+              <div className="bg-gray-900 rounded-lg p-3 md:p-4 lg:p-6 overflow-hidden">
+                <h3 className="text-base md:text-lg lg:text-xl font-bold mb-3 md:mb-4 lg:mb-6">Faturamento por Dia (últimos 30 dias)</h3>
+                <div className="w-full" style={{ height: '250px' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={revenueData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                       <XAxis dataKey="date" stroke="#9CA3AF" fontSize={10} angle={-45} textAnchor="end" height={60} />
                       <YAxis stroke="#9CA3AF" fontSize={10} />
@@ -1336,20 +730,17 @@ function AdminContent() {
                         fill="#3B82F6"
                         radius={[8, 8, 0, 0]}
                       />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                ) : (
-                  <p className="text-gray-400 text-center py-8">Nenhum dado disponível</p>
-                )}
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </div>
 
             {/* Gráficos Inferiores */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
               {/* Top Produtos */}
-              <div className="bg-gray-900 rounded-lg p-3 md:p-4">
-                <h3 className="text-base md:text-lg font-bold mb-3 md:mb-4">Top 5 Produtos Mais Vendidos</h3>
+              <div className="bg-gray-900 rounded-lg p-4 md:p-6">
+                <h3 className="text-lg md:text-xl font-bold mb-4 md:mb-6">Top 5 Produtos Mais Vendidos</h3>
                 <div className="space-y-3">
                   {topProducts.length > 0 ? (
                     topProducts.map((product, index) => (
@@ -1373,10 +764,10 @@ function AdminContent() {
               </div>
 
               {/* Métodos de Pagamento */}
-              <div className="bg-gray-900 rounded-lg p-3 md:p-4 overflow-hidden">
-                <h3 className="text-sm md:text-base font-bold mb-2 md:mb-3">Faturamento por Método de Pagamento</h3>
+              <div className="bg-gray-900 rounded-lg p-3 md:p-4 lg:p-6 overflow-hidden">
+                <h3 className="text-base md:text-lg lg:text-xl font-bold mb-3 md:mb-4 lg:mb-6">Faturamento por Método de Pagamento</h3>
                 {paymentMethods.length > 0 ? (
-                  <div className="w-full" style={{ minHeight: '250px', height: '250px' }}>
+                  <div className="w-full" style={{ height: '250px' }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -1395,9 +786,8 @@ function AdminContent() {
                           })}
                         </Pie>
                         <Tooltip 
-                          contentStyle={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '12px', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }}
-                          labelStyle={{ color: '#1F2937', fontWeight: 'bold' }}
-                          itemStyle={{ color: '#065F46', fontWeight: 'bold' }}
+                          contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px', fontSize: '12px' }}
+                          labelStyle={{ color: '#F3F4F6' }}
                           formatter={(value: number) => formatCurrency(value)}
                         />
                       </PieChart>
@@ -1410,9 +800,9 @@ function AdminContent() {
             </div>
 
             {/* Status de Pedidos */}
-            <div className="bg-gray-900 rounded-lg p-3 md:p-4">
-              <h3 className="text-sm md:text-base font-bold mb-2 md:mb-3">Status dos Pedidos</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
+            <div className="bg-gray-900 rounded-lg p-3 md:p-4 lg:p-6">
+              <h3 className="text-base md:text-lg lg:text-xl font-bold mb-3 md:mb-4 lg:mb-6">Status dos Pedidos</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 md:gap-4">
                 {[
                   { status: 'pending', label: 'Aguardando', color: 'bg-yellow-500', count: orders.filter(o => o.status === 'pending').length },
                   { status: 'confirmed', label: 'Confirmado', color: 'bg-blue-500', count: orders.filter(o => o.status === 'confirmed').length },
@@ -1423,7 +813,7 @@ function AdminContent() {
                   { status: 'cancelled', label: 'Cancelado', color: 'bg-red-500', count: orders.filter(o => o.status === 'cancelled').length },
                 ].map((item) => (
                   <div key={item.status} className="text-center">
-                    <div className={`${item.color} w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full mx-auto mb-2 flex items-center justify-center text-white font-bold text-xs sm:text-sm md:text-base`}>
+                    <div className={`${item.color} w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full mx-auto mb-2 flex items-center justify-center text-white font-bold text-sm sm:text-base md:text-lg lg:text-2xl`}>
                       {item.count}
                     </div>
                     <p className="text-xs sm:text-sm text-gray-400 break-words">{item.label}</p>
@@ -1435,25 +825,24 @@ function AdminContent() {
         )}
 
         {/* Produtos */}
-        {(activeTab === "products" || searchParams.get("tab") === "products") && (
+        {activeTab === "products" && (
           <div>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 md:mb-6">
-              <h2 className="text-lg md:text-xl font-bold">Produtos</h2>
+              <h2 className="text-xl md:text-2xl font-bold">Produtos</h2>
               <Link
                 href="/admin/products/new"
                 className="bg-primary-yellow text-black px-4 py-2 rounded-lg font-bold hover:bg-opacity-90 transition flex items-center gap-2 text-sm md:text-base whitespace-nowrap"
-                style={{ display: 'flex', backgroundColor: '#ccff00' }}
               >
                 <Plus className="w-4 h-4 md:w-5 md:h-5" />
                 Novo Produto
               </Link>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
               {products.map((product) => (
                 <div key={product.id} className="bg-gray-900 rounded-lg p-3 md:p-4">
-                  <h3 className="text-base md:text-lg font-bold mb-1 md:mb-2">{product.name}</h3>
+                  <h3 className="text-lg md:text-xl font-bold mb-1 md:mb-2">{product.name}</h3>
                   <p className="text-gray-400 text-xs md:text-sm mb-2 line-clamp-2">{product.description}</p>
-                  <p className="text-primary-yellow font-bold mb-2 md:mb-3 text-sm md:text-base">
+                  <p className="text-primary-yellow font-bold mb-3 md:mb-4 text-base md:text-lg">
                     {formatCurrency(product.price)}
                   </p>
                   <div className="flex gap-2">
@@ -1492,145 +881,21 @@ function AdminContent() {
 
         {/* Pedidos */}
         {activeTab === "orders" && (
-            <div>
+          <div>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 md:mb-6">
-              <h2 className="text-lg md:text-xl font-bold">Pedidos</h2>
-                <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
-                  <div className="flex gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 w-full sm:w-auto">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setFilterStatus("active");
-                      }}
-                      className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded text-xs font-medium transition whitespace-nowrap flex-shrink-0 ${
-                        filterStatus === "active"
-                          ? "bg-[#ccff00] text-black font-bold shadow-lg shadow-[#ccff00]/30"
-                          : "text-gray-400 hover:text-white"
-                      }`}
-                    >
-                      Ativos ({activeOrders.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setFilterStatus("pending");
-                      }}
-                      className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded text-xs font-medium transition whitespace-nowrap flex-shrink-0 ${
-                        filterStatus === "pending"
-                          ? "bg-yellow-500 text-white font-bold shadow-lg shadow-yellow-500/30"
-                          : "text-gray-400 hover:text-white"
-                      }`}
-                    >
-                      Aguardando ({orders.filter(o => o.status === "pending").length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setFilterStatus("confirmed");
-                      }}
-                      className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded text-xs font-medium transition whitespace-nowrap flex-shrink-0 ${
-                        filterStatus === "confirmed"
-                          ? "bg-blue-500 text-white font-bold shadow-lg shadow-blue-500/30"
-                          : "text-gray-400 hover:text-white"
-                      }`}
-                    >
-                      Confirmado ({orders.filter(o => o.status === "confirmed").length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setFilterStatus("preparing");
-                      }}
-                      className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded text-xs font-medium transition whitespace-nowrap flex-shrink-0 ${
-                        filterStatus === "preparing"
-                          ? "bg-orange-500 text-white font-bold shadow-lg shadow-orange-500/30"
-                          : "text-gray-400 hover:text-white"
-                      }`}
-                    >
-                      Preparando ({orders.filter(o => o.status === "preparing").length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setFilterStatus("ready");
-                      }}
-                      className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded text-xs font-medium transition whitespace-nowrap flex-shrink-0 ${
-                        filterStatus === "ready"
-                          ? "bg-green-500 text-white font-bold shadow-lg shadow-green-500/30"
-                          : "text-gray-400 hover:text-white"
-                      }`}
-                    >
-                      Pronto ({orders.filter(o => o.status === "ready").length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setFilterStatus("delivering");
-                      }}
-                      className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded text-xs font-medium transition whitespace-nowrap flex-shrink-0 ${
-                        filterStatus === "delivering"
-                          ? "bg-purple-500 text-white font-bold shadow-lg shadow-purple-500/30"
-                          : "text-gray-400 hover:text-white"
-                      }`}
-                    >
-                      Saiu para Entrega ({orders.filter(o => o.status === "delivering").length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setFilterStatus("delivered");
-                      }}
-                      className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded text-xs font-medium transition whitespace-nowrap flex-shrink-0 ${
-                        filterStatus === "delivered"
-                          ? "bg-green-600 text-white font-bold shadow-lg shadow-green-600/30"
-                          : "text-gray-400 hover:text-white"
-                      }`}
-                    >
-                      Entregue ({deliveredOrders.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setFilterStatus("cancelled");
-                      }}
-                      className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded text-xs font-medium transition whitespace-nowrap flex-shrink-0 ${
-                        filterStatus === "cancelled"
-                          ? "bg-red-600 text-white font-bold shadow-lg shadow-red-600/30"
-                          : "text-gray-400 hover:text-white"
-                      }`}
-                    >
-                      Cancelado ({cancelledOrders.length})
-                    </button>
-                  </div>
-                  <div className="text-sm text-gray-400">
-                    Total: {orders.length} pedido{orders.length !== 1 ? 's' : ''}
-                  </div>
-                </div>
+              <h2 className="text-xl md:text-2xl font-bold">Pedidos</h2>
+              <div className="text-sm text-gray-400">
+                Total: {orders.length} pedido{orders.length !== 1 ? 's' : ''}
               </div>
+            </div>
 
-              {/* Timeline View */}
-              <div className="relative">
-                {/* Timeline Line */}
-                <div className="absolute left-3 sm:left-4 md:left-6 top-0 bottom-0 w-0.5 bg-gray-700"></div>
+            {/* Timeline View */}
+            <div className="relative">
+              {/* Timeline Line */}
+              <div className="absolute left-3 sm:left-4 md:left-6 top-0 bottom-0 w-0.5 bg-gray-700"></div>
 
-                <div className="space-y-3 md:space-y-4" key={`orders-section-${filterStatus}`}>
-                  {ordersToShow.map((order, index) => {
+              <div className="space-y-3 md:space-y-4 lg:space-y-6">
+                {orders.map((order, index) => {
                   const statusColors: Record<string, string> = {
                     pending: "bg-yellow-500",
                     confirmed: "bg-blue-500",
@@ -1641,42 +906,36 @@ function AdminContent() {
                     cancelled: "bg-red-500",
                   };
 
+                  const statusLabels: Record<string, string> = {
+                    pending: "Aguardando",
+                    confirmed: "Confirmado",
+                    preparing: "Preparando",
+                    ready: "Pronto",
+                    delivering: "Saiu para Entrega",
+                    delivered: "Entregue",
+                    cancelled: "Cancelado",
+                  };
+
                   return (
                     <div key={order.id} className="relative pl-10 sm:pl-12 md:pl-16">
                       {/* Timeline Dot */}
-                      <div className={`absolute left-1.5 sm:left-2 md:left-3 top-2 w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 rounded-full ${statusColors[order.status] || "bg-gray-500"} border-2 sm:border-3 border-black z-10`}></div>
+                      <div className={`absolute left-1.5 sm:left-2 md:left-4 top-2 w-3 h-3 sm:w-4 sm:h-4 md:w-6 md:h-6 rounded-full ${statusColors[order.status] || "bg-gray-500"} border-2 sm:border-4 border-black z-10`}></div>
 
                       {/* Order Card */}
-                      <div 
-                        className="bg-gray-900 rounded-lg p-3 sm:p-4 md:p-5 hover:bg-gray-800 transition cursor-pointer"
-                        onClick={() => handleViewOrder(order)}
-                      >
-                        <div className="flex flex-col md:flex-row justify-between items-start gap-3 md:gap-4">
+                      <div className="bg-gray-900 rounded-lg p-3 sm:p-4 md:p-6 hover:bg-gray-800 transition">
+                        <div className="flex flex-col lg:flex-row justify-between items-start gap-3 md:gap-4">
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-                              <h3 className="text-sm sm:text-base md:text-lg font-bold break-words">
+                              <h3 className="text-base sm:text-lg md:text-xl font-bold break-words">
                                 Pedido #{order.id.slice(0, 8)}
                               </h3>
-                              <span className={`px-2 py-1 rounded text-xs sm:text-sm font-medium whitespace-nowrap ${statusColors[order.status] || "bg-gray-500"}`}>
+                              <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${statusColors[order.status] || "bg-gray-500"}`}>
                                 {statusLabels[order.status] || order.status}
                               </span>
-                              {(() => {
-                                const timeStatus = getTimeStatus(order);
-                                if (timeStatus) {
-                                  const TimeIcon = timeStatus.icon;
-                                  return (
-                                    <div className={`flex items-center gap-1 ${timeStatus.color} text-xs sm:text-sm font-medium`}>
-                                      <TimeIcon className="w-3 h-3 sm:w-4 sm:h-4" />
-                                      <span>{timeStatus.message}</span>
-                                    </div>
-                                  );
-                                }
-                                return null;
-                              })()}
                             </div>
 
                             {/* Time Information */}
-                            <div className="space-y-1 mb-2">
+                            <div className="space-y-1 mb-2 md:mb-3">
                               <p className="text-gray-300 text-xs sm:text-sm md:text-base font-medium">
                                 {formatDateTime(order.created_at)}
                               </p>
@@ -1696,66 +955,16 @@ function AdminContent() {
                                 👤 {order.customer_name}
                               </p>
                             )}
-
-                            {/* Detalhes do Pedido - Mostrar para entregues */}
-                            {order.status === "delivered" && order.order_items && order.order_items.length > 0 && (
-                              <div className="mt-3 pt-3 border-t border-gray-700">
-                                <h4 className="text-xs sm:text-sm font-semibold text-gray-300 mb-2">Itens do Pedido:</h4>
-                                <div className="space-y-1.5">
-                                  {order.order_items.map((item: any, idx: number) => (
-                                    <div key={idx} className="flex justify-between items-start gap-2 text-xs sm:text-sm">
-                                      <div className="flex-1 min-w-0">
-                                        <span className="text-gray-300 font-medium">
-                                          {item.quantity}x {item.products?.name || 'Produto'}
-                                        </span>
-                                        {item.observations && (
-                                          <p className="text-gray-500 text-xs italic mt-0.5">
-                                            Obs: {item.observations}
-                                          </p>
-                                        )}
-                                      </div>
-                                      <span className="text-primary-yellow font-semibold whitespace-nowrap">
-                                        {formatCurrency((item.price || 0) * (item.quantity || 1))}
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                                <div className="mt-2 pt-2 border-t border-gray-800 flex justify-between items-center">
-                                  <span className="text-xs sm:text-sm text-gray-400">Subtotal:</span>
-                                  <span className="text-sm sm:text-base font-semibold text-gray-300">
-                                    {formatCurrency(order.order_items.reduce((sum: number, item: any) => sum + ((item.price || 0) * (item.quantity || 1)), 0))}
-                                  </span>
-                                </div>
-                                {order.delivery_fee && order.delivery_fee > 0 && (
-                                  <div className="flex justify-between items-center mt-1">
-                                    <span className="text-xs sm:text-sm text-gray-400">Taxa de Entrega:</span>
-                                    <span className="text-sm sm:text-base font-semibold text-gray-300">
-                                      {formatCurrency(order.delivery_fee)}
-                                    </span>
-                                  </div>
-                                )}
-                                <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-700">
-                                  <span className="text-sm sm:text-base font-bold text-gray-200">Total:</span>
-                                  <span className="text-sm sm:text-base md:text-lg font-bold text-primary-yellow">
-                                    {formatCurrency(order.total)}
-                                  </span>
-                                </div>
-                              </div>
-                            )}
                           </div>
 
-                          <div className="w-full md:w-auto text-left md:text-right space-y-2 md:space-y-3">
-                            <p className="text-base sm:text-lg md:text-xl font-bold text-primary-yellow mb-2 md:mb-0">
+                          <div className="w-full lg:w-auto text-left lg:text-right space-y-2 md:space-y-3">
+                            <p className="text-lg sm:text-xl md:text-2xl font-bold text-primary-yellow mb-2 lg:mb-0">
                               {formatCurrency(order.total)}
                             </p>
                             <div className="flex flex-col sm:flex-row gap-2">
                               <select
                                 value={order.status}
-                                onChange={(e) => {
-                                  e.stopPropagation();
-                                  updateOrderStatus(order.id, e.target.value);
-                                }}
-                                onClick={(e) => e.stopPropagation()}
+                                onChange={(e) => updateOrderStatus(order.id, e.target.value)}
                                 className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm"
                               >
                                 <option value="pending">Aguardando</option>
@@ -1767,10 +976,7 @@ function AdminContent() {
                                 <option value="cancelled">Cancelado</option>
                               </select>
                               <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleEditOrder(order);
-                                }}
+                                onClick={() => handleEditOrder(order)}
                                 className="bg-blue-600 hover:bg-blue-700 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg flex items-center justify-center gap-1 text-xs sm:text-sm"
                                 title="Editar pedido"
                               >
@@ -1778,10 +984,7 @@ function AdminContent() {
                                 <span className="hidden sm:inline">Editar</span>
                               </button>
                               <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteOrder(order.id);
-                                }}
+                                onClick={() => handleDeleteOrder(order.id)}
                                 className="bg-red-600 hover:bg-red-700 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg flex items-center justify-center gap-1 text-xs sm:text-sm"
                                 title="Excluir pedido"
                               >
@@ -1797,7 +1000,7 @@ function AdminContent() {
                 })}
               </div>
 
-              {ordersToShow.length === 0 && (
+              {orders.length === 0 && (
                 <div className="text-center py-12 text-gray-400">
                   <p className="text-base sm:text-lg">Nenhum pedido encontrado</p>
                 </div>
@@ -1806,188 +1009,23 @@ function AdminContent() {
           </div>
         )}
 
-        {/* Modal de Detalhes do Pedido */}
-        {mounted && selectedOrder && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4"
-            onClick={closeOrderModal}
-          >
-            <div 
-              className="bg-gray-900 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="sticky top-0 bg-gray-900 border-b border-gray-800 p-4 md:p-6 flex justify-between items-center z-10">
-                <h2 className="text-xl md:text-2xl font-bold">
-                  Detalhes do Pedido #{selectedOrder.id.slice(0, 8)}
-                </h2>
-                <div className="flex items-center gap-2">
-                  {orderDetails && (
-                    <button
-                      onClick={exportToPDF}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition flex items-center gap-2"
-                      title="Exportar para PDF"
-                    >
-                      <FileDown className="w-5 h-5" />
-                      <span className="hidden sm:inline">Exportar PDF</span>
-                    </button>
-                  )}
-                  <button
-                    onClick={closeOrderModal}
-                    className="text-gray-400 hover:text-white transition p-2"
-                  >
-                    <X className="w-6 h-6" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="p-4 md:p-6 space-y-6">
-                {loadingOrderDetails ? (
-                  <div className="text-center py-12">
-                    <p className="text-gray-400">Carregando detalhes...</p>
-                  </div>
-                ) : orderDetails ? (
-                  <>
-                    {/* Informações do Cliente */}
-                    <div className="bg-gray-800 rounded-lg p-4 md:p-6">
-                      <h3 className="text-lg md:text-xl font-bold mb-4">Informações do Cliente</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-gray-400 text-sm mb-1">Nome</p>
-                          <p className="font-medium">{orderDetails.customer_name || "Não informado"}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-400 text-sm mb-1">Telefone</p>
-                          <p className="font-medium">{orderDetails.customer_phone || "Não informado"}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-400 text-sm mb-1">E-mail</p>
-                          <p className="font-medium">{orderDetails.customer_email || "Não informado"}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-400 text-sm mb-1">Data do Pedido</p>
-                          <p className="font-medium">{formatDateTime(orderDetails.created_at)}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Endereço de Entrega */}
-                    {orderDetails.delivery_address && (
-                      <div className="bg-gray-800 rounded-lg p-4 md:p-6">
-                        <h3 className="text-lg md:text-xl font-bold mb-4">Endereço de Entrega</h3>
-                        <p className="font-medium break-words">{orderDetails.delivery_address}</p>
-                      </div>
-                    )}
-
-                    {/* Itens do Pedido */}
-                    <div className="bg-gray-800 rounded-lg p-4 md:p-6">
-                      <h3 className="text-lg md:text-xl font-bold mb-4">Itens do Pedido</h3>
-                      <div className="space-y-4">
-                        {orderDetails.order_items && Array.isArray(orderDetails.order_items) && orderDetails.order_items.length > 0 ? (
-                          orderDetails.order_items.map((item: any) => (
-                            <div key={item.id} className="border-b border-gray-700 pb-4 last:border-0 last:pb-0">
-                              <div className="flex justify-between items-start mb-2">
-                                <div className="flex-1">
-                                  <p className="font-bold text-base md:text-lg">
-                                    {item.quantity}x {item.products?.name || "Produto"}
-                                  </p>
-                                  {item.observations && (
-                                    <p className="text-gray-400 text-sm italic mt-1">
-                                      Obs: {item.observations}
-                                    </p>
-                                  )}
-                                  {item.options && Array.isArray(item.options) && item.options.length > 0 && (
-                                    <div className="mt-2 space-y-1">
-                                      {item.options.map((opt: any, idx: number) => (
-                                        opt && (
-                                          <div key={idx} className="text-sm text-gray-300">
-                                            <span className="text-gray-400">• </span>
-                                            {opt.product_options?.name || "Opção"}: {opt.product_option_values?.name || "Valor"}
-                                            {opt.price_modifier !== undefined && opt.price_modifier !== 0 && (
-                                              <span className="text-green-400 ml-2">
-                                                ({opt.price_modifier > 0 ? '+' : ''}{formatCurrency(opt.price_modifier)})
-                                              </span>
-                                            )}
-                                          </div>
-                                        )
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                                <p className="text-primary-yellow font-bold text-lg md:text-xl ml-4">
-                                  {formatCurrency((item.price || 0) * (item.quantity || 1))}
-                                </p>
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <p className="text-gray-400">Nenhum item encontrado</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Resumo Financeiro */}
-                    <div className="bg-gray-800 rounded-lg p-4 md:p-6">
-                      <h3 className="text-lg md:text-xl font-bold mb-4">Resumo Financeiro</h3>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-gray-400">
-                          <span>Subtotal</span>
-                          <span>{formatCurrency((orderDetails.total || 0) - (orderDetails.delivery_fee || 0))}</span>
-                        </div>
-                        {orderDetails.delivery_fee > 0 && (
-                          <div className="flex justify-between text-gray-400">
-                            <span>Taxa de Entrega</span>
-                            <span>{formatCurrency(orderDetails.delivery_fee)}</span>
-                          </div>
-                        )}
-                        <div className="flex justify-between text-lg md:text-xl font-bold pt-2 border-t border-gray-700">
-                          <span>Total</span>
-                          <span className="text-primary-yellow">{formatCurrency(orderDetails.total)}</span>
-                        </div>
-                        <div className="flex justify-between text-gray-400 mt-2">
-                          <span>Forma de Pagamento</span>
-                          <span className="capitalize">
-                            {orderDetails.payment_method === "pix"
-                              ? "PIX"
-                              : orderDetails.payment_method === "card"
-                              ? "Cartão"
-                              : "Dinheiro"}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-gray-400">
-                          <span>Status</span>
-                          <span className="capitalize">{statusLabels[orderDetails.status] || orderDetails.status}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-center py-12">
-                    <p className="text-gray-400">Erro ao carregar detalhes</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Categorias */}
-        {(activeTab === "categories" || searchParams.get("tab") === "categories") && (
+        {activeTab === "categories" && (
           <div>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 md:mb-6">
-              <h2 className="text-lg md:text-xl font-bold">Categorias</h2>
+              <h2 className="text-xl md:text-2xl font-bold">Categorias</h2>
               <Link
                 href="/admin/categories/new"
                 className="bg-primary-yellow text-black px-4 py-2 rounded-lg font-bold hover:bg-opacity-90 transition flex items-center gap-2 text-sm md:text-base whitespace-nowrap"
-                style={{ display: 'flex', backgroundColor: '#ccff00' }}
               >
                 <Plus className="w-4 h-4 md:w-5 md:h-5" />
                 Nova Categoria
               </Link>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
               {categories.map((category) => (
                 <div key={category.id} className="bg-gray-900 rounded-lg p-3 md:p-4">
-                  <h3 className="text-sm md:text-lg font-bold mb-2">{category.name}</h3>
+                  <h3 className="text-base md:text-xl font-bold mb-3">{category.name}</h3>
                   {category.order !== null && (
                     <p className="text-xs text-gray-400 mb-3">Ordem: {category.order}</p>
                   )}
@@ -2014,36 +1052,6 @@ function AdminContent() {
             </div>
           </div>
         )}
-
-        {/* Botões Flutuantes */}
-        {(() => {
-          const currentTab = activeTab || searchParams.get("tab");
-          if (currentTab === "products") {
-            return (
-              <Link
-                href="/admin/products/new"
-                className="fixed bottom-6 right-6 bg-[#ccff00] text-black px-6 py-4 rounded-full font-bold hover:bg-opacity-90 transition shadow-lg shadow-[#ccff00]/30 flex items-center gap-2 z-50"
-                style={{ display: 'flex', backgroundColor: '#ccff00', position: 'fixed' }}
-              >
-                <Plus className="w-5 h-5" />
-                <span className="hidden sm:inline">Novo Produto</span>
-              </Link>
-            );
-          }
-          if (currentTab === "categories") {
-            return (
-              <Link
-                href="/admin/categories/new"
-                className="fixed bottom-6 right-6 bg-[#ccff00] text-black px-6 py-4 rounded-full font-bold hover:bg-opacity-90 transition shadow-lg shadow-[#ccff00]/30 flex items-center gap-2 z-50"
-                style={{ display: 'flex', backgroundColor: '#ccff00', position: 'fixed' }}
-              >
-                <Plus className="w-5 h-5" />
-                <span className="hidden sm:inline">Nova Categoria</span>
-              </Link>
-            );
-          }
-          return null;
-        })()}
       </div>
     </div>
   );
@@ -2051,20 +1059,16 @@ function AdminContent() {
 
 export default function AdminPage() {
   return (
-    <AuthGuard>
-      <Suspense fallback={
-        <div className="min-h-screen bg-black text-white">
-          <Header />
-          <div className="container mx-auto px-4 py-8">
-            <div className="text-center">Carregando...</div>
-          </div>
+    <Suspense fallback={
+      <div className="min-h-screen bg-black text-white">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">Carregando...</div>
         </div>
-      }>
-        <AdminContent />
-      </Suspense>
-    </AuthGuard>
+      </div>
+    }>
+      <AdminContent />
+    </Suspense>
   );
 }
-
-// Exportar AdminContent como named export
 

@@ -8,6 +8,7 @@ import { Plus, Minus } from "lucide-react";
 import { useCartStore } from "@/store/cart-store";
 import { formatCurrency } from "@/lib/utils";
 import toast from "react-hot-toast";
+import { DEMO_RESTAURANT_UUID } from "@/lib/restaurant-constants";
 
 export default function CardapioPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -22,52 +23,27 @@ export default function CardapioPage() {
 
   const loadData = async () => {
     try {
-      // Verificar se há restaurante logado
-      const { data: { user } } = await supabase.auth.getUser();
-      const restaurantId = user?.id;
-      const DEMO_UUID = "f5f457d9-821e-4a21-9029-e181b1bee792";
-      const isDemo = restaurantId === DEMO_UUID;
+      // A página de cardápio SEMPRE mostra o conteúdo do demo (Versiory Delivery)
+      // Independente de estar logado ou não - ISOLAMENTO TOTAL
+      const DEMO_UUID = DEMO_RESTAURANT_UUID;
       
-      // Carregar categorias:
-      // - Se for demo ou não houver login: mostra categorias do demo
-      // - Se for outro restaurante: mostra apenas categorias desse restaurante
-      let categoriesQuery = supabase
+      // SEMPRE carregar categorias do demo
+      const { data: categoriesData } = await supabase
         .from("categories")
         .select("*")
+        .eq("restaurant_id", DEMO_UUID)
         .order("order");
-      
-      if (restaurantId && !isDemo) {
-        // Outro restaurante logado: mostrar apenas categorias desse restaurante
-        categoriesQuery = categoriesQuery.eq("restaurant_id", restaurantId);
-      } else {
-        // Demo ou sem login: mostrar apenas categorias do demo
-        categoriesQuery = categoriesQuery.eq("restaurant_id", DEMO_UUID);
-      }
-      
-      const { data: categoriesData } = await categoriesQuery;
 
-      // Carregar produtos:
-      // - Se for demo ou não houver login: mostra produtos do demo (antigos)
-      // - Se for outro restaurante: mostra apenas produtos desse restaurante (não mostra antigos)
-      let productsQuery = supabase
+      // SEMPRE carregar produtos do demo
+      const { data: productsData } = await supabase
         .from("products")
         .select("*")
         .eq("available", true) // Apenas produtos ativos
+        .eq("restaurant_id", DEMO_UUID) // Sempre do demo
         .order("name");
-      
-      if (restaurantId && !isDemo) {
-        // Outro restaurante logado: mostrar apenas produtos desse restaurante (não produtos antigos)
-        productsQuery = productsQuery.eq("restaurant_id", restaurantId);
-        console.log("🔍 Carregando produtos do restaurante:", restaurantId);
-      } else {
-        // Demo ou sem login: mostrar apenas produtos do demo (antigos)
-        productsQuery = productsQuery.eq("restaurant_id", DEMO_UUID);
-        console.log("🔍 Carregando produtos do demo (antigos)");
-      }
 
-      const { data: productsData } = await productsQuery;
-
-      console.log("📦 Produtos no cardápio:", productsData?.length || 0, "Restaurante:", restaurantId || "demo");
+      console.log("🔍 Carregando produtos do demo (Versiory Delivery)");
+      console.log("📦 Produtos no cardápio:", productsData?.length || 0);
       if (categoriesData) setCategories(categoriesData);
       if (productsData) setProducts(productsData);
     } catch (error) {
@@ -160,51 +136,88 @@ export default function CardapioPage() {
         </div>
 
         {/* Produtos */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-          {filteredProducts.map((product) => (
-            <div
-              key={product.id}
-              className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:scale-105 transition-transform shadow-md hover:shadow-lg"
-            >
-              <div className="relative w-full h-40 sm:h-48 bg-gray-100">
-                {product.image ? (
-                  <Image
-                    src={product.image}
-                    alt={product.name}
-                    fill
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
-                    Sem imagem
-                  </div>
-                )}
-              </div>
-              <div className="p-3 sm:p-4">
-                <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900">{product.name}</h3>
-                <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4 line-clamp-2">
-                  {product.description}
-                </p>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
-                  <span className="text-xl sm:text-2xl font-bold text-primary-yellow">
-                    {formatCurrency(product.price)}
-                  </span>
-                  <button
-                    onClick={() => handleAddToCart(product)}
-                    className="w-full sm:w-auto bg-primary-yellow text-black px-3 sm:px-4 py-2 text-sm sm:text-base rounded-lg font-bold hover:bg-opacity-90 transition flex items-center justify-center gap-2"
-                  >
-                    <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-                    Adicionar
-                  </button>
+        {products.length === 0 ? (
+          // Não há produtos cadastrados
+          <div className="text-center py-16 px-4">
+            <div className="max-w-md mx-auto">
+              <div className="mb-6">
+                <div className="w-24 h-24 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                  <Plus className="w-12 h-12 text-gray-400" />
                 </div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
+                  Nenhum produto cadastrado
+                </h2>
+                <p className="text-gray-600 text-base sm:text-lg mb-6">
+                  Ainda não há produtos disponíveis no cardápio.
+                </p>
+              </div>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 sm:p-6">
+                <p className="text-sm sm:text-base text-blue-800 mb-2">
+                  <strong>Para adicionar produtos:</strong>
+                </p>
+                <ol className="text-left text-sm sm:text-base text-blue-700 space-y-2 list-decimal list-inside">
+                  <li>Acesse o painel administrativo</li>
+                  <li>Vá em &quot;Categorias&quot; para criar categorias</li>
+                  <li>Vá em &quot;Produtos&quot; para adicionar produtos ao cardápio</li>
+                </ol>
               </div>
             </div>
-          ))}
-        </div>
-
-        {filteredProducts.length === 0 && (
-          <div className="text-center py-12 text-gray-600">
-            Nenhum produto encontrado nesta categoria.
+          </div>
+        ) : filteredProducts.length === 0 ? (
+          // Há produtos, mas não na categoria selecionada
+          <div className="text-center py-12 px-4">
+            <p className="text-xl text-gray-600 mb-4">
+              Nenhum produto encontrado nesta categoria.
+            </p>
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className="text-primary-yellow hover:text-yellow-600 font-medium underline text-lg"
+            >
+              Ver todos os produtos
+            </button>
+          </div>
+        ) : (
+          // Mostrar produtos
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+            {filteredProducts.map((product) => (
+              <div
+                key={product.id}
+                className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:scale-105 transition-transform shadow-md hover:shadow-lg"
+              >
+                <div className="relative w-full h-40 sm:h-48 bg-gray-100">
+                  {product.image ? (
+                    <Image
+                      src={product.image}
+                      alt={product.name}
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+                      Sem imagem
+                    </div>
+                  )}
+                </div>
+                <div className="p-3 sm:p-4">
+                  <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900">{product.name}</h3>
+                  <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4 line-clamp-2">
+                    {product.description}
+                  </p>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
+                    <span className="text-xl sm:text-2xl font-bold text-primary-yellow">
+                      {formatCurrency(product.price)}
+                    </span>
+                    <button
+                      onClick={() => handleAddToCart(product)}
+                      className="w-full sm:w-auto bg-primary-yellow text-black px-3 sm:px-4 py-2 text-sm sm:text-base rounded-lg font-bold hover:bg-opacity-90 transition flex items-center justify-center gap-2"
+                    >
+                      <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                      Adicionar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>

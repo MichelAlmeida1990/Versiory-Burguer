@@ -4,12 +4,18 @@ import { useState, useEffect } from "react";
 import { Header } from "@/components/layout/header";
 import { useCartStore } from "@/store/cart-store";
 import { formatCurrency } from "@/lib/utils";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { ShoppingBag } from "lucide-react";
 import toast from "react-hot-toast";
+import { PaymentModal } from "@/components/payment/payment-modal";
+import { useClientAuth } from "@/contexts/client-auth-context";
+import { DEMO_RESTAURANT_UUID, validateRestaurantIsolation } from "@/lib/restaurant-constants";
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const { user, loading: authLoading } = useClientAuth();
   const { items, getTotal, clearCart } = useCartStore();
   const [mounted, setMounted] = useState(false);
   const [deliveryFee] = useState(5.0);
@@ -25,10 +31,51 @@ export default function CheckoutPage() {
     paymentMethod: "pix" as "card" | "pix" | "cash",
     deliveryType: "delivery" as "delivery" | "pickup",
   });
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
+  const [currentRestaurantId, setCurrentRestaurantId] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    
+    // Verificar se é um restaurante específico (não é o demo/versiory)
+    // Se todos os produtos forem do DEMO ou não tiverem restaurant_id, não exigir login
+    const produtosComRestaurante = items.filter(item => item.product.restaurant_id);
+    const isDemoRestaurant = produtosComRestaurante.length === 0 || 
+      produtosComRestaurante.every(item => 
+        item.product.restaurant_id === DEMO_RESTAURANT_UUID
+      );
+    
+    // Se for restaurante específico (como Tom & Jerry), exigir login do cliente
+    // Mas NÃO exigir se for o Versiory (demo)
+    if (!isDemoRestaurant && produtosComRestaurante.length > 0 && !authLoading && !user) {
+      // Detectar slug do restaurante pelos produtos
+      const restaurantId = produtosComRestaurante[0].product.restaurant_id;
+      
+      // Buscar slug do restaurante ou usar do localStorage
+      const restaurantSlug = typeof window !== 'undefined' 
+        ? localStorage.getItem('lastRestaurantContext')
+        : null;
+      
+      if (restaurantSlug) {
+        toast.error("Faça login para finalizar o pedido");
+        router.push(`/restaurante/${restaurantSlug}/cliente/login`);
+        return;
+      } else {
+        toast.error("Faça login para finalizar o pedido");
+        router.push("/cliente/login");
+        return;
+      }
+    }
+    
+    // Se o cliente estiver logado, preencher email automaticamente
+    if (user?.email) {
+      setFormData(prev => ({
+        ...prev,
+        email: user.email || prev.email,
+      }));
+    }
+  }, [user, authLoading, items, router]);
 
   const subtotal = mounted ? getTotal() : 0;
   const total = subtotal + (formData.deliveryType === "delivery" ? deliveryFee : 0);
@@ -87,9 +134,20 @@ export default function CheckoutPage() {
           return;
         }
         
-        // Não permitir misturar produtos com e sem restaurante
+        // VALIDAÇÃO DE ISOLAMENTO: Não permitir misturar produtos com e sem restaurante
+        // Isso garante que produtos do Tom & Jerry não sejam misturados com produtos do Versiory
         if (produtosSemRestaurante.length > 0) {
-          toast.error("Não é possível misturar produtos antigos com produtos novos. Por favor, faça pedidos separados.");
+          toast.error("Não é possível misturar produtos de restaurantes diferentes. Por favor, faça pedidos separados.");
+          return;
+        }
+        
+        // VALIDAÇÃO ADICIONAL usando função centralizada
+        const validation = validateRestaurantIsolation(
+          items.map(item => ({ restaurant_id: item.product.restaurant_id })),
+          restaurantId
+        );
+        if (!validation.valid) {
+          toast.error(validation.error || "Produtos de restaurantes diferentes detectados");
           return;
         }
         
@@ -130,27 +188,38 @@ export default function CheckoutPage() {
         throw new Error("Resposta inválida do servidor");
       }
 
-      // Salvar informações do cliente no localStorage para filtrar pedidos depois
-      // Usar uma chave única baseada em nome+telefone+email para evitar conflitos
+      const orderId = result.id;
+      setCurrentOrderId(orderId);
+      setCurrentRestaurantId(restaurantId);
+
+      // Salvar informações do cliente no localStorage (normalizar email para busca consistente)
       if (typeof window !== 'undefined' && formData.email) {
-        const clientKey = `${formData.name}_${formData.phone}_${formData.email}`.toLowerCase().replace(/\s+/g, '_');
-        localStorage.setItem('lastOrderEmail', formData.email);
+        const normalizedEmail = formData.email.toLowerCase().trim();
+        const clientKey = `${formData.name}_${formData.phone}_${normalizedEmail}`.toLowerCase().replace(/\s+/g, '_');
+        localStorage.setItem('lastOrderEmail', normalizedEmail); // Salvar email normalizado
         localStorage.setItem('lastOrderClientKey', clientKey);
         localStorage.setItem('lastOrderName', formData.name);
         localStorage.setItem('lastOrderPhone', formData.phone);
+        console.log("💾 Email salvo no localStorage:", normalizedEmail);
       }
 
-      // Limpar carrinho antes de redirecionar
-      clearCart();
-      
-      // Mostrar mensagem de sucesso
-      toast.success("Pedido realizado com sucesso!");
-      
-      // Aguardar um pouco antes de redirecionar para garantir que o toast apareça
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Redirecionar usando window.location para garantir que funcione
-      window.location.href = `/pedidos/${result.id}`;
+      // Se for pagamento online (pix ou card), tentar mostrar modal de pagamento
+      // Se não houver configuração, será tratado como dinheiro automaticamente
+      if (formData.paymentMethod === "pix" || formData.paymentMethod === "card") {
+        // ISOLAMENTO: Definir restaurantId final (usar o identificado ou o demo como fallback)
+        // Produtos sem restaurante sempre vão para Versiory (demo)
+        const finalRestaurantId = restaurantId || DEMO_RESTAURANT_UUID;
+        setCurrentRestaurantId(finalRestaurantId);
+        setShowPaymentModal(true);
+        // O PaymentModal vai tentar gerar o pagamento e, se não houver configuração,
+        // mostrará erro e permitirá que o usuário feche o modal
+      } else {
+        // Se for dinheiro, limpar carrinho e redirecionar
+        toast.success("Pedido realizado com sucesso!");
+        clearCart();
+        await new Promise(resolve => setTimeout(resolve, 500));
+        router.push(`/pedidos?order=${orderId}`);
+      }
     } catch (error: any) {
       console.error("Erro ao criar pedido:", error);
       toast.error(error.message || "Erro ao finalizar pedido. Tente novamente.");
@@ -163,9 +232,44 @@ export default function CheckoutPage() {
     }
   };
 
+  const handlePaymentClose = () => {
+    setShowPaymentModal(false);
+    // Após fechar o modal, limpar carrinho e redirecionar
+    clearCart();
+    
+    // Verificar se é Versiory (demo) - se for, não usar contexto de restaurante
+    const isDemoRestaurant = currentRestaurantId === DEMO_RESTAURANT_UUID || !currentRestaurantId;
+    
+    // Se for demo/versiory, limpar o contexto de restaurante do localStorage
+    if (isDemoRestaurant) {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('lastRestaurantContext');
+      }
+    }
+    
+    // Redirecionar para página de pedidos (Versiory não precisa de contexto no URL)
+    if (currentOrderId) {
+      router.push(`/pedidos?order=${currentOrderId}`);
+    } else {
+      router.push("/pedidos");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black text-white">
       <Header />
+      
+      {/* Modal de Pagamento */}
+      {showPaymentModal && currentOrderId && currentRestaurantId && (
+        <PaymentModal
+          isOpen={showPaymentModal}
+          onClose={handlePaymentClose}
+          orderId={currentOrderId}
+          amount={total}
+          paymentMethod={formData.paymentMethod as "pix" | "card"}
+          restaurantId={currentRestaurantId}
+        />
+      )}
       <div className="container mx-auto px-4 py-6 md:py-8">
         <h1 className="text-3xl md:text-4xl font-bold mb-6 md:mb-8">Finalizar Pedido</h1>
 
@@ -389,39 +493,30 @@ export default function CheckoutPage() {
             <div className="bg-gray-900 rounded-lg p-4 md:p-6 lg:sticky lg:top-20 lg:top-24">
               <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Resumo</h2>
               <div className="space-y-2 md:space-y-3 mb-4 md:mb-6">
-                {mounted ? (
-                  <>
-                    <div className="flex justify-between text-gray-400">
-                      <span>Subtotal</span>
-                      <span>{formatCurrency(subtotal)}</span>
-                    </div>
-                    {formData.deliveryType === "delivery" && (
-                      <div className="flex justify-between text-gray-400">
-                        <span>Taxa de Entrega</span>
-                        <span>{formatCurrency(deliveryFee)}</span>
-                      </div>
-                    )}
-                    {formData.paymentMethod === "pix" && (
-                      <div className="flex justify-between text-green-400">
-                        <span>Desconto PIX</span>
-                        <span>-{formatCurrency(total * 0.05)}</span>
-                      </div>
-                    )}
-                    <div className="border-t border-gray-700 pt-3 flex justify-between text-xl font-bold">
-                      <span>Total</span>
-                      <span className="text-primary-yellow">
-                        {formatCurrency(
-                          formData.paymentMethod === "pix" ? total * 0.95 : total
-                        )}
-                      </span>
-                    </div>
-                  </>
-                ) : (
+                <div className="flex justify-between text-gray-400">
+                  <span>Subtotal</span>
+                  <span>{mounted ? formatCurrency(subtotal) : formatCurrency(0)}</span>
+                </div>
+                {formData.deliveryType === "delivery" && (
                   <div className="flex justify-between text-gray-400">
-                    <span>Carregando...</span>
-                    <span>R$ 0,00</span>
+                    <span>Taxa de Entrega</span>
+                    <span>{formatCurrency(deliveryFee)}</span>
                   </div>
                 )}
+                {formData.paymentMethod === "pix" && (
+                  <div className="flex justify-between text-green-400">
+                    <span>Desconto PIX</span>
+                    <span>-{formatCurrency(total * 0.05)}</span>
+                  </div>
+                )}
+                <div className="border-t border-gray-700 pt-3 flex justify-between text-xl font-bold">
+                  <span>Total</span>
+                  <span className="text-primary-yellow">
+                    {formatCurrency(
+                      formData.paymentMethod === "pix" ? total * 0.95 : total
+                    )}
+                  </span>
+                </div>
               </div>
               <button
                 type="button"

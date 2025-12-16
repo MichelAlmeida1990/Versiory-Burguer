@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { DEMO_RESTAURANT_UUID, validateRestaurantIsolation } from "@/lib/restaurant-constants";
 
 export async function POST(request: NextRequest) {
   try {
@@ -103,13 +104,24 @@ export async function POST(request: NextRequest) {
         );
       }
       
-      // Se tem produtos sem restaurante E produtos com restaurante, rejeitar
+      // VALIDAÇÃO DE ISOLAMENTO: Se tem produtos sem restaurante E produtos com restaurante, rejeitar
+      // Isso garante que produtos do Tom & Jerry não sejam misturados com produtos do Versiory
       if (produtosSemRestaurante.length > 0) {
-        console.error("❌ Mistura de produtos antigos e novos no pedido!");
+        console.error("❌ ERRO DE ISOLAMENTO: Mistura de produtos antigos (Versiory) e novos (outro restaurante) no pedido!");
         return NextResponse.json(
           { 
-            error: "Não é possível misturar produtos antigos (sem restaurante) com produtos novos (com restaurante). Por favor, faça pedidos separados." 
+            error: "Não é possível misturar produtos de restaurantes diferentes. Por favor, faça pedidos separados." 
           },
+          { status: 400 }
+        );
+      }
+      
+      // VALIDAÇÃO ADICIONAL usando função centralizada
+      const validation = validateRestaurantIsolation(products, restaurantId);
+      if (!validation.valid) {
+        console.error("❌ ERRO DE ISOLAMENTO:", validation.error);
+        return NextResponse.json(
+          { error: validation.error || "Produtos de restaurantes diferentes detectados" },
           { status: 400 }
         );
       }
@@ -121,10 +133,9 @@ export async function POST(request: NextRequest) {
         console.log("⚠️ Pedido com produtos antigos, usando restaurant_id do body:", restaurantId);
       } else {
         // Se não tem restaurant_id no body, usar automaticamente o UUID do demo@versiory.com.br
-        // (que é o dono dos produtos antigos)
-        // UUID conhecido do demo: f5f457d9-821e-4a21-9029-e181b1bee792
-        restaurantId = "f5f457d9-821e-4a21-9029-e181b1bee792";
-        console.log("✅ Pedido com produtos antigos, associando automaticamente ao demo@versiory.com.br");
+        // (que é o dono dos produtos antigos) - ISOLAMENTO: sempre Versiory para produtos antigos
+        restaurantId = DEMO_RESTAURANT_UUID;
+        console.log("✅ Pedido com produtos antigos, associando automaticamente ao Versiory (demo)");
         console.log("   UUID do demo:", restaurantId);
       }
     } else {
@@ -186,7 +197,7 @@ export async function POST(request: NextRequest) {
         payment_method: paymentMethod,
         customer_name: name,
         customer_phone: phone,
-        customer_email: email,
+        customer_email: email ? email.toLowerCase().trim() : null, // Normalizar email para comparação consistente
       })
       .select()
       .single();

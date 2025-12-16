@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
+import { ClientAuthProviderWrapper } from "@/components/providers/client-auth-provider";
 
 export const metadata: Metadata = {
   title: "Versiory Delivery - Sistema de Pedidos Online",
@@ -15,7 +16,9 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body>
-        {children}
+        <ClientAuthProviderWrapper>
+          {children}
+        </ClientAuthProviderWrapper>
         <Toaster position="top-center" />
       </body>
     </html>

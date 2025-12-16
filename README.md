@@ -59,7 +59,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_chave_anonima_do_supabase
 
 4. Configure o banco de dados no Supabase:
 
-Execute o arquivo `supabase/COMPLETO.sql` no SQL Editor do Supabase para criar as tabelas e inserir os dados iniciais.
+Execute os scripts em `supabase/schema/` no SQL Editor do Supabase (veja [supabase/schema/README.md](supabase/schema/README.md) para ordem de execução).
 
 5. Inicie o servidor de desenvolvimento:
 ```bash
@@ -77,7 +77,7 @@ O sistema utiliza as seguintes tabelas no Supabase:
 - `orders` - Pedidos
 - `order_items` - Itens dos pedidos
 
-Veja o arquivo `supabase/COMPLETO.sql` para o schema completo e dados iniciais.
+Veja os scripts em `supabase/schema/` para o schema completo e `supabase/README.md` para documentação dos scripts SQL.
 
 ## 📁 Estrutura do Projeto
 
@@ -102,7 +102,18 @@ Veja o arquivo `supabase/COMPLETO.sql` para o schema completo e dados iniciais.
 │       ├── categorias/    # Imagens de categorias
 │       ├── banners/       # Banners promocionais
 │       └── logos/         # Logos e marca
-└── supabase/             # Scripts SQL do banco de dados
+├── supabase/             # Scripts SQL do banco de dados
+│   ├── schema/           # Schemas principais
+│   ├── policies/         # Políticas RLS
+│   ├── migrations/       # Scripts de migração
+│   ├── clientes/         # Scripts por cliente
+│   └── docs/             # Documentação do banco
+└── docs/                 # Documentação do projeto
+    ├── guia/             # Guias e tutoriais
+    ├── configuracao/     # Configurações
+    ├── solucoes/         # Soluções de problemas
+    ├── analises/         # Análises técnicas
+    └── clientes/         # Docs específicas de clientes
 ```
 
 ## 🎨 Cores do Tema
@@ -113,6 +124,18 @@ Veja o arquivo `supabase/COMPLETO.sql` para o schema completo e dados iniciais.
 - **Marrom**: `#c2af00`
 - **Verde Amarelado**: `#ccff00` (botões)
 - **Fundo**: `#000000`
+
+## 📚 Documentação
+
+A documentação completa está organizada em `docs/`:
+
+- **[Guia](docs/guia/)** - Tutoriais e guias passo a passo
+- **[Configuração](docs/configuracao/)** - Configurações do sistema
+- **[Soluções](docs/solucoes/)** - Soluções para problemas comuns
+- **[Análises](docs/analises/)** - Análises técnicas
+- **[Clientes](docs/clientes/)** - Documentação específica de clientes
+
+Veja [docs/README.md](docs/README.md) para mais informações.
 
 ## 📝 Próximos Passos
 
