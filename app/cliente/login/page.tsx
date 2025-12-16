@@ -111,6 +111,34 @@ export default function ClienteLoginPage() {
     }
   };
 
+  const handleResendConfirmationEmail = async () => {
+    if (!pendingEmail) return;
+
+    setResendingEmail(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: pendingEmail,
+        options: {
+          emailRedirectTo: restaurantSlug 
+            ? `${window.location.origin}/auth/callback?restaurant=${restaurantSlug}`
+            : `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) {
+        toast.error(error.message || "Erro ao reenviar email");
+      } else {
+        toast.success(`Email de confirmação reenviado para ${pendingEmail}`);
+      }
+    } catch (error: any) {
+      console.error("Erro ao reenviar email:", error);
+      toast.error(error.message || "Erro ao reenviar email");
+    } finally {
+      setResendingEmail(false);
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
