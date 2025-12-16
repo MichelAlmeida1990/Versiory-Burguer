@@ -205,11 +205,13 @@ export default function RestaurantePage() {
       <LoyaltyChatbot primaryColor={settings?.primary_color || "#dc2626"} />
 
       {/* Hero Section */}
-      <section id="inicio" className="relative min-h-[70vh] sm:min-h-screen flex items-center justify-center overflow-hidden py-16 sm:py-20 md:py-0 sm:h-screen">
+      <section id="inicio" className="relative min-h-[70vh] sm:min-h-screen flex items-center justify-center overflow-hidden py-16 sm:py-20 md:py-0 sm:h-screen max-w-full">
         <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 bg-image-cover max-w-full"
           style={{
-            backgroundImage: `url('${settings?.home_banner_url || "/images/banners/banner.jpg"}')`
+            backgroundImage: `url('${settings?.home_banner_url || "/images/banners/banner.jpg"}')`,
+            maxWidth: '100%',
+            width: '100%'
           }}
         ></div>
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/60"></div>
@@ -475,11 +477,13 @@ export default function RestaurantePage() {
       </section>
 
       {/* CTA Final */}
-      <section className="relative py-32 px-4 overflow-hidden">
+      <section className="relative py-32 px-4 overflow-hidden max-w-full">
         <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 bg-image-cover max-w-full"
           style={{
-            backgroundImage: `url('${settings?.home_banner_url || "/images/banners/banner.jpg"}')`
+            backgroundImage: `url('${settings?.home_banner_url || "/images/banners/banner.jpg"}')`,
+            maxWidth: '100%',
+            width: '100%'
           }}
         ></div>
         <div className="absolute inset-0 bg-black/60"></div>

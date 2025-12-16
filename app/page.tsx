@@ -155,11 +155,13 @@ export default function Home() {
       <Header />
       
       {/* Hero Section */}
-      <section id="inicio" className="relative min-h-screen flex items-center justify-center overflow-hidden py-20 sm:py-0 sm:h-screen">
+      <section id="inicio" className="relative min-h-screen flex items-center justify-center overflow-hidden py-20 sm:py-0 sm:h-screen max-w-full">
         <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 bg-image-cover max-w-full"
           style={{
-            backgroundImage: `url('${settings?.home_banner_url || "/images/banners/banner.jpg"}')`
+            backgroundImage: `url('${settings?.home_banner_url || "/images/banners/banner.jpg"}')`,
+            maxWidth: '100%',
+            width: '100%'
           }}
         ></div>
         <div className="absolute inset-0 bg-black/50"></div>
@@ -282,8 +284,8 @@ export default function Home() {
       </section>
 
       {/* Cardápio Section */}
-      <section id="cardapio" className="py-20 px-4 bg-white">
-        <div className="max-w-7xl mx-auto">
+      <section id="cardapio" className="py-20 px-4 bg-white w-full overflow-x-hidden max-w-full">
+        <div className="max-w-7xl mx-auto w-full">
           <ScrollAnimation>
             <div className="text-center mb-12">
               <motion.h2
