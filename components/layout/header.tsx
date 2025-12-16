@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -26,7 +26,7 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
   } : null;
 }
 
-export function Header() {
+function HeaderContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -517,5 +517,21 @@ export function Header() {
         </nav>
       )}
     </header>
+  );
+}
+
+export function Header() {
+  return (
+    <Suspense fallback={
+      <header className="bg-white shadow-md sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="text-lg font-bold">Carregando...</div>
+          </div>
+        </div>
+      </header>
+    }>
+      <HeaderContent />
+    </Suspense>
   );
 }
