@@ -149,16 +149,16 @@ export function LoyaltyChatbot({ primaryColor = "#dc2626" }: LoyaltyChatbotProps
   return (
     <>
       {/* Botão Flutuante com Avatar do Jerry */}
-      <div className="fixed bottom-6 right-6 z-[100] flex flex-col items-end gap-2">
+      <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[100] flex flex-col items-end gap-2 max-w-[calc(100vw-2rem)] sm:max-w-none">
         {/* Texto indicativo de fidelidade */}
         {!isOpen && (
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
-            className="bg-white rounded-lg px-3 py-2 shadow-lg border border-gray-200 mr-2"
+            className="bg-white rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 shadow-lg border border-gray-200 mr-1 sm:mr-2"
           >
-            <p className="text-xs font-semibold text-gray-700 whitespace-nowrap">
+            <p className="text-[10px] sm:text-xs font-semibold text-gray-700 whitespace-nowrap">
               💎 Programa de Fidelidade
             </p>
             <p className="text-xs text-gray-500">Clique para saber mais!</p>
@@ -171,7 +171,7 @@ export function LoyaltyChatbot({ primaryColor = "#dc2626" }: LoyaltyChatbotProps
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => setIsOpen(!isOpen)}
-          className="w-20 h-20 rounded-full shadow-2xl flex items-center justify-center overflow-hidden border-4 border-white transition-all relative group"
+          className="w-14 h-14 sm:w-20 sm:h-20 rounded-full shadow-2xl flex items-center justify-center overflow-hidden border-4 border-white transition-all relative group"
           style={{ backgroundColor: primaryColor }}
           aria-label="Abrir chat de fidelidade"
         >
@@ -226,7 +226,7 @@ export function LoyaltyChatbot({ primaryColor = "#dc2626" }: LoyaltyChatbotProps
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 20 }}
             transition={{ duration: 0.3 }}
-            className="fixed bottom-24 right-6 z-[100] w-96 h-[600px] max-h-[calc(100vh-8rem)] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border-2"
+            className="fixed bottom-20 right-4 left-4 sm:left-auto sm:right-6 sm:w-96 z-[100] h-[calc(100vh-6rem)] sm:h-[600px] sm:max-h-[calc(100vh-8rem)] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border-2"
             style={{ borderColor: primaryColor }}
           >
             {/* Header com Avatar do Jerry */}
@@ -243,7 +243,7 @@ export function LoyaltyChatbot({ primaryColor = "#dc2626" }: LoyaltyChatbotProps
                 <motion.div
                   animate={{ rotate: [0, 5, -5, 0] }}
                   transition={{ duration: 3, repeat: Infinity, repeatDelay: 2 }}
-                  className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/30 shadow-lg flex-shrink-0"
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden border-2 border-white/30 shadow-lg flex-shrink-0"
                 >
                   <Image
                     src="/images/banners/jerry2.jpg"
@@ -255,8 +255,8 @@ export function LoyaltyChatbot({ primaryColor = "#dc2626" }: LoyaltyChatbotProps
                   />
                 </motion.div>
                 <div>
-                  <h3 className="font-bold text-lg">Jerry - Programa de Fidelidade</h3>
-                  <p className="text-xs opacity-90 flex items-center gap-1">
+                  <h3 className="font-bold text-sm sm:text-lg">Jerry - Programa de Fidelidade</h3>
+                  <p className="text-[10px] sm:text-xs opacity-90 flex items-center gap-1">
                     <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
                     Online agora
                   </p>
@@ -292,7 +292,7 @@ export function LoyaltyChatbot({ primaryColor = "#dc2626" }: LoyaltyChatbotProps
                     </div>
                   )}
                   <div
-                    className={`max-w-[75%] rounded-2xl px-4 py-3 ${
+                    className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-3 py-2 sm:px-4 sm:py-3 ${
                       message.sender === "user"
                         ? "rounded-tr-sm"
                         : "rounded-tl-sm bg-white shadow-sm"
@@ -305,7 +305,7 @@ export function LoyaltyChatbot({ primaryColor = "#dc2626" }: LoyaltyChatbotProps
                         : {}
                     }
                   >
-                    <p className="text-sm whitespace-pre-line leading-relaxed" style={{ color: message.sender === "user" ? "white" : "#1f2937" }}>
+                    <p className="text-xs sm:text-sm whitespace-pre-line leading-relaxed" style={{ color: message.sender === "user" ? "white" : "#1f2937" }}>
                       {message.text}
                     </p>
                   </div>

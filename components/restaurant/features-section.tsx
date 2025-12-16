@@ -54,14 +54,14 @@ export function FeaturesSection({ primaryColor = "#dc2626" }: FeaturesSectionPro
   };
 
   return (
-    <section className="py-20 px-4 bg-white relative overflow-hidden">
+    <section className="py-20 px-3 sm:px-4 bg-white relative overflow-hidden w-full">
       {/* Decorative elements */}
       <div className="absolute top-0 left-0 w-full h-full opacity-5">
         <div className="absolute top-20 left-10 w-72 h-72 rounded-full" style={{ background: `radial-gradient(circle, ${primaryColor}, transparent)` }}></div>
         <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full" style={{ background: `radial-gradient(circle, ${primaryColor}, transparent)` }}></div>
       </div>
 
-      <div className="max-w-7xl mx-auto relative z-10">
+      <div className="max-w-7xl mx-auto relative z-10 w-full">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           whileInView={{ opacity: 1, y: 0 }}

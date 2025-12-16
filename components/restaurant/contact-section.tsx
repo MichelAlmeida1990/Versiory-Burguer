@@ -58,14 +58,14 @@ export function ContactSection({
   };
 
   return (
-    <section className="py-16 px-4 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
+    <section className="py-16 px-3 sm:px-4 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden w-full">
       {/* Decorative background elements */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute top-0 left-0 w-96 h-96 rounded-full" style={{ background: `radial-gradient(circle, ${primaryColor}, transparent)`, transform: 'translate(-50%, -50%)' }}></div>
         <div className="absolute bottom-0 right-0 w-96 h-96 rounded-full" style={{ background: `radial-gradient(circle, ${primaryColor}, transparent)`, transform: 'translate(50%, 50%)' }}></div>
       </div>
 
-      <div className="max-w-7xl mx-auto relative z-10">
+      <div className="max-w-7xl mx-auto relative z-10 w-full">
         {/* Section Title */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}

@@ -51,6 +51,15 @@ export default function RestaurantePage() {
   const [notFound, setNotFound] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
 
+  // Função para formatar telefone para link do WhatsApp
+  const formatPhoneForLink = (phone: string) => {
+    // Remover caracteres não numéricos
+    const numbers = phone.replace(/\D/g, "");
+    // Se começar com 0, remover
+    const cleaned = numbers.startsWith("0") ? numbers.slice(1) : numbers;
+    return `55${cleaned}`;
+  };
+
   useEffect(() => {
     if (slug) {
       // Salvar contexto do restaurante no localStorage
@@ -191,7 +200,7 @@ export default function RestaurantePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white overflow-x-hidden w-full">
       <Header />
       <LoyaltyChatbot primaryColor={settings?.primary_color || "#dc2626"} />
 
@@ -213,7 +222,7 @@ export default function RestaurantePage() {
           }}
         ></div>
         
-        <div className="relative z-10 text-center px-4 sm:px-6 max-w-4xl mx-auto">
+        <div className="relative z-10 text-center px-3 sm:px-4 md:px-6 max-w-4xl mx-auto w-full">
           <AnimatedTitle 
             text={settings?.home_title || "Bem-vindo"}
             className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-3 sm:mb-4 md:mb-6 text-white"
@@ -270,13 +279,15 @@ export default function RestaurantePage() {
                 Ver Cardápio
               </span>
             </PulseButton>
-            <PulseButton href="https://wa.me/5511959917953">
-              <span 
-                className="text-black px-5 py-2.5 sm:px-6 sm:py-3 md:px-8 md:py-4 rounded-lg text-sm sm:text-base md:text-lg font-bold flex items-center gap-2 w-full sm:w-auto justify-center transition relative backdrop-blur-md bg-yellow-400/80 border border-yellow-300/50 shadow-lg shadow-yellow-500/30 hover:bg-yellow-400/90 hover:shadow-yellow-500/40"
-              >
-                Pedir pelo WhatsApp
-              </span>
-            </PulseButton>
+            {settings?.phone_1 && (
+              <PulseButton href={`https://wa.me/${formatPhoneForLink(settings.phone_1)}`}>
+                <span 
+                  className="text-black px-5 py-2.5 sm:px-6 sm:py-3 md:px-8 md:py-4 rounded-lg text-sm sm:text-base md:text-lg font-bold flex items-center gap-2 w-full sm:w-auto justify-center transition relative backdrop-blur-md bg-yellow-400/80 border border-yellow-300/50 shadow-lg shadow-yellow-500/30 hover:bg-yellow-400/90 hover:shadow-yellow-500/40"
+                >
+                  Pedir pelo WhatsApp
+                </span>
+              </PulseButton>
+            )}
           </motion.div>
         </div>
       </section>
@@ -296,8 +307,8 @@ export default function RestaurantePage() {
       />
 
       {/* Cardápio Section */}
-      <section id="cardapio" className="py-20 px-4 bg-white">
-        <div className="max-w-7xl mx-auto">
+      <section id="cardapio" className="py-20 px-3 sm:px-4 bg-white w-full overflow-x-hidden">
+        <div className="max-w-7xl mx-auto w-full">
           <ScrollAnimation>
             <div className="text-center mb-12">
               <motion.h2
@@ -317,44 +328,87 @@ export default function RestaurantePage() {
 
           {/* Categorias */}
           <ScrollAnimation delay={0.2}>
-            <div className="flex flex-wrap gap-4 mb-12 justify-center">
-              <button
-                onClick={() => setSelectedCategory(null)}
-                className={`px-6 py-3 rounded-lg font-medium transition ${
-                  selectedCategory === null
-                    ? "bg-red-600 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-                style={selectedCategory === null ? {
-                  backgroundColor: settings?.primary_color || '#dc2626'
-                } : {}}
-              >
-                Todos
-              </button>
-              {categories.map((category) => (
+            <div className="mb-12">
+              {/* Mobile: Scroll horizontal */}
+              <div className="flex flex-nowrap gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 sm:hidden" style={{ WebkitOverflowScrolling: 'touch' }}>
                 <button
-                  key={category.id}
-                  onClick={() => {
-                    setSelectedCategory(category.id);
-                    setTimeout(() => {
-                      const produtosSection = document.getElementById('produtos-section');
-                      if (produtosSection) {
-                        produtosSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                      }
-                    }, 100);
-                  }}
-                  className={`px-6 py-3 rounded-lg font-medium transition ${
-                    selectedCategory === category.id
+                  onClick={() => setSelectedCategory(null)}
+                  className={`flex-shrink-0 px-4 py-2.5 text-sm rounded-lg font-medium transition whitespace-nowrap ${
+                    selectedCategory === null
                       ? "text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      : "bg-gray-100 text-gray-700"
                   }`}
-                  style={selectedCategory === category.id ? {
+                  style={selectedCategory === null ? {
                     backgroundColor: settings?.primary_color || '#dc2626'
                   } : {}}
                 >
-                  {category.name}
+                  Todos
                 </button>
-              ))}
+                {categories.map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => {
+                      setSelectedCategory(category.id);
+                      setTimeout(() => {
+                        const produtosSection = document.getElementById('produtos-section');
+                        if (produtosSection) {
+                          produtosSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                      }, 100);
+                    }}
+                    className={`flex-shrink-0 px-4 py-2.5 text-sm rounded-lg font-medium transition whitespace-nowrap ${
+                      selectedCategory === category.id
+                        ? "text-white"
+                        : "bg-gray-100 text-gray-700"
+                    }`}
+                    style={selectedCategory === category.id ? {
+                      backgroundColor: settings?.primary_color || '#dc2626'
+                    } : {}}
+                  >
+                    {category.name}
+                  </button>
+                ))}
+              </div>
+              {/* Desktop: Grid centralizado */}
+              <div className="hidden sm:flex flex-wrap gap-4 justify-center">
+                <button
+                  onClick={() => setSelectedCategory(null)}
+                  className={`px-6 py-3 rounded-lg font-medium transition ${
+                    selectedCategory === null
+                      ? "text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                  style={selectedCategory === null ? {
+                    backgroundColor: settings?.primary_color || '#dc2626'
+                  } : {}}
+                >
+                  Todos
+                </button>
+                {categories.map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => {
+                      setSelectedCategory(category.id);
+                      setTimeout(() => {
+                        const produtosSection = document.getElementById('produtos-section');
+                        if (produtosSection) {
+                          produtosSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                      }, 100);
+                    }}
+                    className={`px-6 py-3 rounded-lg font-medium transition ${
+                      selectedCategory === category.id
+                        ? "text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                    style={selectedCategory === category.id ? {
+                      backgroundColor: settings?.primary_color || '#dc2626'
+                    } : {}}
+                  >
+                    {category.name}
+                  </button>
+                ))}
+              </div>
             </div>
           </ScrollAnimation>
 
@@ -430,13 +484,13 @@ export default function RestaurantePage() {
         ></div>
         <div className="absolute inset-0 bg-black/60"></div>
         <ScrollAnimation>
-          <div className="relative z-10 max-w-4xl mx-auto text-center">
+          <div className="relative z-10 max-w-4xl mx-auto text-center w-full px-3 sm:px-4">
             <motion.h2
               initial={{ rotateX: -90, opacity: 0 }}
               whileInView={{ rotateX: 0, opacity: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 1, type: "spring", stiffness: 80 }}
-              className="text-3xl md:text-5xl font-bold mb-4 md:mb-6 text-white px-4"
+              className="text-3xl md:text-5xl font-bold mb-4 md:mb-6 text-white"
             >
               Pronto para pedir?
             </motion.h2>
@@ -445,7 +499,7 @@ export default function RestaurantePage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2, duration: 0.8 }}
-              className="text-lg md:text-xl text-white/90 mb-8 md:mb-10 px-4"
+              className="text-lg md:text-xl text-white/90 mb-8 md:mb-10"
             >
               Finalize seu pedido e aproveite nossos deliciosos pratos
             </motion.p>
@@ -457,7 +511,7 @@ export default function RestaurantePage() {
             >
               <PulseButton href={`/restaurante/${slug}#cardapio`}>
                 <span 
-                  className="text-white px-8 py-4 md:px-10 md:py-5 rounded-lg text-lg md:text-xl font-bold inline-block shadow-2xl w-full sm:w-auto transition"
+                  className="text-white px-6 py-3 sm:px-8 sm:py-4 md:px-10 md:py-5 rounded-lg text-base sm:text-lg md:text-xl font-bold inline-block shadow-2xl w-full sm:w-auto transition"
                   style={{
                     backgroundColor: settings?.primary_color || '#dc2626'
                   }}

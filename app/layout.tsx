@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import { ClientAuthProviderWrapper } from "@/components/providers/client-auth-provider";
@@ -6,6 +6,12 @@ import { ClientAuthProviderWrapper } from "@/components/providers/client-auth-pr
 export const metadata: Metadata = {
   title: "Versiory Delivery - Sistema de Pedidos Online",
   description: "O sistema que sua empresa merece. Conquistando empreendedores pela facilidade, eficiência e resultados.",
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
 };
 
 export default function RootLayout({
