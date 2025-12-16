@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+export const dynamic = 'force-dynamic';
+
+import { useState, useEffect, Suspense } from "react";
 import { Header } from "@/components/layout/header";
 import { useCartStore } from "@/store/cart-store";
 import { formatCurrency } from "@/lib/utils";
@@ -11,7 +13,7 @@ import { PaymentModal } from "@/components/payment/payment-modal";
 import { useClientAuth } from "@/contexts/client-auth-context";
 import { DEMO_RESTAURANT_UUID, validateRestaurantIsolation } from "@/lib/restaurant-constants";
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -537,6 +539,21 @@ export default function CheckoutPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-black text-white">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">Carregando...</div>
+        </div>
+      </div>
+    }>
+      <CheckoutContent />
+    </Suspense>
   );
 }
 

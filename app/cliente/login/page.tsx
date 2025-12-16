@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+export const dynamic = 'force-dynamic';
+
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
 import { Lock, Mail, User } from "lucide-react";
 import Link from "next/link";
 
-export default function ClienteLoginPage() {
+function ClienteLoginContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -324,6 +326,18 @@ export default function ClienteLoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ClienteLoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white flex items-center justify-center px-4 py-8">
+        <div className="text-center">Carregando...</div>
+      </div>
+    }>
+      <ClienteLoginContent />
+    </Suspense>
   );
 }
 

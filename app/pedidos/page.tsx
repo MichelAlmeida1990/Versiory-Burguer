@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+export const dynamic = 'force-dynamic';
+
+import { useEffect, useState, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -19,7 +21,7 @@ interface Order {
   user_id?: string; // ID do restaurante
 }
 
-export default function PedidosPage() {
+function PedidosContent() {
   const { user, loading: authLoading, signOut } = useClientAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -365,6 +367,21 @@ export default function PedidosPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function PedidosPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-black text-white">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">Carregando...</div>
+        </div>
+      </div>
+    }>
+      <PedidosContent />
+    </Suspense>
   );
 }
 
