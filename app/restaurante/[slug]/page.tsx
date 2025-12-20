@@ -19,6 +19,7 @@ import { Plus } from "lucide-react";
 import { ContactSection } from "@/components/restaurant/contact-section";
 import { FeaturesSection } from "@/components/restaurant/features-section";
 import { LoyaltyChatbot } from "@/components/restaurant/loyalty-chatbot";
+import { ExpertChatbot } from "@/components/restaurant/expert-chatbot";
 import { useClientAuth } from "@/contexts/client-auth-context";
 
 interface RestaurantSettings {
@@ -202,7 +203,11 @@ export default function RestaurantePage() {
   return (
     <div className="min-h-screen bg-white overflow-x-hidden w-full">
       <Header />
-      <LoyaltyChatbot primaryColor={settings?.primary_color || "#dc2626"} />
+      <ExpertChatbot 
+        primaryColor={settings?.primary_color || "#dc2626"}
+        restaurantId={restaurantId || undefined}
+        restaurantName={settings?.home_title || "Tom & Jerry Pizzaria"}
+      />
 
       {/* Hero Section */}
       <section id="inicio" className="relative min-h-[70vh] sm:min-h-screen flex items-center justify-center overflow-hidden py-16 sm:py-20 md:py-0 sm:h-screen max-w-full">
