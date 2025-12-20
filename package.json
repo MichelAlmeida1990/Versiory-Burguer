@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -20,7 +20,7 @@
     "framer-motion": "^12.23.24",
     "jspdf": "^3.0.4",
     "lucide-react": "^0.309.0",
-    "next": "^14.2.3",
+    "next": "14.2.3",
     "qrcode": "^1.5.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -35,11 +35,12 @@
     "@types/node": "^20.10.6",
     "@types/react": "^18.2.46",
     "@types/react-dom": "^18.2.18",
-    "autoprefixer": "^10.4.15",
+    "autoprefixer": "^10.4.23",
+    "dotenv": "^17.2.3",
     "eslint": "^8.56.0",
     "eslint-config-next": "^15.0.0",
-    "postcss": "^8.4.31",
-    "tailwindcss": "^3.3.0",
-    "typescript": "^5.3.3"
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.19",
+    "typescript": "5.9.3"
   }
 }

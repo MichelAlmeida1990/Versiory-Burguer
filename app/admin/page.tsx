@@ -773,7 +773,7 @@ function AdminContent() {
                       <Tooltip 
                         contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px', fontSize: '12px' }}
                         labelStyle={{ color: '#F3F4F6' }}
-                        formatter={(value: number) => formatCurrency(value)}
+                        formatter={(value) => formatCurrency(typeof value === 'number' ? value : 0)}
                       />
                       <Legend wrapperStyle={{ fontSize: '12px' }} />
                       <Bar 
@@ -840,7 +840,7 @@ function AdminContent() {
                         <Tooltip 
                           contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px', fontSize: '12px' }}
                           labelStyle={{ color: '#F3F4F6' }}
-                          formatter={(value: number) => formatCurrency(value)}
+                          formatter={(value) => formatCurrency(typeof value === 'number' ? value : 0)}
                         />
                       </PieChart>
                     </ResponsiveContainer>
