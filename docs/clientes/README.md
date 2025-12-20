@@ -13,3 +13,6 @@ Ao adicionar um novo cliente:
 2. Inclua instruções de setup específicas
 3. Crie scripts SQL correspondentes em `supabase/clientes/`
 
+
+
+

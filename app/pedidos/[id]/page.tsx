@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { Header } from "@/components/layout/header";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { formatCurrency, formatDate, formatTime, getTimeAgo } from "@/lib/utils";
 import { Clock, CheckCircle, XCircle, Package, ShoppingBag } from "lucide-react";
+import { useClientAuth } from "@/contexts/client-auth-context";
 
 interface OrderStatusHistory {
   id: string;
@@ -17,6 +18,7 @@ interface Order {
   status: string;
   total: number;
   delivery_address?: string;
+  delivery_fee?: number;
   payment_method: string;
   created_at: string;
   customer_name?: string;
@@ -43,11 +45,18 @@ const statusConfig = {
   cancelled: { label: "Cancelado", color: "text-red-400", bgColor: "bg-red-500", icon: XCircle },
 };
 
-export default function PedidoPage() {
+function PedidoContent() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { user, loading: authLoading } = useClientAuth();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Detectar contexto de restaurante: pode vir do query param ou do localStorage
+  const restaurantSlugFromQuery = searchParams?.get('restaurant');
+  const restaurantSlug = restaurantSlugFromQuery || (typeof window !== 'undefined' ? localStorage.getItem('lastRestaurantContext') : null);
+  const isRestaurantContext = !!restaurantSlug;
 
   useEffect(() => {
     loadOrder();
@@ -56,6 +65,18 @@ export default function PedidoPage() {
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
+
+  // IMPORTANTE: Multi-tenancy - verificar autenticação apenas em contexto de restaurante específico
+  useEffect(() => {
+    // Se estiver em contexto de restaurante específico, exigir login
+    if (!authLoading && !user && isRestaurantContext && restaurantSlug) {
+      // IMPORTANTE: Preservar contexto e URL de retorno
+      const returnUrl = `/pedidos/${params.id}?restaurant=${restaurantSlug}`;
+      router.push(`/restaurante/${restaurantSlug}/cliente/login?returnUrl=${encodeURIComponent(returnUrl)}`);
+      return;
+    }
+    // Versiory: permitir acesso sem login
+  }, [user, authLoading, isRestaurantContext, restaurantSlug, router, params.id]);
 
   const loadOrder = async () => {
     try {
@@ -142,7 +163,14 @@ export default function PedidoPage() {
               Realizado em {formatDate(order.created_at)}
             </p>
             <button
-              onClick={() => router.push("/cardapio")}
+              onClick={() => {
+                // IMPORTANTE: Preservar contexto do restaurante ao redirecionar
+                if (restaurantSlug) {
+                  router.push(`/restaurante/${restaurantSlug}`);
+                } else {
+                  router.push("/cardapio");
+                }
+              }}
               className="w-full sm:w-auto bg-primary-yellow text-black py-3 px-6 rounded-lg font-bold hover:bg-opacity-90 transition flex items-center justify-center gap-2"
             >
               <ShoppingBag className="w-5 h-5" />
@@ -228,6 +256,14 @@ export default function PedidoPage() {
                   <p className="font-medium text-sm md:text-base break-words">{order.delivery_address}</p>
                 </div>
               )}
+              {order.delivery_fee !== undefined && order.delivery_fee > 0 && (
+                <div>
+                  <p className="text-gray-400 text-xs md:text-sm">Taxa de Entrega</p>
+                  <p className="font-medium text-sm md:text-base text-primary-yellow">
+                    {formatCurrency(order.delivery_fee)}
+                  </p>
+                </div>
+              )}
               <div>
                 <p className="text-gray-400 text-xs md:text-sm">Forma de Pagamento</p>
                 <p className="font-medium capitalize text-sm md:text-base">
@@ -249,6 +285,18 @@ export default function PedidoPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PedidoPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-xl">Carregando pedido...</div>
+      </div>
+    }>
+      <PedidoContent />
+    </Suspense>
   );
 }
 

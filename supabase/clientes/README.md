@@ -20,3 +20,6 @@ Scripts específicos para cada cliente/restaurante.
 3. Execute `ADICIONAR_IMAGENS_PIXABAY_TOM_JERRY.sql` para adicionar imagens
 4. Use `VERIFICAR_TOM_JERRY.sql` para verificar se está tudo OK
 
+
+
+

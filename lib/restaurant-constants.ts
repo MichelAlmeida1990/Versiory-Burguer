@@ -63,3 +63,6 @@ export function validateRestaurantIsolation(
   return { valid: true };
 }
 
+
+
+

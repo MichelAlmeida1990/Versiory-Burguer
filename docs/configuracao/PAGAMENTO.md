@@ -161,3 +161,6 @@ if (paymentConfig.gateway === 'mercadopago') {
 - Use HTTPS em produção
 - Criptografe dados sensíveis no banco
 
+
+
+

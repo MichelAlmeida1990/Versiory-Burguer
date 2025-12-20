@@ -24,11 +24,33 @@ export function ClientAuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+    let mounted = true;
+
+    // Timeout de segurança para evitar loading infinito em mobile
+    timeoutId = setTimeout(() => {
+      if (mounted) {
+        console.warn("⚠️ Timeout ao verificar sessão - forçando loading = false");
+        setLoading(false);
+      }
+    }, 5000); // 5 segundos
+
     // Verificar sessão inicial
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-      setLoading(false);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (mounted) {
+          setUser(session?.user ?? null);
+          setLoading(false);
+          if (timeoutId) clearTimeout(timeoutId);
+        }
+      } catch (error) {
+        console.error("Erro ao verificar sessão:", error);
+        if (mounted) {
+          setLoading(false);
+          if (timeoutId) clearTimeout(timeoutId);
+        }
+      }
     };
 
     checkSession();
@@ -37,8 +59,11 @@ export function ClientAuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+      
       setUser(session?.user ?? null);
       setLoading(false);
+      if (timeoutId) clearTimeout(timeoutId);
 
       // Se fizer login, sempre redirecionar para a página do restaurante
       if (event === "SIGNED_IN") {
@@ -65,22 +90,46 @@ export function ClientAuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Se fizer logout, redirecionar para login
+      // Se fizer logout, redirecionar para página do restaurante (se houver contexto)
+      // IMPORTANTE: Versiory não tem login de cliente, então não redirecionar para /cliente/login genérico
       if (event === "SIGNED_OUT") {
         if (pathname?.startsWith("/pedidos")) {
-          router.push("/cliente/login");
+          // Verificar se há contexto de restaurante
+          const restaurantSlug = typeof window !== 'undefined' 
+            ? localStorage.getItem('lastRestaurantContext')
+            : null;
+          
+          if (restaurantSlug) {
+            router.push(`/restaurante/${restaurantSlug}/cliente/login`);
+          } else {
+            // Versiory: apenas redirecionar para home
+            router.push("/");
+          }
         }
       }
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, [router, pathname]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    router.push("/cliente/login");
+    
+    // IMPORTANTE: Versiory não tem login de cliente
+    // Redirecionar para página do restaurante se houver contexto, senão para home
+    const restaurantSlug = typeof window !== 'undefined' 
+      ? localStorage.getItem('lastRestaurantContext')
+      : null;
+    
+    if (restaurantSlug) {
+      router.push(`/restaurante/${restaurantSlug}/cliente/login`);
+    } else {
+      router.push("/");
+    }
   };
 
   return (

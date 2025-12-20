@@ -56,11 +56,13 @@ export default function Home() {
       if (categoriesError) {
         console.error("Erro ao carregar categorias:", categoriesError);
         toast.error("Erro ao carregar categorias");
+        setLoading(false);
         return;
       }
 
       if (!categoriesData || categoriesData.length === 0) {
         toast.error("Nenhuma categoria encontrada");
+        setLoading(false);
         return;
       }
 

@@ -38,3 +38,6 @@ console.log('💡 Execute o script SQL: supabase/ADICIONAR_IMAGENS_PIXABAY_TOM_J
 console.log('   Ele é mais simples e atualiza diretamente no banco de dados.');
 console.log('');
 
+
+
+

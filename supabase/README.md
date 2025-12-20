@@ -53,3 +53,6 @@ Documentação relacionada ao banco de dados:
 - Execute os scripts na ordem correta (schemas → policies → migrations)
 - Teste em ambiente de desenvolvimento antes de produção
 
+
+
+

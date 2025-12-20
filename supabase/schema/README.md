@@ -23,3 +23,6 @@ Execute os scripts nesta ordem:
 - **ORDER_STATUS_HISTORY.sql**: Tabela para histórico de status de pedidos
 - **CRIAR_TABELA_RESTAURANT_SETTINGS.sql**: Tabela para configurações personalizadas por restaurante
 
+
+
+

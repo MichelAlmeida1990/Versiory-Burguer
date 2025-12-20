@@ -146,3 +146,6 @@ Veja `supabase/migrations/` para scripts SQL relacionados a slugs:
 - `DEFINIR_SLUG_TOM_JERRY.sql`
 - `ADICIONAR_SLUG_RESTAURANT_SETTINGS.sql`
 
+
+
+

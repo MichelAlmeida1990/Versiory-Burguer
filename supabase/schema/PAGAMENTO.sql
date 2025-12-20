@@ -130,3 +130,6 @@ CREATE POLICY "Public can view transaction by order"
   FOR SELECT
   USING (true); -- Temporariamente público para permitir verificar status de pagamento
 
+
+
+

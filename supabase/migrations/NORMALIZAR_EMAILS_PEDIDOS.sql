@@ -16,3 +16,6 @@ SELECT
 FROM orders
 WHERE customer_email IS NOT NULL;
 
+
+
+

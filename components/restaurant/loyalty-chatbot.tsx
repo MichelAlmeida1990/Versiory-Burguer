@@ -149,7 +149,7 @@ export function LoyaltyChatbot({ primaryColor = "#dc2626" }: LoyaltyChatbotProps
   return (
     <>
       {/* Botão Flutuante com Avatar do Jerry */}
-      <div className="fixed bottom-3 right-3 sm:bottom-6 sm:right-6 z-[100] flex flex-col items-end gap-2 max-w-[calc(100vw-1rem)] sm:max-w-none">
+      <div className="fixed bottom-3 right-3 sm:bottom-6 sm:right-6 z-[99] flex flex-col items-end gap-2 max-w-[calc(100vw-1rem)] sm:max-w-none">
         {/* Texto indicativo de fidelidade */}
         {!isOpen && (
           <motion.div
@@ -171,7 +171,7 @@ export function LoyaltyChatbot({ primaryColor = "#dc2626" }: LoyaltyChatbotProps
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => setIsOpen(!isOpen)}
-          className="w-12 h-12 sm:w-20 sm:h-20 rounded-full shadow-2xl flex items-center justify-center overflow-hidden border-2 sm:border-4 border-white transition-all relative group"
+          className="w-14 h-14 sm:w-20 sm:h-20 rounded-full shadow-2xl flex items-center justify-center overflow-hidden border-2 sm:border-4 border-white transition-all relative group"
           style={{ backgroundColor: primaryColor }}
           aria-label="Abrir chat de fidelidade"
         >
@@ -208,9 +208,9 @@ export function LoyaltyChatbot({ primaryColor = "#dc2626" }: LoyaltyChatbotProps
                 <motion.div
                   animate={{ scale: [1, 1.2, 1] }}
                   transition={{ duration: 2, repeat: Infinity }}
-                  className="absolute -top-1 -right-1 w-6 h-6 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center"
+                  className="absolute -top-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center"
                 >
-                  <Gift className="w-3 h-3 text-yellow-900" />
+                  <Gift className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-yellow-900" />
                 </motion.div>
               </motion.div>
             )}
@@ -226,7 +226,7 @@ export function LoyaltyChatbot({ primaryColor = "#dc2626" }: LoyaltyChatbotProps
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 20 }}
             transition={{ duration: 0.3 }}
-            className="fixed bottom-20 right-2 left-2 sm:left-auto sm:right-6 sm:w-96 z-[100] h-[calc(100vh-5rem)] sm:h-[600px] sm:max-h-[calc(100vh-8rem)] bg-white rounded-xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden border-2"
+            className="fixed bottom-20 right-2 left-2 sm:left-auto sm:right-6 sm:w-96 z-[100] h-[70vh] max-h-[500px] sm:h-[600px] sm:max-h-[calc(100vh-8rem)] bg-white rounded-xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden border-2"
             style={{ borderColor: primaryColor }}
           >
             {/* Header com Avatar do Jerry */}
@@ -271,7 +271,7 @@ export function LoyaltyChatbot({ primaryColor = "#dc2626" }: LoyaltyChatbotProps
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-3 sm:space-y-4 bg-gray-50">
+            <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-4 bg-gray-50">
               {messages.map((message) => (
                 <motion.div
                   key={message.id}
@@ -292,7 +292,7 @@ export function LoyaltyChatbot({ primaryColor = "#dc2626" }: LoyaltyChatbotProps
                     </div>
                   )}
                   <div
-                    className={`max-w-[80%] sm:max-w-[75%] rounded-xl sm:rounded-2xl px-2.5 py-1.5 sm:px-4 sm:py-3 ${
+                    className={`max-w-[75%] sm:max-w-[75%] rounded-lg sm:rounded-2xl px-2.5 py-1.5 sm:px-4 sm:py-3 ${
                       message.sender === "user"
                         ? "rounded-tr-sm"
                         : "rounded-tl-sm bg-white shadow-sm"
@@ -305,13 +305,13 @@ export function LoyaltyChatbot({ primaryColor = "#dc2626" }: LoyaltyChatbotProps
                         : {}
                     }
                   >
-                    <p className="text-[11px] sm:text-sm whitespace-pre-line leading-relaxed" style={{ color: message.sender === "user" ? "white" : "#1f2937" }}>
+                    <p className="text-xs sm:text-sm whitespace-pre-line leading-relaxed" style={{ color: message.sender === "user" ? "white" : "#1f2937" }}>
                       {message.text}
                     </p>
                   </div>
                   {message.sender === "user" && (
-                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0">
-                      <span className="text-gray-600 text-[10px] sm:text-xs font-bold">VC</span>
+                    <div className="w-5 h-5 sm:w-8 sm:h-8 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0">
+                      <span className="text-gray-600 text-[9px] sm:text-xs font-bold">VC</span>
                     </div>
                   )}
                 </motion.div>
@@ -321,7 +321,7 @@ export function LoyaltyChatbot({ primaryColor = "#dc2626" }: LoyaltyChatbotProps
 
             {/* Quick Questions */}
             <div className="p-2 sm:p-3 bg-gray-100 border-t border-gray-200">
-              <p className="text-[10px] sm:text-xs font-semibold text-gray-600 mb-1.5 sm:mb-2 px-1 sm:px-2">
+              <p className="text-xs sm:text-xs font-semibold text-gray-600 mb-1.5 sm:mb-2 px-1 sm:px-2">
                 Perguntas rápidas:
               </p>
               <div className="flex flex-wrap gap-1.5 sm:gap-2">
@@ -329,7 +329,7 @@ export function LoyaltyChatbot({ primaryColor = "#dc2626" }: LoyaltyChatbotProps
                   <button
                     key={index}
                     onClick={() => handleQuickQuestion(rule.question)}
-                    className="text-[10px] sm:text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-white border border-gray-300 hover:border-gray-400 transition-colors text-gray-700"
+                    className="text-[10px] sm:text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-white border border-gray-300 hover:border-gray-400 transition-colors text-gray-700 whitespace-nowrap"
                   >
                     {rule.question}
                   </button>
@@ -347,7 +347,7 @@ export function LoyaltyChatbot({ primaryColor = "#dc2626" }: LoyaltyChatbotProps
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
                   placeholder="Digite sua dúvida..."
-                  className="flex-1 px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-0 text-xs sm:text-sm"
+                  className="flex-1 px-3 sm:px-4 py-2 sm:py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-0 text-xs sm:text-sm"
                   style={{ '--tw-ring-color': primaryColor } as React.CSSProperties}
                   onFocus={(e) => {
                     e.currentTarget.style.setProperty('--tw-ring-color', primaryColor);
@@ -355,10 +355,10 @@ export function LoyaltyChatbot({ primaryColor = "#dc2626" }: LoyaltyChatbotProps
                 />
                 <button
                   onClick={handleSendMessage}
-                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white transition-all flex-shrink-0"
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white transition-all flex-shrink-0"
                   style={{ backgroundColor: primaryColor }}
                 >
-                  <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <Send className="w-4 h-4 sm:w-4 sm:h-4" />
                 </button>
               </div>
             </div>

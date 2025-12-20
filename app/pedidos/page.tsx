@@ -18,6 +18,7 @@ interface Order {
   total: number;
   created_at: string;
   customer_email: string;
+  customer_name?: string;
   user_id?: string; // ID do restaurante
 }
 
@@ -340,14 +341,19 @@ function PedidosContent() {
             {orders.map((order) => (
               <Link
                 key={order.id}
-                href={`/pedidos/${order.id}`}
-                className="block bg-gray-900 rounded-lg p-4 md:p-6 hover:bg-gray-800 transition"
+                href={`/pedidos/${order.id}${restaurantSlug ? `?restaurant=${restaurantSlug}` : ''}`}
+                className="block bg-gray-900 rounded-lg p-4 md:p-6 hover:bg-gray-800 transition cursor-pointer border border-gray-800 hover:border-gray-700"
               >
                 <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
                   <div className="flex-1">
                     <h2 className="text-lg md:text-xl font-bold mb-1 md:mb-2">
                       Pedido #{order.id.slice(0, 8)}
                     </h2>
+                    {order.customer_name && (
+                      <p className="text-gray-300 text-sm md:text-base mb-1 md:mb-2 font-medium">
+                        {order.customer_name}
+                      </p>
+                    )}
                     <p className="text-gray-400 text-xs md:text-sm">
                       {formatDate(order.created_at)}
                     </p>
@@ -355,10 +361,13 @@ function PedidosContent() {
                       {getStatusLabel(order.status)}
                     </p>
                   </div>
-                  <div className="w-full sm:w-auto text-left sm:text-right">
+                  <div className="w-full sm:w-auto text-left sm:text-right flex flex-col items-start sm:items-end gap-2">
                     <p className="text-xl md:text-2xl font-bold text-primary-yellow">
                       {formatCurrency(order.total)}
                     </p>
+                    <span className="text-xs text-gray-500 hover:text-gray-400 transition">
+                      Clique para ver detalhes →
+                    </span>
                   </div>
                 </div>
               </Link>

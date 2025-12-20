@@ -20,3 +20,6 @@ ORDER BY u.email;
 -- INNER JOIN restaurant_settings rs ON rs.restaurant_id = u.id
 -- ORDER BY u.email;
 
+
+
+

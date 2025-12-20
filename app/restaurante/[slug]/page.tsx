@@ -176,7 +176,7 @@ export default function RestaurantePage() {
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Restaurante não encontrado</h1>
           <p className="text-gray-600 mb-4">O restaurante &quot;{slug}&quot; não foi encontrado.</p>
-          <Link href="/" className="text-blue-600 hover:underline">
+          <Link href={`/restaurante/${slug}`} className="text-blue-600 hover:underline">
             Voltar para a página inicial
           </Link>
         </div>

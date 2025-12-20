@@ -29,11 +29,19 @@ function ClienteLoginContent() {
     const restaurantMatch = pathname?.match(/^\/restaurante\/([^/]+)/);
     if (restaurantMatch && restaurantMatch[1]) {
       setRestaurantSlug(restaurantMatch[1]);
+      // Salvar no localStorage para preservar contexto
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('lastRestaurantContext', restaurantMatch[1]);
+      }
     } else {
       // Verificar se foi passado como parâmetro
       const slugFromParam = searchParams?.get('restaurant');
       if (slugFromParam) {
         setRestaurantSlug(slugFromParam);
+        // Salvar no localStorage para preservar contexto
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lastRestaurantContext', slugFromParam);
+        }
       }
     }
 
@@ -165,6 +173,14 @@ function ClienteLoginContent() {
         }
         
         toast.success("Login realizado com sucesso!");
+        
+        // IMPORTANTE: Verificar se há returnUrl para preservar contexto multi-tenancy
+        const returnUrl = searchParams?.get('returnUrl');
+        if (returnUrl) {
+          // Redirecionar para a URL de retorno (preserva contexto do restaurante)
+          router.push(decodeURIComponent(returnUrl));
+          return;
+        }
         
         // Buscar o slug do restaurante (pode vir do state ou do localStorage)
         let finalRestaurantSlug = restaurantSlug;

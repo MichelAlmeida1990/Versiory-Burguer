@@ -1,0 +1,10 @@
+{
+  "python.terminal.activateEnvironment": false,
+  "python.terminal.activateEnvInCurrentTerminal": false,
+  "powershell.integratedConsole.suppressStartupBanner": true,
+  "terminal.integrated.env.windows": {
+    "VIRTUAL_ENV": "",
+    "PYTHONPATH": ""
+  }
+}
+

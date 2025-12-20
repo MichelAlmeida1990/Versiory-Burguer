@@ -17,10 +17,24 @@ export default function CarrinhoPage() {
   const router = useRouter();
   const { items, updateQuantity, removeItem, getTotal, clearCart } =
     useCartStore();
-  const [deliveryFee] = useState(5.0);
+  // IMPORTANTE: O frete NÃO deve ser calculado no carrinho
+  // O frete só será calculado no checkout, após o usuário preencher o endereço
+  // No carrinho, mostramos apenas o subtotal
+  // Mas se já tiver endereço salvo, podemos mostrar o frete calculado
+  const [deliveryFee, setDeliveryFee] = useState(0);
   const [coupon, setCoupon] = useState("");
   const [discount, setDiscount] = useState(0);
   const [optionNames, setOptionNames] = useState<Record<string, string>>({});
+  
+  // Carregar frete do localStorage se existir (vindo do checkout)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedFee = localStorage.getItem('calculated_delivery_fee');
+      if (savedFee) {
+        setDeliveryFee(parseFloat(savedFee));
+      }
+    }
+  }, []);
 
   const loadOptionNames = useCallback(async () => {
     const allOptionValueIds = new Set<string>();
@@ -41,7 +55,7 @@ export default function CarrinhoPage() {
       if (error) throw error;
 
       const names: Record<string, string> = {};
-      data?.forEach((val) => {
+      data?.forEach((val: { id: string; name: string }) => {
         names[val.id] = val.name;
       });
       setOptionNames(names);
@@ -71,6 +85,7 @@ export default function CarrinhoPage() {
   }, [items, removeItem]);
 
   const subtotal = getTotal();
+  // IMPORTANTE: Incluir frete no total apenas se já foi calculado (salvo no localStorage)
   const total = subtotal + deliveryFee - discount;
 
   const handleCheckout = () => {
@@ -78,8 +93,20 @@ export default function CarrinhoPage() {
       toast.error("Seu carrinho está vazio!");
       return;
     }
-    // Redirecionar para checkout
-    window.location.href = "/checkout";
+    // IMPORTANTE: Preservar contexto do restaurante ao redirecionar
+    const restaurantSlug = typeof window !== 'undefined' 
+      ? new URLSearchParams(window.location.search).get('restaurant') 
+        || localStorage.getItem('lastRestaurantContext')
+      : null;
+    
+    // IMPORTANTE: SEMPRE ir para checkout primeiro para preencher/confirmar endereço
+    // O checkout é onde o usuário preenche o endereço e calcula o frete
+    // Depois pode voltar ao carrinho para ver o total com frete
+    const checkoutUrl = restaurantSlug 
+      ? `/checkout?restaurant=${restaurantSlug}`
+      : '/checkout';
+    
+    router.push(checkoutUrl);
   };
 
   const applyCoupon = () => {
@@ -328,7 +355,13 @@ export default function CarrinhoPage() {
                 </div>
                 <div className="flex justify-between items-center text-gray-400 text-sm sm:text-base w-full min-w-0">
                   <span className="flex-shrink-0">Taxa de Entrega</span>
-                  <span className="text-right break-all ml-2">{formatCurrency(deliveryFee)}</span>
+                  <span className="text-right break-all ml-2">
+                    {deliveryFee > 0 ? (
+                      formatCurrency(deliveryFee)
+                    ) : (
+                      <span className="text-yellow-500 text-xs">Será calculada no checkout</span>
+                    )}
+                  </span>
                 </div>
                 {discount > 0 && (
                   <div className="flex justify-between items-center text-green-400 text-sm sm:text-base w-full min-w-0">
@@ -346,7 +379,19 @@ export default function CarrinhoPage() {
 
               <button
                 type="button"
-                onClick={() => router.push("/cardapio")}
+                onClick={() => {
+                  // IMPORTANTE: Preservar contexto do restaurante ao continuar comprando
+                  const restaurantSlug = typeof window !== 'undefined' 
+                    ? new URLSearchParams(window.location.search).get('restaurant') 
+                      || localStorage.getItem('lastRestaurantContext')
+                    : null;
+                  
+                  if (restaurantSlug) {
+                    router.push(`/restaurante/${restaurantSlug}#cardapio`);
+                  } else {
+                    router.push("/#cardapio");
+                  }
+                }}
                 className="w-full bg-gray-800 hover:bg-gray-700 text-white py-3 px-4 rounded-lg font-bold transition flex items-center justify-center gap-2 mb-3 border border-gray-700"
               >
                 <ShoppingBag className="w-5 h-5" />

@@ -84,6 +84,22 @@ Uma vez que o usuário estiver criado, o restaurante Tom & Jerry:
 - Verifique se os produtos foram copiados corretamente
 - Confirme que está logado com `tomjerry@gmail.com`
 
+## 🔐 Redefinir Senha (Se Esqueceu)
+
+Se você esqueceu a senha do admin Tom & Jerry:
+
+**📖 Guia Completo**: Veja `docs/configuracao/REDEFINIR_SENHA_TOM_JERRY.md`
+
+**Método Rápido (Dashboard):**
+1. Acesse o **Supabase Dashboard**
+2. Vá em **Authentication** > **Users**
+3. Encontre `tomjerry@gmail.com`
+4. Clique nos **três pontos** (⋯) > **"Reset Password"** ou **"Update Password"**
+5. Defina a nova senha
+6. Teste o login
+
+**⚠️ Importante**: O usuário não será excluído - apenas a senha será atualizada, mantendo todos os IDs e relacionamentos intactos.
+
 ## 📞 Suporte
 
 Se encontrar problemas, verifique:

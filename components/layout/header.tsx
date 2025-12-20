@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -8,6 +8,7 @@ import { ShoppingCart, Menu, X, User, LogOut, Package, ChevronDown } from "lucid
 import { CartButton } from "@/components/cart/cart-button";
 import { supabase } from "@/lib/supabase";
 import { useClientAuth } from "@/contexts/client-auth-context";
+import { getRestaurantSlug, withRestaurantContext } from "@/lib/restaurant-context";
 
 interface RestaurantSettings {
   restaurant_name: string;
@@ -46,22 +47,24 @@ function HeaderContent() {
     try {
       setLoading(true);
       
-      // IMPORTANTE: Só carregar configurações específicas do restaurante quando estiver na rota /restaurante/[slug]
+      // IMPORTANTE: Carregar configurações quando estiver na rota /restaurante/[slug] OU quando tiver query param restaurant
       // Nas outras rotas (/cardapio, /, etc), SEMPRE usar os valores padrão da Versiory
       const slugMatch = pathname?.match(/^\/restaurante\/([^/]+)/);
-      if (slugMatch && slugMatch[1]) {
-        const slug = slugMatch[1];
-        
+      const slugFromQuery = searchParams?.get('restaurant');
+      const slugToLoad = slugMatch?.[1] || slugFromQuery;
+      
+      if (slugToLoad) {
         try {
-          const response = await fetch(`/api/restaurante/${slug}`);
+          const response = await fetch(`/api/restaurante/${slugToLoad}`);
           if (response.ok) {
             const restaurantData = await response.json();
             setSettings({
               restaurant_name: restaurantData.restaurant_name,
               logo_url: restaurantData.logo_url,
               primary_color: restaurantData.primary_color,
-              slug: restaurantData.slug || slug,
+              slug: restaurantData.slug || slugToLoad,
             });
+            console.log('✅ Configurações do restaurante carregadas:', slugToLoad);
             setLoading(false);
             return;
           }
@@ -112,9 +115,22 @@ function HeaderContent() {
   const restaurantFromQuery = searchParams?.get('restaurant');
   const restaurantFromSettings = settings?.slug || null;
   
-  // Usar slug do pathname primeiro, depois query, depois settings
-  const restaurantSlug = restaurantSlugFromPath || restaurantFromQuery || restaurantFromSettings || null;
+  // IMPORTANTE: Usar slug do pathname primeiro, depois query, depois settings, depois localStorage
+  // A query string é CRÍTICA para páginas como /pedidos?restaurant=tomjerry
+  const restaurantSlugFromStorage = typeof window !== 'undefined' ? getRestaurantSlug() : null;
+  const restaurantSlug = restaurantSlugFromPath || restaurantFromQuery || restaurantFromSettings || restaurantSlugFromStorage || null;
   const restaurantBasePath = restaurantSlug ? `/restaurante/${restaurantSlug}` : null;
+  
+  // IMPORTANTE: Salvar no localStorage sempre que detectar o slug (de qualquer fonte)
+  useEffect(() => {
+    if (restaurantSlug && typeof window !== 'undefined') {
+      localStorage.setItem('lastRestaurantContext', restaurantSlug);
+      console.log('🔒 Contexto salvo no Header:', restaurantSlug);
+    }
+  }, [restaurantSlug]);
+  
+  // IMPORTANTE: Se estiver em rota que não é /restaurante/[slug] mas tem query param, considerar como restaurante
+  const isInRestaurantContext = isRestaurantRoute || !!restaurantFromQuery;
   
   // Se estiver na rota de restaurante e ainda estiver carregando, não mostrar nada
   // Se não estiver na rota de restaurante, usar valores padrão da Versiory
@@ -202,8 +218,8 @@ function HeaderContent() {
               Combos
             </Link>
             {/* Versiory: sempre mostrar "Meus Pedidos", restaurante específico: mostrar apenas se logado ou Login/Cadastro */}
-            {!isRestaurantRoute ? (
-              // Versiory: sempre mostrar "Meus Pedidos"
+            {!isInRestaurantContext ? (
+              // Versiory: sempre mostrar "Meus Pedidos" (sem contexto)
               <Link
                 href="/pedidos"
                 className="text-gray-700 font-medium transition"
@@ -217,7 +233,7 @@ function HeaderContent() {
               <>
                 {!clientAuthLoading && clientUser ? (
                   <Link
-                    href={`/pedidos?restaurant=${restaurantSlug}`}
+                    href={withRestaurantContext('/pedidos', restaurantSlug)}
                     className="text-gray-700 font-medium transition"
                     onMouseEnter={(e) => e.currentTarget.style.color = primaryColor}
                     onMouseLeave={(e) => e.currentTarget.style.color = '#374151'}
@@ -274,7 +290,7 @@ function HeaderContent() {
         <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 flex-shrink-0">
           {/* IMPORTANTE: Só mostrar perfil do cliente se estiver em restaurante específico OU no admin */}
           {/* Na Versiory (páginas públicas), NÃO mostrar perfil do cliente logado */}
-          {!isAdmin && isRestaurantRoute && !clientAuthLoading && clientUser && (
+          {!isAdmin && isInRestaurantContext && !clientAuthLoading && clientUser && (
             <div className="relative">
               <button
                 onClick={() => setProfileMenuOpen(!profileMenuOpen)}
@@ -311,7 +327,7 @@ function HeaderContent() {
                       </p>
                     </div>
                     <Link
-                      href={restaurantSlug ? `/pedidos?restaurant=${restaurantSlug}` : "/pedidos"}
+                      href={withRestaurantContext('/pedidos', restaurantSlug)}
                       onClick={() => setProfileMenuOpen(false)}
                       className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition"
                     >
@@ -337,7 +353,7 @@ function HeaderContent() {
             <>
               <CartButton />
               <Link
-                href="/carrinho"
+                href={withRestaurantContext('/checkout', restaurantSlug)}
                 className="text-white px-2 py-1.5 sm:px-3 sm:py-2 md:px-6 md:py-2 rounded-lg font-bold transition flex items-center gap-1 md:gap-2 text-xs sm:text-sm md:text-base"
                 style={{ 
                   backgroundColor: primaryColor,
@@ -412,7 +428,7 @@ function HeaderContent() {
                 </Link>
                 {/* IMPORTANTE: Só mostrar perfil do cliente no mobile se estiver em restaurante específico */}
                 {/* Na Versiory, NÃO mostrar perfil do cliente logado */}
-                {isRestaurantRoute && !clientAuthLoading && clientUser && (
+                {isInRestaurantContext && !clientAuthLoading && clientUser && (
                   <div className="mb-3 pb-3 border-b border-gray-200">
                     <div className="flex items-center space-x-3 px-2">
                       <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold"
@@ -432,7 +448,7 @@ function HeaderContent() {
                   </div>
                 )}
                 {/* Versiory: sempre mostrar "Meus Pedidos", restaurante específico: mostrar apenas se logado ou Login/Cadastro */}
-                {!isRestaurantRoute ? (
+                {!isInRestaurantContext ? (
                   // Versiory: sempre mostrar "Meus Pedidos"
                   <Link
                     href="/pedidos"
@@ -448,7 +464,7 @@ function HeaderContent() {
                     {!clientAuthLoading && clientUser ? (
                       <>
                         <Link
-                          href={`/pedidos?restaurant=${restaurantSlug}`}
+                          href={withRestaurantContext('/pedidos', restaurantSlug)}
                           onClick={() => setMobileMenuOpen(false)}
                           className="flex items-center space-x-3 text-gray-700 font-medium transition py-2"
                         >

@@ -42,11 +42,13 @@ export async function GET(request: NextRequest) {
     
     if (error) {
       console.error('Erro ao trocar code por sessão:', error);
-      // Redirecionar para login mesmo com erro
+      // IMPORTANTE: Versiory não tem login de cliente
+      // Redirecionar apenas se houver contexto de restaurante
       if (restaurantSlug) {
         return NextResponse.redirect(new URL(`/restaurante/${restaurantSlug}/cliente/login?error=auth_failed`, request.url));
       }
-      return NextResponse.redirect(new URL('/cliente/login?error=auth_failed', request.url));
+      // Versiory: redirecionar para home em caso de erro
+      return NextResponse.redirect(new URL('/', request.url));
     }
   }
 

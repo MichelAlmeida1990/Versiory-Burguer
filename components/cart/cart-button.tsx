@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
 import { useCartStore } from "@/store/cart-store";
+import { withRestaurantContext } from "@/lib/restaurant-context";
 
 export function CartButton() {
   const [mounted, setMounted] = useState(false);
@@ -16,8 +17,9 @@ export function CartButton() {
 
   return (
     <Link
-      href="/carrinho"
+      href={withRestaurantContext('/checkout')}
       className="relative inline-flex items-center justify-center p-2 hover:bg-gray-100 rounded-lg transition"
+      title="Finalizar Pedido (Checkout)"
     >
       <ShoppingCart className="w-6 h-6 text-gray-700" />
       {mounted && itemCount > 0 && (

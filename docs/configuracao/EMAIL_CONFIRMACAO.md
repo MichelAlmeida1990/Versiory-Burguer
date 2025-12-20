@@ -32,3 +32,6 @@ Após desabilitar a confirmação de email:
 2. Você deve ser logado automaticamente após o cadastro
 3. Não será necessário confirmar o email
 
+
+
+

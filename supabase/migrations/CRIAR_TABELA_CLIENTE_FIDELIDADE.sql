@@ -43,3 +43,6 @@ COMMENT ON COLUMN customer_loyalty.total_stamps IS 'Total de selos acumulados pe
 COMMENT ON COLUMN customer_loyalty.total_orders IS 'Total de pedidos realizados';
 COMMENT ON COLUMN customer_loyalty.total_spent IS 'Valor total gasto pelo cliente';
 
+
+
+

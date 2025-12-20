@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { Header } from "@/components/layout/header";
 import { useCartStore } from "@/store/cart-store";
 import { formatCurrency } from "@/lib/utils";
@@ -12,6 +12,7 @@ import toast from "react-hot-toast";
 import { PaymentModal } from "@/components/payment/payment-modal";
 import { useClientAuth } from "@/contexts/client-auth-context";
 import { DEMO_RESTAURANT_UUID, validateRestaurantIsolation } from "@/lib/restaurant-constants";
+import { supabase, DeliveryArea } from "@/lib/supabase";
 
 function CheckoutContent() {
   const router = useRouter();
@@ -20,7 +21,10 @@ function CheckoutContent() {
   const { user, loading: authLoading } = useClientAuth();
   const { items, getTotal, clearCart } = useCartStore();
   const [mounted, setMounted] = useState(false);
-  const [deliveryFee] = useState(5.0);
+  const [deliveryFee, setDeliveryFee] = useState(5.0);
+  const [deliveryAreas, setDeliveryAreas] = useState<DeliveryArea[]>([]);
+  const [loadingAreas, setLoadingAreas] = useState(false);
+  const [addressLoaded, setAddressLoaded] = useState(false); // Flag para carregar endereço apenas uma vez
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -37,6 +41,57 @@ function CheckoutContent() {
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   const [currentRestaurantId, setCurrentRestaurantId] = useState<string | null>(null);
 
+  // Função para calcular frete baseado em cidade e bairro
+  const calculateDeliveryFee = useCallback((city: string, neighborhood: string, areas?: DeliveryArea[]) => {
+    const areasToSearch = areas || deliveryAreas;
+    if (areasToSearch.length === 0) {
+      setDeliveryFee(5.0); // Valor padrão
+      return;
+    }
+
+    const area = areasToSearch.find(
+      a => a.city.toLowerCase() === city.toLowerCase() && 
+           a.neighborhood.toLowerCase() === neighborhood.toLowerCase()
+    );
+
+    if (area) {
+      setDeliveryFee(Number(area.delivery_fee));
+    } else {
+      setDeliveryFee(5.0); // Valor padrão se não encontrar
+    }
+  }, [deliveryAreas]);
+
+  // Função para carregar áreas de entrega
+  const loadDeliveryAreas = useCallback(async (restaurantId: string) => {
+    setLoadingAreas(true);
+    try {
+      const { data, error } = await supabase
+        .from("delivery_areas")
+        .select("*")
+        .eq("restaurant_id", restaurantId)
+        .eq("active", true)
+        .order("city")
+        .order("neighborhood");
+
+      if (error) {
+        console.error("Erro ao buscar áreas de entrega:", error);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        setDeliveryAreas(data);
+        // Se já tiver cidade e bairro selecionados, calcular frete
+        if (formData.city && formData.neighborhood) {
+          calculateDeliveryFee(formData.city, formData.neighborhood, data);
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao carregar áreas de entrega:", error);
+    } finally {
+      setLoadingAreas(false);
+    }
+  }, [formData.city, formData.neighborhood, calculateDeliveryFee]);
+
   useEffect(() => {
     setMounted(true);
     
@@ -48,7 +103,7 @@ function CheckoutContent() {
         item.product.restaurant_id === DEMO_RESTAURANT_UUID
       );
     
-    // Se for restaurante específico (como Tom & Jerry), exigir login do cliente
+    // Se for restaurante específico (como Tom & Jerry), exigir login do cliente ANTES de permitir preencher endereço
     // Mas NÃO exigir se for o Versiory (demo)
     if (!isDemoRestaurant && produtosComRestaurante.length > 0 && !authLoading && !user) {
       // Detectar slug do restaurante pelos produtos
@@ -59,15 +114,16 @@ function CheckoutContent() {
         ? localStorage.getItem('lastRestaurantContext')
         : null;
       
+      // IMPORTANTE: Login de cliente é APENAS para restaurantes específicos (Tom & Jerry)
+      // Versiory NÃO tem login de cliente
+      // Exigir login ANTES de permitir preencher endereço e calcular frete
       if (restaurantSlug) {
-        toast.error("Faça login para finalizar o pedido");
-        router.push(`/restaurante/${restaurantSlug}/cliente/login`);
-        return;
-      } else {
-        toast.error("Faça login para finalizar o pedido");
-        router.push("/cliente/login");
+        toast.error("Faça login ou cadastre-se para continuar com o pedido");
+        const returnUrl = `/checkout`;
+        router.push(`/restaurante/${restaurantSlug}/cliente/login?returnUrl=${encodeURIComponent(returnUrl)}`);
         return;
       }
+      // Se não tiver slug, não deve acontecer (produtos sem restaurante são Versiory e não exigem login)
     }
     
     // Se o cliente estiver logado, preencher email automaticamente
@@ -77,10 +133,107 @@ function CheckoutContent() {
         email: user.email || prev.email,
       }));
     }
-  }, [user, authLoading, items, router]);
+    
+    // Carregar endereço salvo do localStorage apenas UMA VEZ na montagem inicial
+    if (typeof window !== 'undefined' && !addressLoaded) {
+      const savedAddress = localStorage.getItem('checkout_address');
+      if (savedAddress) {
+        try {
+          const address = JSON.parse(savedAddress);
+          setFormData(prev => ({
+            ...prev,
+            city: address.city || prev.city,
+            neighborhood: address.neighborhood || prev.neighborhood,
+            address: address.address || prev.address,
+            zipCode: address.zipCode || prev.zipCode,
+            complement: address.complement || prev.complement,
+          }));
+        } catch (e) {
+          console.error("Erro ao carregar endereço salvo:", e);
+        }
+      }
+      
+      // Carregar frete calculado se existir
+      const savedFee = localStorage.getItem('calculated_delivery_fee');
+      if (savedFee) {
+        setDeliveryFee(parseFloat(savedFee));
+      }
+      
+      setAddressLoaded(true); // Marcar como carregado para não recarregar
+    }
+
+    // Buscar áreas de entrega se for restaurante específico
+    if (!isDemoRestaurant && produtosComRestaurante.length > 0) {
+      const restaurantId = produtosComRestaurante[0].product.restaurant_id;
+      if (restaurantId) {
+        loadDeliveryAreas(restaurantId);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, authLoading, items, router, loadDeliveryAreas, addressLoaded]);
+
+  // Quando cidade ou bairro mudar, recalcular frete (apenas se ambos estiverem preenchidos E usuário estiver autenticado)
+  useEffect(() => {
+    // Verificar se precisa estar autenticado para calcular frete
+    const produtosComRestaurante = items.filter(item => item.product.restaurant_id);
+    const isDemoRestaurant = produtosComRestaurante.length === 0 || 
+      produtosComRestaurante.every(item => 
+        item.product.restaurant_id === DEMO_RESTAURANT_UUID
+      );
+    const needsAuth = !isDemoRestaurant && produtosComRestaurante.length > 0;
+    
+    // Se precisar de autenticação e não estiver autenticado, não calcular frete
+    if (needsAuth && !authLoading && !user) {
+      setDeliveryFee(0);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('calculated_delivery_fee');
+        localStorage.removeItem('checkout_address');
+      }
+      return;
+    }
+    
+    if (formData.deliveryType === "delivery" && formData.city && formData.neighborhood && deliveryAreas.length > 0) {
+      // Buscar correspondência exata (case-insensitive)
+      const areaEncontrada = deliveryAreas.find(
+        a => a.city.toLowerCase().trim() === formData.city.toLowerCase().trim() &&
+             a.neighborhood.toLowerCase().trim() === formData.neighborhood.toLowerCase().trim()
+      );
+      
+      const calculatedFee = areaEncontrada ? Number(areaEncontrada.delivery_fee) : 5.0;
+      setDeliveryFee(calculatedFee);
+      
+      // IMPORTANTE: Salvar frete calculado no localStorage para mostrar no carrinho
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('calculated_delivery_fee', calculatedFee.toString());
+        localStorage.setItem('checkout_address', JSON.stringify({
+          city: formData.city,
+          neighborhood: formData.neighborhood,
+          address: formData.address,
+          zipCode: formData.zipCode,
+          complement: formData.complement
+        }));
+      }
+    } else if (formData.deliveryType === "delivery" && (!formData.city || !formData.neighborhood)) {
+      // Se não tiver cidade ou bairro, resetar frete e limpar localStorage
+      const defaultFee = deliveryAreas.length === 0 ? 5.0 : 0;
+      setDeliveryFee(defaultFee);
+      if (typeof window !== 'undefined') {
+        if (defaultFee === 0) {
+          localStorage.removeItem('calculated_delivery_fee');
+          // IMPORTANTE: Limpar endereço do localStorage quando apagar bairro/cidade
+          localStorage.removeItem('checkout_address');
+        } else {
+          localStorage.setItem('calculated_delivery_fee', defaultFee.toString());
+        }
+      }
+    }
+  }, [formData.city, formData.neighborhood, formData.deliveryType, formData.address, formData.zipCode, formData.complement, deliveryAreas, user, authLoading, items]);
 
   const subtotal = mounted ? getTotal() : 0;
-  const total = subtotal + (formData.deliveryType === "delivery" ? deliveryFee : 0);
+  // Só adicionar frete se tiver cidade e bairro selecionados (ou se não houver áreas configuradas)
+  const shouldCalculateFee = formData.deliveryType === "delivery" && 
+    (deliveryAreas.length === 0 || (formData.city && formData.neighborhood));
+  const total = subtotal + (shouldCalculateFee ? deliveryFee : 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,9 +255,24 @@ function CheckoutContent() {
       return;
     }
 
-    if (formData.deliveryType === "delivery" && !formData.address) {
-      toast.error("Preencha o endereço de entrega");
-      return;
+    if (formData.deliveryType === "delivery") {
+      if (!formData.address) {
+        toast.error("Preencha o endereço de entrega");
+        return;
+      }
+      if (!formData.city) {
+        toast.error("Selecione a cidade");
+        return;
+      }
+      if (!formData.neighborhood) {
+        toast.error("Selecione o bairro para calcular o frete");
+        return;
+      }
+      // Validar se o frete foi calculado (se houver áreas configuradas)
+      if (deliveryAreas.length > 0 && deliveryFee === 0) {
+        toast.error("Selecione um bairro válido para calcular o frete");
+        return;
+      }
     }
 
     // Desabilitar o botão de submit para evitar múltiplos envios
@@ -272,16 +440,16 @@ function CheckoutContent() {
           restaurantId={currentRestaurantId}
         />
       )}
-      <div className="container mx-auto px-4 py-6 md:py-8">
-        <h1 className="text-3xl md:text-4xl font-bold mb-6 md:mb-8">Finalizar Pedido</h1>
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 md:mb-8">Finalizar Pedido</h1>
 
-        <form onSubmit={handleSubmit} className="grid lg:grid-cols-3 gap-6 md:gap-8">
+        <form onSubmit={handleSubmit} className="grid lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
           {/* Formulário */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Tipo de Entrega */}
-            <div className="bg-gray-900 rounded-lg p-4 md:p-6">
-              <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Tipo de Entrega</h2>
-              <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
+            <div className="bg-gray-900 rounded-lg p-3 sm:p-4 md:p-6">
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 md:mb-4">Tipo de Entrega</h2>
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4">
                 <label className="flex-1">
                   <input
                     type="radio"
@@ -310,8 +478,8 @@ function CheckoutContent() {
             </div>
 
             {/* Dados Pessoais */}
-            <div className="bg-gray-900 rounded-lg p-4 md:p-6">
-              <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Dados Pessoais</h2>
+            <div className="bg-gray-900 rounded-lg p-3 sm:p-4 md:p-6">
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 md:mb-4">Dados Pessoais</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">
@@ -365,90 +533,198 @@ function CheckoutContent() {
 
             {/* Endereço (se delivery) */}
             {formData.deliveryType === "delivery" && (
-              <div className="bg-gray-900 rounded-lg p-4 md:p-6">
-                <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Endereço de Entrega</h2>
+              <div className="bg-gray-900 rounded-lg p-3 sm:p-4 md:p-6">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 md:mb-4">Endereço de Entrega</h2>
+                
+                {/* Verificar se precisa estar logado para restaurantes específicos */}
+                {(() => {
+                  const produtosComRestaurante = items.filter(item => item.product.restaurant_id);
+                  const isDemoRestaurant = produtosComRestaurante.length === 0 || 
+                    produtosComRestaurante.every(item => 
+                      item.product.restaurant_id === DEMO_RESTAURANT_UUID
+                    );
+                  
+                  // Se for restaurante específico e não estiver logado, mostrar mensagem
+                  if (!isDemoRestaurant && produtosComRestaurante.length > 0 && !authLoading && !user) {
+                    const restaurantSlug = typeof window !== 'undefined' 
+                      ? localStorage.getItem('lastRestaurantContext')
+                      : null;
+                    
+                    if (restaurantSlug) {
+                      return (
+                        <div className="bg-yellow-900/30 border border-yellow-700 rounded-lg p-4 mb-4">
+                          <p className="text-yellow-400 font-medium mb-2">
+                            ⚠️ Faça login ou cadastre-se para preencher o endereço e calcular o frete
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const returnUrl = `/checkout`;
+                              router.push(`/restaurante/${restaurantSlug}/cliente/login?returnUrl=${encodeURIComponent(returnUrl)}`);
+                            }}
+                            className="bg-primary-yellow hover:bg-yellow-500 text-black font-bold py-2 px-4 rounded-lg transition"
+                          >
+                            Fazer Login / Cadastrar
+                          </button>
+                        </div>
+                      );
+                    }
+                  }
+                  return null;
+                })()}
                 <div className="space-y-3 md:space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      CEP *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.zipCode}
-                      onChange={(e) =>
-                        setFormData({ ...formData, zipCode: e.target.value })
-                      }
-                      placeholder="00000-000"
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-primary-yellow"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Endereço *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.address}
-                      onChange={(e) =>
-                        setFormData({ ...formData, address: e.target.value })
-                      }
-                      placeholder="Rua, Avenida, etc"
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-primary-yellow"
-                    />
-                  </div>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Complemento
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.complement}
-                        onChange={(e) =>
-                          setFormData({ ...formData, complement: e.target.value })
-                        }
-                        placeholder="Apto, Bloco, etc"
-                        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-primary-yellow"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Bairro *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.neighborhood}
-                        onChange={(e) =>
-                          setFormData({ ...formData, neighborhood: e.target.value })
-                        }
-                        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-primary-yellow"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Cidade *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.city}
-                      onChange={(e) =>
-                        setFormData({ ...formData, city: e.target.value })
-                      }
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-primary-yellow"
-                    />
-                  </div>
+                  {(() => {
+                    const produtosComRestaurante = items.filter(item => item.product.restaurant_id);
+                    const isDemoRestaurant = produtosComRestaurante.length === 0 || 
+                      produtosComRestaurante.every(item => 
+                        item.product.restaurant_id === DEMO_RESTAURANT_UUID
+                      );
+                    const needsAuth = !isDemoRestaurant && produtosComRestaurante.length > 0 && !authLoading && !user;
+                    const restaurantSlug = typeof window !== 'undefined' 
+                      ? localStorage.getItem('lastRestaurantContext')
+                      : null;
+                    const isDisabled = !!(needsAuth && restaurantSlug);
+                    
+                    return (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">
+                            CEP *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            disabled={isDisabled}
+                            value={formData.zipCode}
+                            onChange={(e) =>
+                              setFormData({ ...formData, zipCode: e.target.value })
+                            }
+                            placeholder="00000-000"
+                            className={`w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-primary-yellow ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">
+                            Endereço *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            disabled={isDisabled}
+                            value={formData.address}
+                            onChange={(e) =>
+                              setFormData({ ...formData, address: e.target.value })
+                            }
+                            placeholder="Rua, Avenida, etc"
+                            className={`w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-primary-yellow ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          />
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium mb-2">
+                              Complemento
+                            </label>
+                            <input
+                              type="text"
+                              disabled={isDisabled}
+                              value={formData.complement}
+                              onChange={(e) =>
+                                setFormData({ ...formData, complement: e.target.value })
+                              }
+                              placeholder="Apto, Bloco, etc"
+                              className={`w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-primary-yellow ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-2">
+                              Bairro *
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              disabled={isDisabled}
+                              value={formData.neighborhood}
+                              onChange={(e) => {
+                                if (isDisabled) return;
+                                
+                                const bairroDigitado = e.target.value;
+                                
+                                // IMPORTANTE: Atualizar o bairro primeiro, permitindo que o usuário digite livremente
+                                setFormData(prev => {
+                                  const newData = { ...prev, neighborhood: bairroDigitado };
+                                  
+                                  // Buscar correspondência nos bairros cadastrados (case-insensitive)
+                                  if (deliveryAreas.length > 0 && bairroDigitado.trim()) {
+                                    const areaEncontrada = deliveryAreas.find(
+                                      a => a.neighborhood.toLowerCase().trim() === bairroDigitado.toLowerCase().trim()
+                                    );
+                                    
+                                    if (areaEncontrada) {
+                                      // Se encontrou, atualizar cidade e calcular frete
+                                      console.log(`✅ Bairro encontrado: ${areaEncontrada.neighborhood} - Frete: R$ ${areaEncontrada.delivery_fee}`);
+                                      newData.city = areaEncontrada.city;
+                                      setDeliveryFee(Number(areaEncontrada.delivery_fee));
+                                    } else {
+                                      // Se não encontrou, usar valor padrão
+                                      console.log(`⚠️ Bairro não encontrado: "${bairroDigitado}" - Usando frete padrão: R$ 5,00`);
+                                      setDeliveryFee(5.0);
+                                    }
+                                  } else if (!bairroDigitado.trim()) {
+                                    // Se apagou o bairro, resetar frete
+                                    setDeliveryFee(0);
+                                  }
+                                  
+                                  return newData;
+                                });
+                              }}
+                              placeholder="Digite o nome do bairro"
+                              className={`w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-primary-yellow ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">
+                            Cidade *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            disabled={isDisabled}
+                            value={formData.city}
+                            onChange={(e) => {
+                              if (isDisabled) return;
+                              
+                              setFormData({ 
+                                ...formData, 
+                                city: e.target.value
+                              });
+                              // Se mudou a cidade, recalcular frete se tiver bairro
+                              if (formData.neighborhood && deliveryAreas.length > 0) {
+                                const areaEncontrada = deliveryAreas.find(
+                                  a => a.city.toLowerCase().trim() === e.target.value.toLowerCase().trim() &&
+                                       a.neighborhood.toLowerCase().trim() === formData.neighborhood.toLowerCase().trim()
+                                );
+                                if (areaEncontrada) {
+                                  setDeliveryFee(Number(areaEncontrada.delivery_fee));
+                                } else {
+                                  setDeliveryFee(5.0); // Valor padrão
+                                }
+                              }
+                            }}
+                            placeholder="Digite a cidade"
+                            className={`w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-primary-yellow ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          />
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             )}
 
             {/* Método de Pagamento */}
-            <div className="bg-gray-900 rounded-lg p-4 md:p-6">
-              <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Método de Pagamento</h2>
+            <div className="bg-gray-900 rounded-lg p-3 sm:p-4 md:p-6">
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 md:mb-4">Método de Pagamento</h2>
               <div className="space-y-2 md:space-y-3">
                 <label className="flex items-center p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700">
                   <input
@@ -492,8 +768,8 @@ function CheckoutContent() {
 
           {/* Resumo */}
           <div className="lg:col-span-1">
-            <div className="bg-gray-900 rounded-lg p-4 md:p-6 lg:sticky lg:top-20 lg:top-24">
-              <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Resumo</h2>
+            <div className="bg-gray-900 rounded-lg p-3 sm:p-4 md:p-6 lg:sticky lg:top-24">
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 md:mb-6">Resumo</h2>
               <div className="space-y-2 md:space-y-3 mb-4 md:mb-6">
                 <div className="flex justify-between text-gray-400">
                   <span>Subtotal</span>
@@ -502,7 +778,13 @@ function CheckoutContent() {
                 {formData.deliveryType === "delivery" && (
                   <div className="flex justify-between text-gray-400">
                     <span>Taxa de Entrega</span>
-                    <span>{formatCurrency(deliveryFee)}</span>
+                    <span>
+                      {deliveryAreas.length > 0 && (!formData.city || !formData.neighborhood) ? (
+                        <span className="text-yellow-500 text-sm">Selecione o bairro</span>
+                      ) : (
+                        formatCurrency(deliveryFee)
+                      )}
+                    </span>
                   </div>
                 )}
                 {formData.paymentMethod === "pix" && (
@@ -522,15 +804,47 @@ function CheckoutContent() {
               </div>
               <button
                 type="button"
-                onClick={() => router.push("/cardapio")}
-                className="w-full bg-gray-800 hover:bg-gray-700 text-white py-3 px-4 rounded-lg font-bold transition flex items-center justify-center gap-2 mb-3 border border-gray-700"
+                onClick={() => {
+                  // IMPORTANTE: Preservar contexto do restaurante ao ir para o carrinho
+                  // O carrinho mostra o total com frete já calculado
+                  const restaurantSlug = typeof window !== 'undefined' 
+                    ? searchParams?.get('restaurant') 
+                      || localStorage.getItem('lastRestaurantContext')
+                    : null;
+                  
+                  const carrinhoUrl = restaurantSlug 
+                    ? `/carrinho?restaurant=${restaurantSlug}`
+                    : '/carrinho';
+                  
+                  router.push(carrinhoUrl);
+                }}
+                className="w-full bg-primary-yellow hover:bg-yellow-500 text-black py-2.5 sm:py-3 px-4 rounded-lg font-bold transition flex items-center justify-center gap-2 mb-2 sm:mb-3 border border-yellow-600 text-sm sm:text-base"
               >
-                <ShoppingBag className="w-5 h-5" />
+                Ver Carrinho com Frete
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  // IMPORTANTE: Preservar contexto do restaurante ao continuar comprando
+                  const restaurantSlug = typeof window !== 'undefined' 
+                    ? searchParams?.get('restaurant') 
+                      || localStorage.getItem('lastRestaurantContext')
+                    : null;
+                  
+                  if (restaurantSlug) {
+                    router.push(`/restaurante/${restaurantSlug}#cardapio`);
+                  } else {
+                    router.push("/#cardapio");
+                  }
+                }}
+                className="w-full bg-gray-800 hover:bg-gray-700 text-white py-2.5 sm:py-3 px-4 rounded-lg font-bold transition flex items-center justify-center gap-2 mb-2 sm:mb-3 border border-gray-700 text-sm sm:text-base"
+              >
+                <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
                 Continuar Comprando
               </button>
               <button
                 type="submit"
-                className="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-lg text-lg font-bold transition"
+                className="w-full bg-red-600 hover:bg-red-700 text-white py-3 sm:py-4 rounded-lg text-base sm:text-lg font-bold transition"
               >
                 Confirmar Pedido
               </button>

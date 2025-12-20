@@ -93,6 +93,17 @@ export interface OrderItem {
   observations?: string;
 }
 
+export interface DeliveryArea {
+  id: string;
+  restaurant_id: string;
+  city: string;
+  neighborhood: string;
+  delivery_fee: number;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 
 
 
